@@ -1,6 +1,9 @@
 name: Regenerate events.ics
 
 on:
+  push:
+    paths:
+      - 'bin/spreadsheet_to_ical'
   repository_dispatch:
     types: [regenerate-events]
   workflow_dispatch:

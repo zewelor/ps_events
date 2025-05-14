@@ -2,9 +2,15 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require_relative "../lib/ps_events/generator"
-require "optparse"
-require "httpx"
+require "optionparser"
+require 'icalendar/tzinfo'
+# require_relative "../lib/ps_events/generator"
+
+Bundler.require(:default)
+
+# https://github.com/fxn/zeitwerk#synopsis
+loader = Zeitwerk::Loader.for_gem
+loader.setup # ready!
 
 class Generator
   DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
@@ -36,6 +42,13 @@ class Generator
     events = CSV.parse(csv_text, headers: true)
 
     cal = Icalendar::Calendar.new
+
+    cal.append_custom_property("X-WR-CALNAME", "PortoSanto Events")
+    tzid = "Europe/Lisbon"
+    tz = TZInfo::Timezone.get(tzid)
+    # timezone = tz.ical_timezone event_start
+    # cal.add_timezone timezone
+
     events.each do |row|
       ev = Icalendar::Event.new
       # parse and validate start/end times
@@ -46,8 +59,8 @@ class Generator
         @skipped = true
         next
       end
-      ev.dtstart = start_time
-      ev.dtend = end_time
+      ev.dtstart = Icalendar::Values::DateTime.new(start_time, 'tzid' => tzid)
+      ev.dtend = Icalendar::Values::DateTime.new(end_time, 'tzid' => tzid)
       ev.summary = row.fetch("Activity").to_s.strip
       ev.location = row["Location"].to_s.strip unless row["Location"].to_s.strip.empty?
       ev.description = row["Description"].to_s.strip unless row["Description"].to_s.strip.empty?
