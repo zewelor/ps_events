@@ -14,13 +14,19 @@ jobs:
         with:
           persist-credentials: true  # ensure the action can push changes
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.x'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: bundle install --jobs 4 --retry 3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: ci
+          # Used by docker-compose.ci
+          tags: image_ci:latest
 
       - name: Generate events.ics
         run: docker compose run --rm app bin/spreadsheet_to_ical -o events.ics
