@@ -27,8 +27,8 @@ class Generator
     events.each do |row|
       ev = Icalendar::Event.new
       # parse and validate start/end times
-      start_time = Time.parse(row["Start time"])
-      end_time = Time.parse(row["End time"])
+      start_time = Time.parse(row.fetch("Start time"))
+      end_time = Time.parse(row.fetch("End time"))
       if end_time < start_time
         warn "Skipping event '#{row["Activity"]}' because end time #{end_time} is before start time #{start_time}"
         @skipped = true
@@ -36,9 +36,9 @@ class Generator
       end
       ev.dtstart = start_time
       ev.dtend = end_time
-      ev.summary = row["Activity"].to_s.strip
+      ev.summary = row.fetch("Activity").to_s.strip
       ev.location = row["Location"].to_s.strip unless row["Location"].to_s.strip.empty?
-      ev.description = row["Notes"].to_s.strip unless row["Notes"].to_s.strip.empty?
+      ev.description = row["Description"].to_s.strip unless row["Description"].to_s.strip.empty?
       ev.organizer = row["Organizer"].to_s.strip unless row["Organizer"].to_s.strip.empty?
       cal.add_event(ev)
     end
