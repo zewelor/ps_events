@@ -5,6 +5,10 @@ on:
     types: [regenerate-events]
   workflow_dispatch:
 
+env:
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  COMPOSE_FILE: docker-compose.ci.yml
+
 jobs:
   regenerate:
     runs-on: ubuntu-latest
