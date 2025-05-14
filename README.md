@@ -1,6 +1,10 @@
 # Readme
 
+
+[Lint to ics](https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/events.ics)
+
 ## Usage
+
 
 Generate an ICS file from the default Google Sheets CSV:
 
