@@ -17,7 +17,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     $RUNTIME_PACKAGES && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/* && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     gem install bundler -v "$BUNDLER_VERSION"
 
 FROM base AS basedev
@@ -28,7 +28,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     $DEV_PACKAGES && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 FROM basedev AS dev
 
