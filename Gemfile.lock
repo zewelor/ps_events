@@ -15,6 +15,9 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     docile (1.4.1)
+    http-2 (1.1.1)
+    httpx (1.4.4)
+      http-2 (>= 1.0.0)
     icalendar (2.11.0)
       base64
       ice_cube (~> 0.16)
@@ -103,6 +106,7 @@ DEPENDENCIES
   bundle-audit
   csv
   debug
+  httpx (~> 1.4)
   icalendar
   irb
   lefthook

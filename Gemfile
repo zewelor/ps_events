@@ -6,6 +6,7 @@ gem "bundle-audit"
 gem "amazing_print"
 gem "icalendar"
 gem "csv"
+gem "httpx", "~> 1.4"
 
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]

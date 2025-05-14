@@ -4,13 +4,20 @@
 require "bundler/setup"
 require_relative "../lib/ps_events/generator"
 require "optparse"
-require "net/http"
-require "uri"
+require "httpx"
 
 class Generator
   DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
 
   attr_reader :skipped
+
+  def self.generate(url: nil)
+    new(url:).generate
+  end
+
+  # Initialize with a URL or use the default
+  # @param url [String] The URL to fetch the CSV from
+  # @return [Generator] The generator instance
 
   def initialize(url: nil)
     @url = url || DEFAULT_CSV_URL
@@ -19,8 +26,13 @@ class Generator
 
   # Fetch CSV, parse events, and return an ICS string
   def generate
-    uri = URI.parse(@url)
-    csv_text = Net::HTTP.get(uri)
+    response = HTTPX.plugin(:follow_redirects)
+      .with(follow_insecure_redirects: false, max_redirects: 4)
+      .get(@url)
+    # puts "Fetching CSV from #{@url}"
+    # puts response
+    # exit
+    csv_text = response.to_s
     events = CSV.parse(csv_text, headers: true)
 
     cal = Icalendar::Calendar.new
@@ -48,7 +60,25 @@ class Generator
   end
 end
 
-url = ARGV[0]
-generator = Generator.new(url: url)
-puts generator.generate
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: spreadsheet_to_ical [options] [url]"
+  opts.on("-oFILE", "--output=FILE", "Write output to FILE instead of stdout") do |file|
+    options[:output] = file
+  end
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+generator = Generator.new(url: options[:url])
+ics_content = generator.generate
+
+if options[:output]
+  File.write(options[:output], ics_content)
+else
+  puts ics_content
+end
+
 exit(1) if generator.skipped
