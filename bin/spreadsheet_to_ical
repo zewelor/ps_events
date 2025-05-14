@@ -51,14 +51,15 @@ class Generator
       # parse and validate start/end times
       start_time = Time.parse(row.fetch("Start time"))
       end_time = Time.parse(row.fetch("End time"))
+      event_name = row.fetch("Name").to_s.strip
       if end_time < start_time
-        warn "Skipping event '#{row["Activity"]}' because end time #{end_time} is before start time #{start_time}"
+        warn "Skipping event '#{event_name}' because end time #{end_time} is before start time #{start_time}"
         @skipped = true
         next
       end
       ev.dtstart = Icalendar::Values::DateTime.new(start_time, "tzid" => tzid)
       ev.dtend = Icalendar::Values::DateTime.new(end_time, "tzid" => tzid)
-      ev.summary = row.fetch("Activity").to_s.strip
+      ev.summary = event_name
       ev.location = row["Location"].to_s.strip unless row["Location"].to_s.strip.empty?
       ev.description = row["Description"].to_s.strip unless row["Description"].to_s.strip.empty?
       ev.organizer = row["Organizer"].to_s.strip unless row["Organizer"].to_s.strip.empty?
