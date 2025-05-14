@@ -23,7 +23,7 @@ jobs:
         run: bundle install --jobs 4 --retry 3
 
       - name: Generate events.ics
-        run: bin/spreadsheet_to_ical > events.ics
+        run: docker compose run --rm app bin/spreadsheet_to_ical -o events.ics
 
       - name: Auto-commit updated events.ics
         uses: stefanzweifel/git-auto-commit-action@v5
