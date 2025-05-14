@@ -43,8 +43,9 @@ class Generator
 
     cal = Icalendar::Calendar.new
 
-    cal.append_custom_property("X-WR-CALNAME", "PortoSanto Events")
     tzid = "Europe/Lisbon"
+    cal.append_custom_property("X-WR-CALNAME", "PortoSanto Events")
+    cal.append_custom_property("X-WR-TIMEZONE", tzid)
     tz = TZInfo::Timezone.get(tzid)
     # timezone = tz.ical_timezone event_start
     # cal.add_timezone timezone
