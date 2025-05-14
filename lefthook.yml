@@ -2,6 +2,4 @@ pre-commit:
   commands:
     rubocop:
       exclude: "application.rb|routes.rb"
-      run: |
-        COMMAND="rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}"
-        docker compose ps|grep -q app && docker compose exec -it app `echo $COMMAND` || docker compose run --rm app `echo $COMMAND`
+      run: rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}

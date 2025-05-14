@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if docker compose ps | grep -q app
+then
+  docker compose --progress quiet exec -T app bundle exec lefthook "$@"
+else
+  docker compose --progress quiet run --rm -T app bundle exec lefthook "$@"
+fi
