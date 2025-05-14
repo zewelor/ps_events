@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "kaiwood.endwise",
+    "redhat.vscode-yaml",
+    "shopify.ruby-lsp",
+    "github.vscode-github-actions"
+  ]
+}

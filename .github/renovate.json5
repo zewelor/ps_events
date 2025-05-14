@@ -1,0 +1,64 @@
+{
+  extends: [
+    'config:recommended',
+    ':dependencyDashboard',
+  ],
+  ignorePaths: [
+    '.github/workflows',
+  ],
+  timezone: 'Europe/Warsaw',
+  vulnerabilityAlerts: {
+    enabled: true,
+  },
+  packageRules: [
+    {
+      matchManagers: [
+        'bundler',
+      ],
+      labels: [
+        'renovate/bundler',
+        'dependency/bundler',
+      ],
+    },
+    {
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'minor',
+      ],
+      labels: [
+        'renovate/image-release',
+        'dependency/minor',
+      ],
+    },
+    {
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'patch',
+      ],
+      labels: [
+        'renovate/image-release',
+        'dependency/patch',
+      ],
+    },
+    {
+      matchManagers: [
+        'bundler',
+      ],
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      matchPackageNames: [
+        'lefthook',
+        'rubocop-performance',
+        'standard'
+      ],
+    },
+  ],
+}

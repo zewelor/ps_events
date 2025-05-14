@@ -1,0 +1,32 @@
+name: Regenerate events.ics
+
+on:
+  repository_dispatch:
+    types: [regenerate-events]
+  workflow_dispatch:
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true  # ensure the action can push changes
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.x'
+
+      - name: Install dependencies
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Generate events.ics
+        run: bin/spreadsheet_to_ical > events.ics
+
+      - name: Auto-commit updated events.ics
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Regenerate events.ics"
+          file_pattern: "events.ics"

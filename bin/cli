@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require_relative "../lib/ps_events"
+require_relative "../lib/ps_events/generator"
+require "optparse"
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: cli [options]"
+  opts.on("-u", "--url URL", "CSV URL to fetch events from") { |v| options[:url] = v }
+  opts.on("-o", "--output FILE", "Output ICS file path (defaults to stdout)") { |v| options[:output] = v }
+end.parse!
+
+ics_content = PsEvents::Generator.new(url: options[:url]).generate
+
+if options[:output]
+  File.write(options[:output], ics_content)
+else
+  puts ics_content
+end

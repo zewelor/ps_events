@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require_relative "../lib/ps_events/generator"
+
+class Generator
+  DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
+
+  attr_reader :skipped
+
+  def initialize(url: nil)
+    @url = url || DEFAULT_CSV_URL
+    @skipped = false
+  end
+
+  # Fetch CSV, parse events, and return an ICS string
+  def generate
+    csv_text = URI.open(@url).read
+    events = CSV.parse(csv_text, headers: true)
+
+    cal = Icalendar::Calendar.new
+    events.each do |row|
+      ev = Icalendar::Event.new
+      # parse and validate start/end times
+      start_time = Time.parse(row["Start time"])
+      end_time   = Time.parse(row["End time"])
+      if end_time < start_time
+        warn "Skipping event '#{row['Activity']}' because end time #{end_time} is before start time #{start_time}"
+        @skipped = true
+        next
+      end
+      ev.dtstart = start_time
+      ev.dtend   = end_time
+      ev.summary     = row["Activity"]
+      ev.location    = row["Location"] unless row["Location"].to_s.strip.empty?
+      ev.description = row["Notes"]    unless row["Notes"].to_s.strip.empty?
+      owner = row["Owner"].to_s.strip
+      ev.organizer = Icalendar::Values::CalAddress.new("mailto:#{owner}") if owner != ""
+      cal.add_event(ev)
+    end
+
+    cal.publish
+    cal.to_ical
+  end
+end
+
+url = ARGV[0]
+generator = Generator.new(url: url)
+puts generator.generate
+exit(1) if generator.skipped
