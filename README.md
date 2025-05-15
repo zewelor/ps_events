@@ -1,7 +1,7 @@
 # Readme
 
 
-[Lint to ics](https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/events.ics)
+[Link to ics](https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/events.ics)
 
 ## Usage
 
