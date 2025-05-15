@@ -1,0 +1,36 @@
+name: Convert Images to WebP
+
+on:
+  push:
+    paths:
+      - 'images/inbox/**'
+  workflow_dispatch:
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick webp
+
+      - name: Convert images to WebP
+        run: |
+          for img in images/inbox/*; do
+            [ -f "$img" ] || continue
+            output="images/$(basename "${img%.*}.webp")"
+            convert "$img" -resize 900x900\> "$output"
+            rm "$img"
+          done
+
+      - name: Auto-commit converted images
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Convert images to WebP"
+          file_pattern: "images/*.webp, images/inbox/*"
