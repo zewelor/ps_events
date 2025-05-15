@@ -24,6 +24,7 @@ jobs:
         run: |
           for img in images/inbox/*; do
             [ -f "$img" ] || continue
+            if [ "$(basename "$img")" = ".gitkeep" ]; then continue; fi
             output="images/$(basename "${img%.*}.webp")"
             convert "$img" -resize 900x900\> "$output"
             rm "$img"
@@ -33,4 +34,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Convert images to WebP"
-          file_pattern: "images/*.webp, images/inbox/*"
+          file_pattern: "images/*.webp images/inbox/*"
