@@ -14,8 +14,9 @@ loader.setup # ready!
 
 class Generator
   DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
+  CALENDAR_NAME = "PXOPulse"
 
-  attr_reader :skipped
+  attr_reader :skipped, :tzid
 
   # Initialize with a URL or use the default
   # @param url [String] The URL to fetch the CSV from
@@ -23,35 +24,19 @@ class Generator
 
   def initialize(url: nil)
     @url = url || DEFAULT_CSV_URL
+    @tzid = "Europe/Lisbon"
     @skipped = false
   end
 
   # Fetch CSV, parse events, and return an ICS string
   def generate
-    response = HTTPX.plugin(:follow_redirects)
-      .with(follow_insecure_redirects: false, max_redirects: 4)
-      .get(@url)
-    # puts "Fetching CSV from #{@url}"
-    # puts response
-    # exit
-    csv_text = response.to_s
-    events = CSV.parse(csv_text, headers: true)
-
-    cal = Icalendar::Calendar.new
-
-    tzid = "Europe/Lisbon"
-    cal.append_custom_property("X-WR-CALNAME", "PortoSanto Events")
-    cal.append_custom_property("X-WR-TIMEZONE", tzid)
-    tz = TZInfo::Timezone.get(tzid)
-    timezone = tz.ical_timezone DateTime.now
-    cal.add_timezone timezone
-
-    events.each do |row|
+    events_from_csv.each do |row|
       ev = Icalendar::Event.new
       # parse and validate start/end times
       start_time = Time.parse(row.fetch("Start time"))
       end_time = Time.parse(row.fetch("End time"))
       event_name = row.fetch("Name").to_s.strip
+
       if end_time < start_time
         warn "Skipping event '#{event_name}' because end time #{end_time} is before start time #{start_time}"
         @skipped = true
@@ -63,11 +48,33 @@ class Generator
       ev.location = row["Location"].to_s.strip unless row["Location"].to_s.strip.empty?
       ev.description = row["Description"].to_s.strip unless row["Description"].to_s.strip.empty?
       ev.organizer = row["Organizer"].to_s.strip unless row["Organizer"].to_s.strip.empty?
-      cal.add_event(ev)
+
+      calendar.add_event(ev)
     end
 
-    cal.publish
-    cal.to_ical
+    calendar.publish
+    calendar.to_ical
+  end
+
+  def events_from_csv
+    response = HTTPX.plugin(:follow_redirects)
+      .with(follow_insecure_redirects: false, max_redirects: 4)
+      .get(@url)
+
+    CSV.parse(response.to_s, headers: true)
+  end
+
+  def calendar
+    return @calendar if defined?(@calendar)
+
+    @calendar = Icalendar::Calendar.new
+    @calendar.append_custom_property("X-WR-CALNAME", CALENDAR_NAME)
+    @calendar.ip_name = CALENDAR_NAME
+    @calendar.prodid = "-//PXO//#{CALENDAR_NAME}//EN"
+    @calendar.append_custom_property("X-WR-TIMEZONE", tzid)
+    timezone = TZInfo::Timezone.get(tzid).ical_timezone(Time.now)
+    @calendar.add_timezone(timezone)
+    @calendar
   end
 end
 

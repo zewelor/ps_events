@@ -3,6 +3,8 @@ name: Docker Checks
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - 'images/**'
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
