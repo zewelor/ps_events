@@ -41,3 +41,25 @@ jobs:
         with:
           commit_message: "Convert images to WebP"
           file_pattern: "images/*.webp images/inbox/*"
+
+  purge-history:
+    needs: convert
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install git-filter-repo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-filter-repo
+      - name: Purge image blobs from history
+        run: |
+          git filter-repo --invert-paths \
+            --path-glob 'images/inbox/*' \
+            --path-glob 'images/**/*.{png,jpg,jpeg}'
+      - name: Force push cleaned history
+        run: |
+          git push origin --force --all
+          git push origin --force --tags
