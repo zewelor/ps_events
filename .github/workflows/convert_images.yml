@@ -58,7 +58,7 @@ jobs:
         run: |
           git filter-repo --invert-paths \
             --path-glob 'images/inbox/[!.]*' \
-            --path-glob 'images/**/*.{png,jpg,jpeg,gif,webp}' \
+            --path-glob 'images/**/*.{png,jpg,jpeg,gif,webp}'
       - name: Force push cleaned history
         run: |
           git push origin --force --all
