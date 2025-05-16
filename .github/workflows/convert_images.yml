@@ -56,7 +56,7 @@ jobs:
           sudo apt-get install -y git-filter-repo
       - name: Purge image blobs from history
         run: |
-          git filter-repo --invert-paths \
+          git filter-repo --invert-paths --force \
             --path-glob 'images/inbox/[!.]*' \
             --path-glob 'images/**/*.{png,jpg,jpeg,gif,webp}'
       - name: Force push cleaned history
