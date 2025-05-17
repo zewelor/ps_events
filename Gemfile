@@ -2,7 +2,6 @@ source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "zeitwerk"
-gem "bundle-audit"
 gem "amazing_print"
 gem "icalendar"
 gem "csv"
