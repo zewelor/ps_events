@@ -48,7 +48,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build Jekyll site
-        run: docker run -v ${{ github.workspace }}/events_listing:/tmp/events_listing -v ${{ github.workspace }}/_site:/tmp/_site ghcr.io/zewelor/ps_events:latest jekyll build --source /tmp/events_listing --destination /tmp/_site --baseurl "${{ steps.pages.outputs.base_path }}"
+        run: docker run -v ${{ github.workspace }}/events_listing:/app/events_listing -v ${{ github.workspace }}/_site:/app/_site ghcr.io/zewelor/ps_events:latest jekyll build --source /app/events_listing --destination /app/_site --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
 
