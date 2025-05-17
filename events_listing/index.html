@@ -4,21 +4,48 @@ title: Events Listing
 ---
 
 <style>
-  img.thumbnail { width: 150px; height: auto; }
+  img.thumbnail {
+    width: 100%;
+    height: auto;
+    max-width: 120px; /* Smaller thumbnail */
+  }
   ul.events-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem; /* Reduced gap */
   }
   ul.events-list li {
     border: 1px solid #ccc;
-    padding: 1rem;
+    padding: 0.75rem; /* Smaller padding */
     border-radius: 4px;
     box-sizing: border-box;
-    flex: 1 1 calc(33% - 1rem);
+    width: 100%;
+    font-size: 0.95rem; /* Slightly smaller text */
+  }
+  ul.events-list li h3 {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+  }
+  ul.events-list li p {
+    margin: 0.4rem 0;
+  }
+  @media (min-width: 576px) {
+    ul.events-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 768px) {
+    ul.events-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (min-width: 992px) {
+    ul.events-list {
+      grid-template-columns: repeat(4, 1fr);
+    }
   }
 </style>
 

@@ -89,7 +89,7 @@ jobs:
             GIT_CODE_VERSION=${{ github.sha }}
 
       - name: Build Jekyll site
-        run: docker compose run jekyll build --source events_listing --destination _site
+        run: docker compose run app jekyll build --source events_listing --destination _site
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
