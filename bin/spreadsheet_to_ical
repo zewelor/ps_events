@@ -4,6 +4,7 @@
 require "bundler/setup"
 require "optionparser"
 require "icalendar/tzinfo"
+require "csv"
 # require_relative "../lib/ps_events/generator"
 
 Bundler.require(:default)
@@ -12,25 +13,24 @@ Bundler.require(:default)
 loader = Zeitwerk::Loader.for_gem
 loader.setup # ready!
 
-class Generator
-  DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
+class SpreadsheetToIcalGenerator
+  CSV_FILE = "events.csv"
   CALENDAR_NAME = "PXOPulse"
 
   attr_reader :skipped, :tzid
 
   # Initialize with a URL or use the default
   # @param url [String] The URL to fetch the CSV from
-  # @return [Generator] The generator instance
+  # @return [SpreadsheetToIcalGenerator] The generator instance
 
-  def initialize(url: nil)
-    @url = url || DEFAULT_CSV_URL
+  def initialize
     @tzid = "Europe/Lisbon"
     @skipped = false
   end
 
   # Fetch CSV, parse events, and return an ICS string
   def generate
-    events_from_csv.each do |row|
+    CSV.read(CSV_FILE, headers: true).each do |row|
       ev = Icalendar::Event.new
       # parse and validate start/end times
       start_time = Time.parse(row.fetch("Start time"))
@@ -57,11 +57,6 @@ class Generator
   end
 
   def events_from_csv
-    response = HTTPX.plugin(:follow_redirects)
-      .with(follow_insecure_redirects: false, max_redirects: 4)
-      .get(@url)
-
-    CSV.parse(response.to_s, headers: true)
   end
 
   def calendar
@@ -90,7 +85,7 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-generator = Generator.new(url: options[:url])
+generator = SpreadsheetToIcalGenerator.new
 ics_content = generator.generate
 
 if options[:output]

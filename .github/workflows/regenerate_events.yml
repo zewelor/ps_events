@@ -41,11 +41,15 @@ jobs:
           # Used by docker-compose.ci
           tags: image_ci:latest
 
+      - name: Download CSV with events
+        run: |
+          curl -Lo events.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
+
       - name: Generate events.ics
         run: docker compose run --rm app bin/spreadsheet_to_ical -o events.ics
 
       - name: Auto-commit updated events.ics
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Regenerate events.ics"
-          file_pattern: "events.ics"
+          commit_message: "Regenerate events files"
+          file_pattern: "events.ics events.csv"
