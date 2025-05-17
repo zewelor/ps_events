@@ -13,3 +13,4 @@
 
 .env
 .aider*
+_site/**/*

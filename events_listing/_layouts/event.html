@@ -1,0 +1,24 @@
+---
+layout: default
+title: "{{ page.Name }}"
+---
+
+<article>
+  <h2>{{ page.Name }}</h2>
+  <img src="https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/images/{{ page.Image }}.webp" alt="{{ event.Name }}" style="max-width:100%;height:auto; margin: 1em 0;" />
+  <p><strong>When:</strong> {{ page.Start time }} - {{ event.End time }}</p>
+  <p><strong>Where:</strong> {{ page.Location }}</p>
+  <p><strong>Description:</strong> {{ page.Description }}</p>
+  <p><strong>Organizer:</strong> {{ page.Organizer }}
+    {% if page.Email or page.Phone %}
+      (
+      {% if page.Email %}
+        <a href="mailto:{{ page.Email }}">{{ page.Email }}</a>{% if page.Phone %}, {{ page.Phone }}{% endif %}
+      {% else %}
+        {{ page.Phone }}
+      {% endif %}
+      )
+    {% endif %}
+  </p>
+  <p><strong>Price:</strong> {{ page.Price }}</p>
+</article>

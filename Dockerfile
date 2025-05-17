@@ -1,4 +1,4 @@
-FROM ghcr.io/zewelor/ruby:3.4.3-slim AS base
+FROM ghcr.io/zewelor/ruby:3.4.4-slim AS base
 
 ARG BUNDLER_VERSION=2.6.8
 ARG RUNTIME_PACKAGES=""
