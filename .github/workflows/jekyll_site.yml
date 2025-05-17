@@ -51,6 +51,8 @@ jobs:
         run: |
           mkdir -p events_listing/.jekyll-cache
           mkdir -p _site
+          chmod -R 777 events_listing/.jekyll-cache
+          chmod -R 777 _site
 
       - name: Build Jekyll site
         run: docker run -v ${{ github.workspace }}/:/app/ ghcr.io/zewelor/ps_events:latest jekyll build --source /app/events_listing --destination /app/_site --baseurl "${{ steps.pages.outputs.base_path }}"
