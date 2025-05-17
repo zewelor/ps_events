@@ -77,4 +77,4 @@ COPY --chown=app:app . ./
 
 USER app
 
-ENTRYPOINT ["/usr/bin/catatonit", "--", "bin/cli"]
+ENTRYPOINT ["/usr/bin/catatonit", "--"]
