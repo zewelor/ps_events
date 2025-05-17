@@ -5,6 +5,8 @@ on:
   push:
     paths-ignore:
       - 'images/**'
+      - '.github/workflows/**'
+      - '!.github/workflows/docker_checks.yml'
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
@@ -26,6 +28,7 @@ jobs:
           ignore: DL3006
 
       - name: Set up Docker Buildx
+        id: buildx_test
         uses: docker/setup-buildx-action@v3
 
       - name: Build
@@ -66,6 +69,7 @@ jobs:
             latest=true
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
