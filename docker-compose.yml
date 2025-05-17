@@ -5,6 +5,8 @@ services:
       target: dev
     tty: true
     stdin_open: true
+    ports:
+      - "127.0.0.1:4000:4000"
     volumes:
       - .:/app:cached
       - bundler:/bundle

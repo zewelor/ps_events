@@ -8,12 +8,12 @@ docker_compose_run_on_exec () {
   then
     docker compose --progress quiet exec -it $container_name "$@"
   else
-    docker compose --progress quiet run --rm -it $container_name "$@"
+    docker compose --progress quiet run --rm -it --service-ports $container_name "$@"
   fi
 }
 
 # Declare functions for each name
-names=("ruby" "rails" "bundle" "rake" "gem" "standardrb" "rubocop" "rspec" "lefthook" "spring" "brakeman")
+names=("ruby" "rails" "bundle" "rake" "gem" "standardrb" "rubocop" "rspec" "lefthook" "spring" "brakeman" "jekyll")
 
 for name in "${names[@]}"
 do

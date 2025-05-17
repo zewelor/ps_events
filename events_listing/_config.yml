@@ -1,0 +1,11 @@
+title: Events Listing
+data_dir: _data
+
+plugins:
+  - jekyll-datapage-generator
+
+page_gen:
+  - name: "Name"
+    template: event
+    dir: events
+    data: events

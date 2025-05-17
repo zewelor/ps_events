@@ -15,6 +15,7 @@ end
 group :development do
   gem "standard"
   gem "lefthook"
+  gem "ruby-lsp", require: false
 end
 
 group :test do
@@ -22,5 +23,9 @@ group :test do
 end
 
 gem "tzinfo", "~> 2.0"
-
 gem "tzinfo-data", "~> 1.2025"
+
+gem "jekyll", "~> 4.4"
+gem "jekyll-datapage-generator"
+
+gem "bigdecimal", "~> 3.1"

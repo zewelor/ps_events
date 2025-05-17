@@ -1,0 +1,38 @@
+---
+layout: default
+title: Events Listing
+---
+
+<style>
+  img.thumbnail { width: 150px; height: auto; }
+  ul.events-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  ul.events-list li {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 4px;
+    box-sizing: border-box;
+    flex: 1 1 calc(33% - 1rem);
+  }
+</style>
+
+<h2>Upcoming Events</h2>
+<ul class="events-list">
+{% for event in site.data.events %}
+  <li>
+    <!-- thumbnail and title link -->
+    <a href="/events/{{ event["Name"] | slugify }}">
+      <img class="thumbnail" src="https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/images/{{ event["Image"] }}.webp" alt="{{ event["Name"] }}" />
+    </a>
+    <h3><a href="/events/{{ event["Name"] | slugify }}">{{ event["Name"] }}</a></h3>
+    <p><strong>When:</strong> {{ event["Start time"] }} - {{ event["End time"] }}</p>
+    <p><strong>Where:</strong> {{ event["Location"] }}</p>
+  </li>
+{% endfor %}
+</ul>
