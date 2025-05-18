@@ -48,9 +48,6 @@ jobs:
       - name: Generate events.ics
         run: docker compose run --rm app bin/spreadsheet_to_ical -o events.ics
 
-      - name: Pull latest changes
-        run: git pull --rebase # Using --rebase to avoid merge commits, adjust if needed
-
       - name: Auto-commit updated events.ics
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
