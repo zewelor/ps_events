@@ -3,63 +3,37 @@ layout: default
 title: Events Listing
 ---
 
-<style>
-  img.thumbnail {
-    width: 100%;
-    height: auto;
-    max-width: 150px; /* Smaller thumbnail */
-  }
-  ul.events-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem; /* Reduced gap */
-  }
-  ul.events-list li {
-    border: 1px solid #ccc;
-    padding: 0.75rem; /* Smaller padding */
-    border-radius: 4px;
-    box-sizing: border-box;
-    width: 100%;
-    font-size: 0.95rem; /* Slightly smaller text */
-  }
-  ul.events-list li h3 {
-    font-size: 1.1rem;
-    margin: 0.5rem 0;
-  }
-  ul.events-list li p {
-    margin: 0.4rem 0;
-  }
-  @media (min-width: 576px) {
-    ul.events-list {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  @media (min-width: 768px) {
-    ul.events-list {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  @media (min-width: 992px) {
-    ul.events-list {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-</style>
+<section id="event-list" class="mb-8">
+  <h2 class="text-2xl font-semibold mb-6">Upcoming Events</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for event in site.data.events %}
+    <div class="event-card rounded-lg shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}">
+      <a href="/events/{{ event['Name'] | slugify }}">
+        <img src="https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/images/{{ event['Image'] }}.webp" alt="{{ event['Name'] }}" class="w-full h-48 object-cover" onerror="this.parentElement.innerHTML = defaultImageSVG;">
+      </a>
+      <div class="p-4 sm:p-6 flex-grow flex flex-col">
+        <h3 class="event-card-title text-xl font-semibold mb-2">
+          <a href="/events/{{ event['Name'] | slugify }}">{{ event["Name"] }}</a>
+        </h3>
+        <p class="text-sm text-gray-600 mb-1">
+          <strong>When:</strong> {{ event["Start time"] }} - {{ event["End time"] }}
+        </p>
+        <p class="text-sm text-gray-600 mb-3">
+          <strong>Where:</strong> {{ event["Location"] }}
+        </p>
+        <a href="/events/{{ event['Name'] | slugify }}" class="event-more-info-button mt-4 inline-block text-center py-2 px-4 rounded-md text-sm">More Info</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
 
-<h2>Upcoming Events</h2>
-<ul class="events-list">
-{% for event in site.data.events %}
-  <li>
-    <!-- thumbnail and title link -->
-    <a href="/events/{{ event['Name'] | slugify }}">
-      <img class="thumbnail" src="https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/images/{{ event['Image'] }}.webp" alt="{{ event['Name'] }}" />
-    </a>
-    <h3><a href="/events/{{ event['Name'] | slugify }}">{{ event["Name"] }}</a></h3>
-    <p><strong>When:</strong> {{ event["Start time"] }} - {{ event["End time"] }}</p>
-    <p><strong>Where:</strong> {{ event["Location"] }}</p>
-  </li>
-{% endfor %}
-</ul>
+<script>
+  // SVG for the default event image placeholder
+  const defaultImageSVG = `
+      <div class="default-event-image">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-3.75h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008Zm2.25-4.5h.008v.008H12v-.008Zm1.5.008h.008v.008H13.5v-.008Zm0 2.25h.008v.008H13.5v-.008Z" />
+          </svg>
+      </div>`;
+</script>
