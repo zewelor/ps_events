@@ -6,8 +6,15 @@ title: Events Listing
 <section id="event-list" class="mb-8">
   <h2 class="text-2xl font-semibold mb-6">Upcoming Events</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
+    {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
     {% assign sorted_events = site.data.events | sort: 'Start time' %}
     {% for event in sorted_events %}
+      {% assign event_start_time_string = event['Start time'] %}
+      {% comment %} Assuming event times are in Lisbon time (UTC+1 during summer like May) {% endcomment %}
+      {% assign event_time_with_offset = event_start_time_string | append: ' +01:00' %}
+      {% assign event_timestamp_utc = event_time_with_offset | date: '%s' | plus: 0 %}
+
+      {% if event_timestamp_utc > current_utc_timestamp %}
     <div class="event-card rounded-lg shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}">
       {% assign category_color = "#ADD8E6" %}
       {% if event.Category == "Music" %}{% assign category_color = "#F08080" %}
@@ -39,6 +46,7 @@ title: Events Listing
         <a href="/events/{{ event['Name'] | slugify }}" class="event-more-info-button mt-4 inline-block text-center py-2 px-4 rounded-md text-sm">More Info</a>
       </div>
     </div>
+      {% endif %}
     {% endfor %}
   </div>
 </section>
