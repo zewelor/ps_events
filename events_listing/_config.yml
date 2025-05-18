@@ -1,11 +1,10 @@
-title: Events Listing
+title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
 data_dir: _data
 
 plugins:
   - jekyll-datapage-generator
   - jekyll-sitemap
-
 
 page_gen:
   - name: "Name"
