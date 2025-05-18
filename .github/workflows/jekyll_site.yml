@@ -59,16 +59,25 @@ jobs:
         env:
           JEKYLL_ENV: production
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Fix file permissions
+        run: |
+          sudo chmod -R 777 _site/
+          sudo chown -R $(id -u):$(id -g) _site/
 
       - name: Install and run minification tool
         run: |
           sudo apt-get update
-          sudo apt-get install minify
-          minify -r _site/ -o _site/ --html-keep-document-tags --html-keep-end-tags
+          sudo apt-get install npm
+          sudo npm install -g html-minifier-terser clean-css-cli terser
+
+          echo "Minifying HTML files..."
+          find _site -type f -name "*.html" -exec html-minifier-terser --collapse-whitespace --remove-comments --minify-css true --minify-js true --output {} {} \;
+
+          echo "Minifying CSS files..."
+          find _site -type f -name "*.css" -exec cleancss -o {} {} \;
+
+          echo "Minifying JS files..."
+          find _site -type f -name "*.js" -exec terser -c -m -o {} {} \;
 
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
