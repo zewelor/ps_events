@@ -8,9 +8,23 @@ title: Events Listing
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for event in site.data.events %}
     <div class="event-card rounded-lg shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}">
-      <a href="/events/{{ event['Name'] | slugify }}">
-        <img src="https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/images/{{ event['Image'] }}.webp" alt="{{ event['Name'] }}" class="w-full h-48 object-cover" onerror="this.parentElement.innerHTML = defaultImageSVG;">
-      </a>
+      {% assign category_color = "#ADD8E6" %}
+      {% if event.Category == "Music" %}{% assign category_color = "#F08080" %}
+      {% elsif event.Category == "Food" %}{% assign category_color = "#FFA07A" %}
+      {% elsif event.Category == "Art" %}{% assign category_color = "#40E0D0" %}
+      {% elsif event.Category == "Nature" %}{% assign category_color = "#20B2AA" %}
+      {% elsif event.Category == "Health & Wellness" %}{% assign category_color = "#98FB98" %}
+      {% elsif event.Category == "Sports" %}{% assign category_color = "#FF7F50" %}
+      {% elsif event.Category == "Learning & Workshops" %}{% assign category_color = "#ADD8E6" %}
+      {% elsif event.Category == "Community & Culture" %}{% assign category_color = "#DAA520" %}
+      {% endif %}
+
+      <div class="h-16 relative overflow-hidden" style="background-color: {{ category_color }};">
+        <div class="text-white font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
+          <span class="px-4 py-1">{{ event.Category | default: "Event" }}</span>
+        </div>
+      </div>
+
       <div class="p-4 sm:p-6 flex-grow flex flex-col">
         <h3 class="event-card-title text-xl font-semibold mb-2">
           <a href="/events/{{ event['Name'] | slugify }}">{{ event["Name"] }}</a>

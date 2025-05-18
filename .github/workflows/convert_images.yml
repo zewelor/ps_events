@@ -6,6 +6,12 @@ on:
       - 'images/inbox/**'
   workflow_dispatch:
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "convert-images"
+  cancel-in-progress: false
+
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -36,11 +42,15 @@ jobs:
             rm "$img"
           done
 
+      - name: Pull latest changes
+        run: git pull --rebase # Using --rebase to avoid merge commits, adjust if needed
+
       - name: Auto-commit converted images
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Convert images to WebP"
           file_pattern: "images/*.webp images/inbox/*"
+          push_options: --force # Add force push
 
   purge-history:
     needs: convert
