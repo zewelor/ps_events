@@ -59,25 +59,11 @@ jobs:
         env:
           JEKYLL_ENV: production
 
-      - name: Fix file permissions
-        run: |
-          sudo chmod -R 777 _site/
-          sudo chown -R $(id -u):$(id -g) _site/
-
-      - name: Install and run minification tool
-        run: |
-          sudo apt-get update
-          sudo apt-get install npm
-          sudo npm install -g html-minifier-terser clean-css-cli terser
-
-          echo "Minifying HTML files..."
-          find _site -type f -name "*.html" -exec html-minifier-terser --collapse-whitespace --remove-comments --minify-css true --minify-js true --output {} {} \;
-
-          echo "Minifying CSS files..."
-          find _site -type f -name "*.css" -exec cleancss -o {} {} \;
-
-          echo "Minifying JS files..."
-          find _site -type f -name "*.js" -exec terser -c -m -o {} {} \;
+      - name: Minify HTML, CSS, and JS
+        uses: docker://devatherock/minify-js:3.1.0
+        with:
+          directory: '_site'
+          add_suffix: false
 
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
