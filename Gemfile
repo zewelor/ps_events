@@ -28,3 +28,5 @@ gem "jekyll", "~> 4.4"
 gem "jekyll-datapage-generator"
 
 gem "bigdecimal", "~> 3.1"
+
+gem "jekyll-sitemap", "~> 1.4"
