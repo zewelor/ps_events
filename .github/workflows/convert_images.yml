@@ -42,9 +42,6 @@ jobs:
             rm "$img"
           done
 
-      - name: Pull latest changes
-        run: git pull --rebase # Using --rebase to avoid merge commits, adjust if needed
-
       - name: Auto-commit converted images
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
