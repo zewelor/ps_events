@@ -50,3 +50,8 @@ Justfile
 .ruby-lsp
 *.gemspec
 lefthook.yml
+_site/*
+images/*
+events_listing/*
+events.ics
+events.csv
