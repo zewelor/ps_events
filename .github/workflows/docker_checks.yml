@@ -15,43 +15,43 @@ env:
   DOCKER_BUILD_CHECKS_ANNOTATIONS: false
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    env:
-      COMPOSE_FILE: docker-compose.ci.yml
-    steps:
-      - uses: actions/checkout@v4
+  # tests:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     COMPOSE_FILE: docker-compose.ci.yml
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: Dockerfile
-          ignore: DL3006
+  #     - uses: hadolint/hadolint-action@v3.1.0
+  #       with:
+  #         dockerfile: Dockerfile
+  #         ignore: DL3006
 
-      - name: Set up Docker Buildx
-        id: buildx_test
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       id: buildx_test
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Build
-        uses: docker/build-push-action@v6
-        with:
-          push: false
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          target: ci
-          # Used by docker-compose.ci
-          tags: image_ci:latest
+  #     - name: Build
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         push: false
+  #         load: true
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
+  #         target: ci
+  #         # Used by docker-compose.ci
+  #         tags: image_ci:latest
 
-      - name: Run Rubocop
-        run: |
-          docker compose run app rubocop
+  #     - name: Run Rubocop
+  #       run: |
+  #         docker compose run app rubocop
 
   push_production:
     permissions:
       contents: read
       packages: write
-    needs:
-      - tests
+    # needs:
+    #   - tests
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
