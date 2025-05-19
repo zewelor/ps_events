@@ -7,121 +7,12 @@
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Root color variables for theme consistency */
-        :root {
-            --color-sea-turquoise: #48D1CC;
-            --color-beach-beige: #FAF0E6;
-            --color-sky-blue-footer: #005A8D;
-            --color-sun-gold: #fbbf24;
-            --color-cloud-white: #FFFFFF;
-            --color-text-dark: #1f2937;
-            --color-text-light: #f9fafb;
-        }
-
-        /* Basic body styling with system font stack */
-        body {
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-            background-color: var(--color-beach-beige); /* Light beige background, like a beach */
-            color: var(--color-text-dark); /* Dark text for readability */
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh; /* Ensures footer is at the bottom */
-        }
-
-        /* Header background and wave styling */
-        .header-bg {
-            background-color: var(--color-sea-turquoise); /* Turquoise background, like the sea */
-            color: var(--color-text-dark);
-            position: relative;
-            padding-bottom: 50px; /* Space for the decorative wave */
-        }
-
-        /* Decorative wave using SVG */
-        .header-wave::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,50 Q360,100 720,50 T1440,50 V100 H0 Z" fill="%23FAF0E6" /></svg>'); /* Wave color matches body background */
-            background-repeat: no-repeat;
-            background-size: 100% 100%;
-            transform: translateY(1px); /* Slight adjustment for smooth transition */
-        }
-
-        /* Footer styling */
-        .footer-bg {
-            background-color: var(--color-sky-blue-footer); /* Dark blue for the footer */
-            color: var(--color-text-light); /* Light text on dark background */
-            margin-top: auto; /* Pushes footer to the bottom of the page */
-        }
-
-        /* Event card styling */
-        .event-card {
-            background-color: var(--color-cloud-white); /* White background for cards */
-            border: 1px solid #e2e8f0; /* Light gray border */
-        }
-
-        .event-card-title {
-            color: var(--color-sea-turquoise); /* Title color matches the sea */
-        }
-
-        /* "More Info" button styling */
-        .event-more-info-button {
-            background-color: var(--color-sun-gold); /* Gold background, like the sun */
-            color: var(--color-text-dark);
-            font-weight: 600; /* Semibold text */
-        }
-
-        /* Default image placeholder styling */
-        .default-event-image {
-            background-color: #e0e0e0; /* Light gray background for placeholder */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #757575; /* Gray icon color */
-            font-size: 1.5rem;
-            height: 200px; /* Fixed height for consistency */
-        }
-        .default-event-image svg {
-            width: 50px;
-            height: 50px;
-        }
-
-        /* Responsive adjustments for smaller screens */
-        @media (max-width: 640px) {
-            .header-bg h1 {
-                font-size: 1.8rem; /* Smaller main title on mobile */
-            }
-            #event-list h2 {
-                font-size: 1.5rem; /* Smaller section title on mobile */
-            }
-        }
-
-        /* Site title link styling */
-        h1 a {
-            color: inherit; /* Inherit color from parent */
-            text-decoration: none; /* Remove underline */
-        }
-    </style>
   </head>
   <body class="text-gray-800">
-    <header class="header-bg header-wave">
-      <div class="container mx-auto px-6 py-8 flex items-center">
-        {% if page.url == "/" or page.url == "/index.html" %}
-        <img src="/assets/logo.webp" alt="{{ site.title }} logo" class="h-34">
-        {% else %}
-        <a href="/" title="{{ site.title }} - Home">
-          <img src="/assets/logo.webp" alt="{{ site.title }} logo" class="h-34">
-        </a>
-        {% endif %}
-      </div>
-    </header>
+    {% include header.html %}
     <main class="container mx-auto p-4 sm:p-6 flex-grow">
       {{ content }}
     </main>
-    <footer class="footer-bg text-center p-6 mt-12">
-      <p>&copy; <span id="current-year"></span> {{ site.title }}. All rights reserved.</p>
-      <script>
+    {% include footer.html %}
+  </body>
+</html>

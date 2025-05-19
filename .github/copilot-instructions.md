@@ -15,5 +15,5 @@ Used in this project
 - Tailwind CSS for styling. We are using version 4
 
 ## UI and Styling
-- Use Shadcn UI, Radix, and Tailwind for components and styling.
+- Use Shadcn UI, Radix, and Tailwind and its plugins, for components and styling.
 - Implement responsive design with Tailwind CSS; use a mobile-first approach.
