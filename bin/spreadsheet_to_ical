@@ -3,15 +3,9 @@
 
 require "bundler/setup"
 require "optionparser"
-require "icalendar/tzinfo"
 require "csv"
-# require_relative "../lib/ps_events/generator"
-
-Bundler.require(:default)
-
-# https://github.com/fxn/zeitwerk#synopsis
-loader = Zeitwerk::Loader.for_gem
-loader.setup # ready!
+require "icalendar"
+require "icalendar/tzinfo"
 
 class SpreadsheetToIcalGenerator
   CSV_FILE = "events.csv"
