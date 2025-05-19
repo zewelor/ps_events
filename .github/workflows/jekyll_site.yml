@@ -59,11 +59,12 @@ jobs:
         env:
           JEKYLL_ENV: production
 
-      - name: Minify HTML, CSS, and JS
-        uses: docker://devatherock/minify-js:3.1.0
-        with:
-          directory: '_site'
-          add_suffix: false
+      # Breaks some CSS styles
+      # - name: Minify HTML, CSS, and JS
+      #   uses: docker://devatherock/minify-js:3.1.0
+      #   with:
+      #     directory: '_site'
+      #     add_suffix: false
 
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
