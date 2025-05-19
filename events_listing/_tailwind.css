@@ -24,8 +24,6 @@ body {
 
 /* Header background and wave styling */
 .header-bg {
-    background-color: var(--color-sea-turquoise); /* Turquoise background, like the sea */
-    color: var(--color-text-dark);
     position: relative;
     padding-bottom: 50px; /* Space for the decorative wave */
 }
@@ -44,21 +42,10 @@ body {
     transform: translateY(1px); /* Slight adjustment for smooth transition */
 }
 
-/* Footer styling */
-.footer-bg {
-    background-color: var(--color-sky-blue-footer); /* Dark blue for the footer */
-    color: var(--color-text-light); /* Light text on dark background */
-    margin-top: auto; /* Pushes footer to the bottom of the page */
-}
-
 /* Event card styling */
 .event-card {
     background-color: var(--color-cloud-white); /* White background for cards */
     border: 1px solid #e2e8f0; /* Light gray border */
-}
-
-.event-card-title {
-    color: var(--color-sea-turquoise); /* Title color matches the sea */
 }
 
 /* "More Info" button styling */

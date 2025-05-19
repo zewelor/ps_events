@@ -21,12 +21,13 @@ title: Events Listing
       {% assign meta = event.Category | category_metadata %}
       <div class="h-16 relative overflow-hidden" style="background-color: {{ meta.color }};">
         <div class="text-white font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">{{ meta.icon }}</svg>
           <span class="px-4 py-1">{{ event.Category | default: "Event" }}</span>
         </div>
       </div>
 
       <div class="p-4 sm:p-6 flex-grow flex flex-col justify-between">
-        <h3 class="event-card-title text-xl font-semibold mb-2 h-14 overflow-hidden line-clamp-2">
+        <h3 class="text-cyan-700 text-xl font-semibold mb-2 h-14 overflow-hidden line-clamp-2">
           <a href="{{ event['Name'] | datapage_url: 'events' }}" title="{{ event['Name'] | escape_once }}">{{ event["Name"] }}</a>
         </h3>
         <p class="text-sm text-gray-600 mb-1">
