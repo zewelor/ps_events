@@ -21,12 +21,15 @@ group :test do
   gem "simplecov", require: false
 end
 
+group :jekyll_plugins do
+  gem "jekyll-datapage-generator"
+  gem "jekyll-sitemap", "~> 1.4"
+  gem "jekyll-tailwindcss"
+end
+
 gem "tzinfo", "~> 2.0"
 gem "tzinfo-data", "~> 1.2025"
 
 gem "jekyll", "~> 4.4"
-gem "jekyll-datapage-generator"
 
 gem "bigdecimal", "~> 3.1"
-
-gem "jekyll-sitemap", "~> 1.4"
