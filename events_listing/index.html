@@ -21,7 +21,6 @@ title: Events Listing
       {% assign meta = event.Category | category_metadata %}
       <div class="h-16 relative overflow-hidden" style="background-color: {{ meta.color }};">
         <div class="text-white font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">{{ meta.icon }}</svg>
           <span class="px-4 py-1">{{ event.Category | default: "Event" }}</span>
         </div>
       </div>
@@ -36,7 +35,7 @@ title: Events Listing
         <p class="text-sm text-gray-600 mb-3">
           <strong>Where:</strong> {{ event["Location"] }}
         </p>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="event-more-info-button mt-4 inline-block text-center py-2 px-4 rounded-md text-sm">More Info</a>
+        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="event-more-info-buttonf mt-4 inline-block text-center py-2 px-4 rounded-md text-sm">More Info</a>
       </div>
     </div>
       {% endif %}
