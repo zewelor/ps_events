@@ -24,8 +24,8 @@ TZNAME:WET
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:4eba2779-e4c8-4dac-a407-b7385a20ea11
+DTSTAMP:20250519T140152Z
+UID:6ad78a54-4964-4030-89e2-955236890878
 DTSTART;TZID=Europe/Lisbon:20250517T170000
 DTEND;TZID=Europe/Lisbon:20250517T190000
 DESCRIPTION:Baking own bread
@@ -34,31 +34,8 @@ ORGANIZER:Digital Porto Santo
 SUMMARY:Bread Baking
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:b1ca8640-7dad-46b4-81d1-039b6d34eb52
-DTSTART;TZID=Europe/Lisbon:20250605T104000
-DTEND;TZID=Europe/Lisbon:20250606T220000
-DESCRIPTION:Event part of "Jubileu 2025 Peregrinos de Esperança". Program 
- includes activities over two days in Porto Santo.
-LOCATION:Largo das Palmeiras
-ORGANIZER:Coro do Centro Comunitário de Porto Santo
-SUMMARY:JUBILEU NO PORTO SANTO
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:1cf6d3e8-0452-4f4f-a335-639bd8a5b0c5
-DTSTART;TZID=Europe/Lisbon:20250528T090000
-DTEND;TZID=Europe/Lisbon:20250529T150000
-DESCRIPTION:The 18th Environmental Symposium with the theme "Uniting Forces
-  for the Island - Sustainability in action". The program includes presenta
- tions and discussions over two days.
-LOCATION:Auditório do CC e de Congressos
-ORGANIZER:Município do Porto Santo
-SUMMARY:XVIII SIMPÓSIO AMBIENTAL
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:420dda6f-418f-4fea-b68d-3f869f4d1225
+DTSTAMP:20250519T140152Z
+UID:75cab4f4-69d4-4546-9c69-2580412cb5ce
 DTSTART;TZID=Europe/Lisbon:20250522T183000
 DTEND;TZID=Europe/Lisbon:20250522T200000
 DESCRIPTION:Presentation of the book "A Revolução da Ilha Pequena" by Liv
@@ -68,36 +45,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:Presentation of the book "A Revolução da Ilha Pequena"
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:45ad58a0-c64e-4b26-b328-26822abea79a
-DTSTART;TZID=Europe/Lisbon:20250614T180000
-DTEND;TZID=Europe/Lisbon:20250624T000000
-DESCRIPTION:The São João Festival in Porto Santo is a vibrant celebration
-  of the island's rich cultural heritage\, taking place from June 14 to 24\
- , 2025. As one of the most significant events on the island\, it offers a 
- unique blend of traditional and contemporary festivities.
-LOCATION:Porto Santo
-ORGANIZER:Câmara Municipal do Porto Santo
-SUMMARY:Sao Joao 2025
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:0908ef4f-2425-48be-995b-5b89b15ab805
-DTSTART;TZID=Europe/Lisbon:20250918T190000
-DTEND;TZID=Europe/Lisbon:20250921T000000
-DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
- d cultural event that transports visitors back to the 15th century\, celeb
- rating the island's connection to Christopher Columbus. Held annually from
-  September 18th to 21st\, 2025\, in the town of Vila Baleira\, the festiva
- l offers a rich tapestry of activities that bring the Age of Discoveries t
- o life.
-LOCATION:Porto Santo
-ORGANIZER:Regional Government of Madeira
-SUMMARY:Columbus Festival
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250519T132909Z
-UID:ce5937a9-0b4e-432c-9b08-8c1d6b54fcf9
+DTSTAMP:20250519T140152Z
+UID:c4b12105-74a5-43e8-9ff6-fedcf217f180
 DTSTART;TZID=Europe/Lisbon:20250524T133000
 DTEND;TZID=Europe/Lisbon:20250525T140000
 DESCRIPTION:The Porto Santo Island Open Water Swimming is a competitive sea
@@ -114,5 +63,70 @@ LOCATION:Porto Santo
 ORGANIZER:Associação de Natação da Madeira (ANM), Federação Portugues
  a de Natação (FPN), Clube Naval do Porto Santo (CNPS)
 SUMMARY:Porto Santo Island Open Water Swimming
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T140152Z
+UID:f221f6b9-4b46-43c6-b252-6222ca264657
+DTSTART;TZID=Europe/Lisbon:20250528T090000
+DTEND;TZID=Europe/Lisbon:20250529T150000
+DESCRIPTION:The 18th Environmental Symposium with the theme "Uniting Forces
+  for the Island - Sustainability in action". The program includes presenta
+ tions and discussions over two days.
+LOCATION:Auditório do CC e de Congressos
+ORGANIZER:Município do Porto Santo
+SUMMARY:XVIII SIMPÓSIO AMBIENTAL
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T140152Z
+UID:2680ac25-afa2-4f4f-b90a-6c7f9541f26a
+DTSTART;TZID=Europe/Lisbon:20250530T160000
+DTEND;TZID=Europe/Lisbon:20250530T190000
+DESCRIPTION:Concerto do Panda is a family-friendly musical event celebratin
+ g Children's Day. It features live performances by beloved children's char
+ acters\, including Panda\, Ruca\, Gabby's Dollhouse\, and Panda's Band. At
+ tendees can expect music\, joy\, and surprises designed for the whole fami
+ ly.
+LOCATION:Praça do Barqueiro\, Porto Santo
+ORGANIZER:Municipality of Porto Santo
+SUMMARY:Concerto do Panda
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T140152Z
+UID:0903639d-3e1b-43d0-a1e3-0061ccd22637
+DTSTART;TZID=Europe/Lisbon:20250605T104000
+DTEND;TZID=Europe/Lisbon:20250606T220000
+DESCRIPTION:Event part of "Jubileu 2025 Peregrinos de Esperança". Program 
+ includes activities over two days in Porto Santo.
+LOCATION:Largo das Palmeiras
+ORGANIZER:Coro do Centro Comunitário de Porto Santo
+SUMMARY:JUBILEU NO PORTO SANTO
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T140152Z
+UID:adfd6edb-2d9f-4cff-99ab-cf0d7abc3450
+DTSTART;TZID=Europe/Lisbon:20250614T180000
+DTEND;TZID=Europe/Lisbon:20250624T000000
+DESCRIPTION:The São João Festival in Porto Santo is a vibrant celebration
+  of the island's rich cultural heritage\, taking place from June 14 to 24\
+ , 2025. As one of the most significant events on the island\, it offers a 
+ unique blend of traditional and contemporary festivities.
+LOCATION:Porto Santo
+ORGANIZER:Câmara Municipal do Porto Santo
+SUMMARY:Sao Joao 2025
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T140152Z
+UID:8f77b9f8-3f92-46a5-a2dc-33d805204298
+DTSTART;TZID=Europe/Lisbon:20250918T190000
+DTEND;TZID=Europe/Lisbon:20250921T000000
+DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
+ d cultural event that transports visitors back to the 15th century\, celeb
+ rating the island's connection to Christopher Columbus. Held annually from
+  September 18th to 21st\, 2025\, in the town of Vila Baleira\, the festiva
+ l offers a rich tapestry of activities that bring the Age of Discoveries t
+ o life.
+LOCATION:Porto Santo
+ORGANIZER:Regional Government of Madeira
+SUMMARY:Columbus Festival
 END:VEVENT
 END:VCALENDAR
