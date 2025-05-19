@@ -24,8 +24,8 @@ TZNAME:WET
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-DTSTAMP:20250519T102723Z
-UID:44bf6847-3b9d-4a52-85fa-e892fe1d949e
+DTSTAMP:20250519T120218Z
+UID:f816cbd1-052b-4cf1-ac82-7c3ae9be4fd7
 DTSTART;TZID=Europe/Lisbon:20250517T170000
 DTEND;TZID=Europe/Lisbon:20250517T190000
 DESCRIPTION:Baking own bread
@@ -34,8 +34,8 @@ ORGANIZER:Digital Porto Santo
 SUMMARY:Bread Baking
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T102723Z
-UID:06106ae8-729e-4fc2-821d-6d98dad77a21
+DTSTAMP:20250519T120218Z
+UID:ca894e55-31c8-4105-8cba-8505af98d1b5
 DTSTART;TZID=Europe/Lisbon:20250605T104000
 DTEND;TZID=Europe/Lisbon:20250606T220000
 DESCRIPTION:Event part of "Jubileu 2025 Peregrinos de Esperança". Program 
@@ -45,8 +45,8 @@ ORGANIZER:Coro do Centro Comunitário de Porto Santo
 SUMMARY:JUBILEU NO PORTO SANTO
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T102723Z
-UID:6c5cbbfb-fe6a-474f-8be1-75527acd8564
+DTSTAMP:20250519T120218Z
+UID:749aa021-49e0-424a-9afa-768ff21aa8d0
 DTSTART;TZID=Europe/Lisbon:20250528T090000
 DTEND;TZID=Europe/Lisbon:20250529T150000
 DESCRIPTION:The 18th Environmental Symposium with the theme "Uniting Forces
@@ -57,8 +57,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:XVIII SIMPÓSIO AMBIENTAL
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T102723Z
-UID:85b21667-97d6-4534-af6d-29c34169fa72
+DTSTAMP:20250519T120218Z
+UID:4aece761-b3a8-4862-bfbb-90be20d9ff2a
 DTSTART;TZID=Europe/Lisbon:20250522T183000
 DTEND;TZID=Europe/Lisbon:20250522T200000
 DESCRIPTION:Presentation of the book "A Revolução da Ilha Pequena" by Liv
@@ -66,5 +66,53 @@ DESCRIPTION:Presentation of the book "A Revolução da Ilha Pequena" by Liv
 LOCATION:Biblioteca Municipal
 ORGANIZER:Município do Porto Santo
 SUMMARY:Presentation of the book "A Revolução da Ilha Pequena"
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T120218Z
+UID:d59e5029-0d29-423d-a2ff-e76e8a22e9cb
+DTSTART;TZID=Europe/Lisbon:20250614T180000
+DTEND;TZID=Europe/Lisbon:20250624T000000
+DESCRIPTION:The São João Festival in Porto Santo is a vibrant celebration
+  of the island's rich cultural heritage\, taking place from June 14 to 24\
+ , 2025. As one of the most significant events on the island\, it offers a 
+ unique blend of traditional and contemporary festivities.
+LOCATION:Porto Santo
+ORGANIZER:Câmara Municipal do Porto Santo
+SUMMARY:Sao Joao 2025
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T120218Z
+UID:d26b5aee-a059-43b3-877e-f0c3031f5613
+DTSTART;TZID=Europe/Lisbon:20250918T190000
+DTEND;TZID=Europe/Lisbon:20250921T000000
+DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
+ d cultural event that transports visitors back to the 15th century\, celeb
+ rating the island's connection to Christopher Columbus. Held annually from
+  September 18th to 21st\, 2025\, in the town of Vila Baleira\, the festiva
+ l offers a rich tapestry of activities that bring the Age of Discoveries t
+ o life.
+LOCATION:Porto Santo
+ORGANIZER:Regional Government of Madeira
+SUMMARY:Columbus Festival
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250519T120218Z
+UID:af8c14c7-b278-453c-ad81-c57770400662
+DTSTART;TZID=Europe/Lisbon:20250524T133000
+DTEND;TZID=Europe/Lisbon:20250525T140000
+DESCRIPTION:The Porto Santo Island Open Water Swimming is a competitive sea
+  swimming event held in Porto Santo\, Madeira. It is part of the National 
+ Open Water Circuit of the Portuguese Swimming Federation. The event includ
+ es the following races:\n\n\nSaturday\, May 24\, 2025\n\n1\,000 meters: Op
+ en to both federated and non-federated swimmers (“popular” category)\n
+ \n2\,500 meters: For federated swimmers only\n\n\nSunday\, May 25\, 2025\n
+ \n5\,000 meters: For federated swimmers only\, this distance is part of th
+ e 1st Inter-Association Open Water Tournament\n\n\nThe event aims to promo
+ te open water swimming and provide a competitive platform for swimmers of 
+ various levels.
+LOCATION:Porto Santo
+ORGANIZER:Associação de Natação da Madeira (ANM), Federação Portugues
+ a de Natação (FPN), Clube Naval do Porto Santo (CNPS)
+SUMMARY:Porto Santo Island Open Water Swimming
 END:VEVENT
 END:VCALENDAR
