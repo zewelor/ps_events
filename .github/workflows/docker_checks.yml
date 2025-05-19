@@ -14,6 +14,10 @@ env:
   OLD_VERSIONS_TO_KEEP: 75 # 25 commits
   DOCKER_BUILD_CHECKS_ANNOTATIONS: false
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -63,9 +67,6 @@ jobs:
           docker compose run app rubocop
 
   push_production:
-    permissions:
-      contents: read
-      packages: write
     # needs:
     #   - tests
     if: github.ref == 'refs/heads/main'
