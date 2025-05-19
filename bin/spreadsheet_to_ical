@@ -50,9 +50,6 @@ class SpreadsheetToIcalGenerator
     calendar.to_ical
   end
 
-  def events_from_csv
-  end
-
   def calendar
     return @calendar if defined?(@calendar)
 

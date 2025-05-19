@@ -17,3 +17,11 @@ Used in this project
 ## UI and Styling
 - Use Shadcn UI, Radix, and Tailwind and its plugins, for components and styling.
 - Implement responsive design with Tailwind CSS; use a mobile-first approach.
+
+
+### Project Structure
+
+- Jekyll site resides in the events_listing directory.
+- .github directory contains GitHub Actions workflows. They are used for CI/CD.
+
+
