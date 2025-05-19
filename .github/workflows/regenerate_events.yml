@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'bin/spreadsheet_to_ical'
+      - '.github/workflows/regenerate_events.yml'
   repository_dispatch:
     types: [regenerate-events]
   workflow_dispatch:
