@@ -60,7 +60,7 @@ jobs:
           directory: '_site'
           add_suffix: false
           exclusions: |-        # Optional
-            .*/assets/css/*.css
+            _site/assets/css/styles.css
 
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
