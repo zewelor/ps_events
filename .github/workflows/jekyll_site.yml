@@ -1,16 +1,16 @@
 name: Deploy Jekyll site to Pages
 
 on:
+  push:
+    paths:
+      - 'events.csv'
+      - '.github/workflows/jekyll_site.yml'
   workflow_dispatch:
   workflow_run:
     workflows: ["Docker Checks"]
     branches: [main]
     types:
       - completed
-  push:
-    paths:
-      - 'events.csv'
-      - '.github/workflows/jekyll_site.yml'
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
