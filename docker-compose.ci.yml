@@ -1,5 +1,5 @@
 services:
   app:
-    image: image_ci
+    image: ghcr.io/zewelor/ps_events:dev
     volumes:
       - .:/app
