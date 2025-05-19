@@ -7,7 +7,7 @@ on:
       - '.github/workflows/jekyll_site.yml'
   workflow_dispatch:
   workflow_run:
-    workflows: ["Docker Checks"]
+    workflows: ["Docker Checks", "Regenerate events.ics"]
     branches: [main]
     types:
       - completed
