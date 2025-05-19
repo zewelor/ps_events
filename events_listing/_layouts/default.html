@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} | {{ site.title }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Root color variables for theme consistency */
@@ -18,7 +18,7 @@
             --color-text-light: #f9fafb;
         }
 
-        /* Basic body styling */
+        /* Basic body styling with system font stack */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--color-beach-beige); /* Light beige background, like a beach */
@@ -124,8 +124,3 @@
     <footer class="footer-bg text-center p-6 mt-12">
       <p>&copy; <span id="current-year"></span> {{ site.title }}. All rights reserved.</p>
       <script>
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-      </script>
-    </footer>
-  </body>
-</html>
