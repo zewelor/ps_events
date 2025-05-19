@@ -85,7 +85,7 @@ jobs:
           push: true
           builder: ${{ steps.buildx.outputs.name }}
           target: live
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           cache-from: type=gha,scope=live           # scope=<scope>: which scope cache object belongs to (default buildkit)
           cache-to: type=gha,mode=max,scope=live
           tags: ${{ steps.meta.outputs.tags }}
