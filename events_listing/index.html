@@ -9,7 +9,7 @@ title: Events Listing
   <div id="no-results-message" class="text-center text-gray-500 py-4" style="display: none;">No events match your filter.</div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
-    {% assign sorted_events = site.data.events | sort: 'Start time' %}
+    {% assign sorted_events = site.data.events %}
     {% for event in sorted_events %}
       {% assign event_start_time_string = event['Start time'] %}
       {% comment %} Assuming event times are in Lisbon time (UTC+1 during summer like May) {% endcomment %}
