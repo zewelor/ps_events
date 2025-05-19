@@ -38,11 +38,10 @@ jobs:
         run: |
           curl -Lo events.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
 
-      - name: Chmod 666 for events.ics
-        run: chmod 666 events.ics
-
       - name: Generate events.ics
-        run: docker run -v ${{ github.workspace }}/:/app/ ghcr.io/zewelor/ps_events:latest bin/spreadsheet_to_ical -o events.ics
+        run: docker compose run app bin/spreadsheet_to_ical -o events.ics
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
 
       - name: Auto-commit updated events.ics
         uses: stefanzweifel/git-auto-commit-action@v5
