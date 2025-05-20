@@ -57,6 +57,7 @@
       matchPackageNames: [
         'lefthook',
         'rubocop-performance',
+        'ruby-lsp',
         'standard'
       ],
     },
