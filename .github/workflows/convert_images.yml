@@ -41,7 +41,7 @@ jobs:
             filename="$(basename "$img")"
             basename_no_ext="${filename%.*}"
             output="events_listing/assets/images/${basename_no_ext}.webp"
-            convert "$img" -resize 900x900\> "$output"
+            convert "$img" -resize 900x900\> -quality 80 "$output"
             rm "$img"
           done
 
