@@ -35,10 +35,14 @@ jobs:
 
       - name: Convert images to WebP
         run: |
+          # ensure Jekyll assets folder exists
+          mkdir -p events_listing/assets/images
           for img in images/inbox/*; do
             [ -f "$img" ] || continue
             if [ "$(basename "$img")" = ".gitkeep" ]; then continue; fi
-            output="images/$(basename "${img%.*}.webp")"
+            filename="$(basename "$img")"
+            basename_no_ext="${filename%.*}"
+            output="events_listing/assets/images/${basename_no_ext}.webp"
             convert "$img" -resize 900x900\> "$output"
             rm "$img"
           done
@@ -47,7 +51,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Convert images to WebP"
-          file_pattern: "images/*.webp images/inbox/*"
+          file_pattern: "events_listing/assets/images/*.webp images/inbox/*"
           push_options: --force # Add force push
 
   # purge-history:
