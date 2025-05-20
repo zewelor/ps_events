@@ -5,6 +5,8 @@ on:
     paths:
       - 'images/inbox/**'
       - '.github/workflows/convert_images.yml'
+    branches:
+      - main
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.

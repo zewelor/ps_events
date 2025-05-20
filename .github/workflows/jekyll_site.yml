@@ -2,6 +2,8 @@ name: Deploy Jekyll site to Pages
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'events.csv'
       - '.github/workflows/jekyll_site.yml'
