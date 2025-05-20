@@ -193,7 +193,7 @@ GEM
       tzinfo (>= 1.0.0)
     unicode-display_width (2.6.0)
     webrick (1.9.1)
-    zeitwerk (2.7.2)
+    zeitwerk (2.7.3)
 
 PLATFORMS
   ruby
