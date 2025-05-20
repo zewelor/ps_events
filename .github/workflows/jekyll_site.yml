@@ -5,9 +5,10 @@ on:
     paths:
       - 'events.csv'
       - '.github/workflows/jekyll_site.yml'
+      - 'events_listing/**'
   workflow_dispatch:
   workflow_run:
-    workflows: ["Docker Checks", "Regenerate events.ics"]
+    workflows: ["Regenerate events.ics"]
     branches: [main]
     types:
       - completed
