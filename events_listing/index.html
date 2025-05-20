@@ -17,25 +17,28 @@ title: Events Listing
       {% assign event_timestamp_utc = event_time_with_offset | date: '%s' | plus: 0 %}
 
       {% if event_timestamp_utc > current_utc_timestamp %}
-    <div class="event-card rounded-lg shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
+    <div class="event-card rounded-lg shadow-lg bg-white overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
       {% assign meta = event.Category | category_metadata %}
-      <div class="h-16 relative overflow-hidden" style="background-color: {{ meta.color }};">
-        <div class="text-white font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
-          <span class="px-4 py-1">{{ event.Category | default: "Event" }}</span>
+      <div class="h-24 relative overflow-hidden" style="background-color: {{ meta.color }};">
+        <div class="text-black font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
+          <span class="px-4 py-1 overflow-hidden line-clamp-2">
+            <a href="{{ event['Name'] | datapage_url: 'events' }}"
+               title="{{ event['Name'] | escape_once }}"
+               class="text-white hover:text-gray-200 transition-colors duration-200">
+               {{ event["Name"] }}
+            </a>
+          </span>
         </div>
       </div>
 
       <div class="p-4 sm:p-6 flex-grow flex flex-col justify-between">
-        <h3 class="text-cyan-700 text-xl font-semibold mb-2 h-14 overflow-hidden line-clamp-2">
-          <a href="{{ event['Name'] | datapage_url: 'events' }}" title="{{ event['Name'] | escape_once }}">{{ event["Name"] }}</a>
-        </h3>
         <p class="text-sm text-gray-600 mb-1">
           <strong>When:</strong> {{ event["Start time"] }} - {{ event["End time"] }}
         </p>
         <p class="text-sm text-gray-600 mb-3">
           <strong>Where:</strong> {{ event["Location"] }}
         </p>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="event-more-info-buttonf mt-4 inline-block text-center py-2 px-4 rounded-md text-sm">More Info</a>
+        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="border border-cyan-700 text-cyan-700 hover:border-cyan-800 hover:text-cyan-800 font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 inline-block text-center mt-4">More Info</a>
       </div>
     </div>
       {% endif %}

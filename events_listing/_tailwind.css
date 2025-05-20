@@ -42,19 +42,6 @@ body {
     transform: translateY(1px); /* Slight adjustment for smooth transition */
 }
 
-/* Event card styling */
-.event-card {
-    background-color: var(--color-cloud-white); /* White background for cards */
-    border: 1px solid #e2e8f0; /* Light gray border */
-}
-
-/* "More Info" button styling */
-.event-more-info-button {
-    background-color: var(--color-sun-gold); /* Gold background, like the sun */
-    color: var(--color-text-dark);
-    font-weight: 600; /* Semibold text */
-}
-
 /* Default image placeholder styling */
 .default-event-image {
     background-color: #e0e0e0; /* Light gray background for placeholder */
@@ -78,10 +65,4 @@ body {
     #event-list h2 {
         font-size: 1.5rem; /* Smaller section title on mobile */
     }
-}
-
-/* Site title link styling */
-h1 a {
-    color: inherit; /* Inherit color from parent */
-    text-decoration: none; /* Remove underline */
 }
