@@ -24,8 +24,8 @@ TZNAME:WET
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:c017f2f6-27a3-4ad4-b387-eac1c9728532
+DTSTAMP:20250520T191849Z
+UID:b707084e-a537-48a1-add8-e2c296ae7e30
 DTSTART;TZID=Europe/Lisbon:20250517T170000
 DTEND;TZID=Europe/Lisbon:20250517T190000
 DESCRIPTION:Baking own bread
@@ -34,8 +34,8 @@ ORGANIZER:Digital Porto Santo
 SUMMARY:Bread Baking
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:b96c65cb-b8c4-49fc-9c06-805f9aaaff2e
+DTSTAMP:20250520T191849Z
+UID:c070cdc2-48b6-47b9-9ee8-525bba0fb0f9
 DTSTART;TZID=Europe/Lisbon:20250522T183000
 DTEND;TZID=Europe/Lisbon:20250522T200000
 DESCRIPTION:Presentation of the book "A Revolução da Ilha Pequena" by Liv
@@ -45,8 +45,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:Presentation of the book "A Revolução da Ilha Pequena"
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:af6f74bc-7112-4a24-ad90-53aea5497c11
+DTSTAMP:20250520T191849Z
+UID:f42c15f7-1659-4958-895d-fcb8d4d85a22
 DTSTART;TZID=Europe/Lisbon:20250524T133000
 DTEND;TZID=Europe/Lisbon:20250525T140000
 DESCRIPTION:The Porto Santo Island Open Water Swimming is a competitive sea
@@ -65,8 +65,8 @@ ORGANIZER:Associação de Natação da Madeira (ANM), Federação Portugues
 SUMMARY:Porto Santo Island Open Water Swimming
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:50c9883d-5415-402e-af96-46a9f50b0e92
+DTSTAMP:20250520T191849Z
+UID:6574b285-da56-461a-838b-c81627696801
 DTSTART;TZID=Europe/Lisbon:20250528T090000
 DTEND;TZID=Europe/Lisbon:20250529T150000
 DESCRIPTION:The 18th Environmental Symposium with the theme "Uniting Forces
@@ -77,8 +77,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:XVIII SIMPÓSIO AMBIENTAL
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:3b85caaa-7179-475c-bd6d-4104ba3f80cd
+DTSTAMP:20250520T191849Z
+UID:44632416-853c-461c-80fa-1494ff854edd
 DTSTART;TZID=Europe/Lisbon:20250530T160000
 DTEND;TZID=Europe/Lisbon:20250530T190000
 DESCRIPTION:Concerto do Panda is a family-friendly musical event celebratin
@@ -91,8 +91,8 @@ ORGANIZER:Municipality of Porto Santo
 SUMMARY:Concerto do Panda
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:d32e792a-0d00-415c-8111-91f1225b40c5
+DTSTAMP:20250520T191849Z
+UID:0d2bfee7-bda8-4c31-aeab-83269b1a08b0
 DTSTART;TZID=Europe/Lisbon:20250605T104000
 DTEND;TZID=Europe/Lisbon:20250606T220000
 DESCRIPTION:Event part of "Jubileu 2025 Peregrinos de Esperança". Program 
@@ -102,8 +102,8 @@ ORGANIZER:Coro do Centro Comunitário de Porto Santo
 SUMMARY:JUBILEU NO PORTO SANTO
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:8b7f8740-c79d-47b3-b368-2f3762b72c4d
+DTSTAMP:20250520T191849Z
+UID:6ffb36d8-fb47-43e7-84df-e13a8fd7b25b
 DTSTART;TZID=Europe/Lisbon:20250614T180000
 DTEND;TZID=Europe/Lisbon:20250624T000000
 DESCRIPTION:The São João Festival in Porto Santo is a vibrant celebration
@@ -115,8 +115,8 @@ ORGANIZER:Câmara Municipal do Porto Santo
 SUMMARY:Sao Joao 2025
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250519T191510Z
-UID:092f63a0-a70b-49d4-9c82-b0e165cd93b6
+DTSTAMP:20250520T191849Z
+UID:0319b7c2-988d-440f-a1af-96d02e97ad2f
 DTSTART;TZID=Europe/Lisbon:20250918T190000
 DTEND;TZID=Europe/Lisbon:20250921T000000
 DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
@@ -128,5 +128,18 @@ DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
 LOCATION:Porto Santo
 ORGANIZER:Regional Government of Madeira
 SUMMARY:Columbus Festival
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250520T191849Z
+UID:ea54430f-841a-465d-969e-7293f5f56059
+DTSTART;TZID=Europe/Lisbon:20250604T000000
+DTEND;TZID=Europe/Lisbon:20250607T000000
+DESCRIPTION:A unique gastronomic festival celebrating the versatility and e
+ xcellence of tuna. This event features top chefs who create exceptional di
+ shes inspired by Atlantic flavors. It's a culinary journey with 4 special 
+ days and the participation of renowned chefs.
+LOCATION:Hotel Vila Baleira
+ORGANIZER:Holet Vila Baleira
+SUMMARY:5th Edition of the Tuna Route (5ª Edição da Rota do Atum)
 END:VEVENT
 END:VCALENDAR
