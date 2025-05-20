@@ -35,8 +35,6 @@ jobs:
 
       - name: Convert images to WebP
         run: |
-          # ensure Jekyll assets folder exists
-          mkdir -p events_listing/assets/images
           for img in images/inbox/*; do
             [ -f "$img" ] || continue
             if [ "$(basename "$img")" = ".gitkeep" ]; then continue; fi
