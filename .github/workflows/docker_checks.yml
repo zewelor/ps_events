@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - 'images/**'
       - '.github/workflows/**'
+      - 'events_listing/**'
       - '!.github/workflows/docker_checks.yml'
 
 env:
