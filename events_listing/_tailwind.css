@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.navigation-button {
+  @apply border border-cyan-700 text-cyan-700 hover:border-cyan-800 hover:text-cyan-800 font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 inline-block text-center mt-4
+}
