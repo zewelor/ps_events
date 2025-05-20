@@ -38,7 +38,7 @@ title: Events Listing
         <p class="text-sm text-gray-600 mb-3">
           <strong>Where:</strong> {{ event["Location"] }}
         </p>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="border border-cyan-700 text-cyan-700 hover:border-cyan-800 hover:text-cyan-800 font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 inline-block text-center mt-4">More Info</a>
+        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="navigation-button">More Info</a>
       </div>
     </div>
       {% endif %}
