@@ -1,12 +1,8 @@
 <header class="relative overflow-hidden">
   <div class="relative z-10 container mx-auto px-6 py-6 flex items-center">
-    {% if page.url == "/" or page.url == "/index.html" %}
+    <a href="/" title="{{ site.title }} - Home">
       <img src="/assets/logo.webp?{{ site.time | date: '%s' }}" alt="{{ site.title }} logo" class="h-34">
-    {% else %}
-      <a href="/" title="{{ site.title }} - Home">
-        <img src="/assets/logo.webp?{{ site.time | date: '%s' }}" alt="{{ site.title }} logo" class="h-34">
-      </a>
-    {% endif %}
+    </a>
   </div>
   <svg class="absolute top-0 left-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
     <path d="M0 160L21.5 157.7C43 155.3 86 150.7 128.8 155.5C171.7 160.3 214.3 174.7 257.2 176.7C300 178.7 343 168.3 385.8 167C428.7 165.7 471.3 173.3 514.2 177.3C557 181.3 600 181.7 642.8 183.3C685.7 185 728.3 188 771.2 186.7C814 185.3 857 179.7 878.5 176.8L900 174L900 0L878.5 0C857 0 814 0 771.2 0C728.3 0 685.7 0 642.8 0C600 0 557 0 514.2 0C471.3 0 428.7 0 385.8 0C343 0 300 0 257.2 0C214.3 0 171.7 0 128.8 0C86 0 43 0 21.5 0L0 0Z" fill="#fed9b7"></path>
