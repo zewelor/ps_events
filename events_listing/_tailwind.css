@@ -16,16 +16,6 @@
 body {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     background-color: var(--color-beach-beige); /* Light beige background, like a beach */
-    color: var(--color-text-dark); /* Dark text for readability */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Ensures footer is at the bottom */
-}
-
-/* Header background and wave styling */
-.header-bg {
-    position: relative;
-    padding-bottom: 50px; /* Space for the decorative wave */
 }
 
 /* Decorative wave using SVG */
@@ -40,29 +30,4 @@ body {
     background-repeat: no-repeat;
     background-size: 100% 100%;
     transform: translateY(1px); /* Slight adjustment for smooth transition */
-}
-
-/* Default image placeholder styling */
-.default-event-image {
-    background-color: #e0e0e0; /* Light gray background for placeholder */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #757575; /* Gray icon color */
-    font-size: 1.5rem;
-    height: 200px; /* Fixed height for consistency */
-}
-.default-event-image svg {
-    width: 50px;
-    height: 50px;
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 640px) {
-    .header-bg h1 {
-        font-size: 1.8rem; /* Smaller main title on mobile */
-    }
-    #event-list h2 {
-        font-size: 1.5rem; /* Smaller section title on mobile */
-    }
 }
