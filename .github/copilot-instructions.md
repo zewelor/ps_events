@@ -22,5 +22,5 @@ Used in this project
 
 - Jekyll site resides in the events_listing directory.
 - .github directory contains GitHub Actions workflows. They are used for CI/CD.
-- Tailwind CSS is located at events_listing/_tailwind.css
+- Tailwind and other custom CSS styles are located at events_listing/_tailwind.css
 
