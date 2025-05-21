@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Tailwind classes for buttons
-    const buttonBaseClasses = ['filter-btn-hook', 'px-4', 'py-2', 'mr-2', 'mb-2', 'rounded-md', 'text-sm', 'font-medium', 'transition', 'duration-150', 'ease-in-out'];
-    const inactiveButtonClasses = ['text-gray-700', 'bg-white', 'hover:bg-gray-50'];
-    const activeButtonClasses = ['text-white', 'bg-red-400', 'hover:bg-red-500'];
+    const buttonBaseClasses = ['filter-btn'];
+    const inactiveButtonClasses = ['filter-btn--inactive'];
+    const activeButtonClasses = ['filter-btn--active'];
 
     if (categories.size > 0 && filterControlsContainer) {
         // Create "All" button
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let visibleCount = 0;
 
         // Update active button style
-        document.querySelectorAll('#event-filter-controls .filter-btn-hook').forEach(btn => {
+        document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
             btn.classList.remove(...activeButtonClasses);
             btn.classList.add(...inactiveButtonClasses);
         });
