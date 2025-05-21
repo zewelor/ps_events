@@ -35,8 +35,9 @@ title: Events Listing
         <p class="text-sm text-gray-600 mb-1">
           <strong>When:</strong> {{ event["Start time"] }} - {{ event["End time"] }}
         </p>
-        <p class="text-sm text-gray-600 mb-3">
-          <strong>Where:</strong> {{ event["Location"] }}
+        <p class="text-sm text-gray-600 mb-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#1f1f1f" class="mr-1"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
+          {{ event["Location"] }}
         </p>
         <a href="{{ event['Name'] | datapage_url: 'events' }}" class="navigation-button">Find out more</a>
       </div>
