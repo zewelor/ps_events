@@ -1,4 +1,18 @@
 ---
 # This file will be converted to __site/assets/css/styles.css
 ---
-This file is just a placeholder. It's content will be replaced by output from the tailwindcss CLI.
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .filter-btn {
+    @apply px-4 py-2 mr-2 mb-2 rounded-md text-sm font-medium transition duration-150 ease-in-out;
+  }
+  .filter-btn-inactive {
+    @apply text-gray-700 bg-white hover:bg-gray-50;
+  }
+  .filter-btn-active {
+    @apply text-white bg-red-400 hover:bg-red-500;
+  }
+}
