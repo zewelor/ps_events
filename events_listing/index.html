@@ -17,31 +17,25 @@ title: Events Listing
       {% assign event_timestamp_utc = event_time_with_offset | date: '%s' | plus: 0 %}
 
       {% if event_timestamp_utc > current_utc_timestamp %}
-    <div class="event-card rounded-lg shadow-lg bg-white overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
-      {% assign meta = event.Category | category_metadata %}
-      <div class="h-24 relative overflow-hidden" style="background-color: {{ meta.color }};">
-        <div class="text-black font-semibold text-lg absolute inset-0 flex items-center justify-center shadow-inner">
-          <span class="px-4 py-1 overflow-hidden line-clamp-2">
-            <a href="{{ event['Name'] | datapage_url: 'events' }}"
-               title="{{ event['Name'] | escape_once }}"
-               class="text-white hover:text-gray-200 transition-colors duration-200">
-               {{ event["Name"] }}
-            </a>
-          </span>
+    <div class="event-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
+      <div class="p-6 flex flex-col flex-grow">
+        <div> <!-- Content wrapper -->
+          <h2 class="text-xl font-semibold text-gray-800 mb-2" title="{{ event['Name'] | escape_once }}">
+            {{ event["Name"] }}
+          </h2>
+          <div class="flex items-center text-sm text-gray-500 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
+            <span>{{ event["Start time"] }} - {{ event["End time"] }}</span>
+          </div>
+          <div class="flex items-center text-sm text-gray-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
+            <span>{{ event["Location"] }}</span>
+          </div>
         </div>
+        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="inline-block bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors mt-auto">Find out more</a>
       </div>
-
-      <div class="p-4 sm:p-6 flex-grow flex flex-col justify-between">
-        <p class="text-sm text-gray-600 mb-1 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#1f1f1f" class="mr-1"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
-          {{ event["Start time"] }} - {{ event["End time"] }}
-        </p>
-        <p class="text-sm text-gray-600 mb-3 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#1f1f1f" class="mr-1"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
-          {{ event["Location"] }}
-        </p>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="navigation-button">Find out more</a>
-      </div>
+      {% assign meta = event.Category | category_metadata %}
+      <div style="background-color: {{ meta.color }};" class="h-2"></div>
     </div>
       {% endif %}
     {% endfor %}
