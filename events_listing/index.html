@@ -20,8 +20,10 @@ title: Events Listing
     <div class="event-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
-          <h2 class="text-xl font-semibold text-gray-800 mb-2" title="{{ event['Name'] | escape_once }}">
-            {{ event["Name"] }}
+          <h2 class="text-xl font-semibold text-gray-800 mb-2 h-14" title="{{ event['Name'] | escape_once }}">
+            <a href="{{ event['Name'] | datapage_url: 'events' }}" class="hover:text-gray-600 line-clamp-2">
+              {{ event["Name"] }}
+            </a>
           </h2>
           <div class="flex items-center text-sm text-gray-500 mb-1">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
@@ -32,7 +34,7 @@ title: Events Listing
             <span>{{ event["Location"] }}</span>
           </div>
         </div>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="inline-block bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors mt-auto">Find out more</a>
+        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="navigation-button">Find out more</a>
       </div>
       {% assign meta = event.Category | category_metadata %}
       <div style="background-color: {{ meta.color }};" class="h-2"></div>

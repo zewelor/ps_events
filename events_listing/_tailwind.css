@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 .navigation-button {
-  @apply border border-cyan-700 text-cyan-700 hover:border-cyan-800 hover:text-cyan-800 font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 inline-block text-center mt-4
+  @apply inline-block bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors
 }
 
 /* Filter button styles */
 .filter-btn {
-  @apply px-4 py-2 mr-2 mb-2 rounded-md text-sm font-medium transition duration-150 ease-in-out inline-flex items-center;
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors mr-2 mb-2;
 }
 
 .filter-btn--inactive {
-  @apply text-gray-700 bg-white hover:bg-gray-50;
+  @apply bg-gray-200 text-gray-700 hover:bg-gray-300
 }
 
 .filter-btn--active {
-  @apply text-white bg-red-400 hover:bg-red-500;
+  @apply bg-emerald-500 text-white hover:bg-emerald-600
 }
