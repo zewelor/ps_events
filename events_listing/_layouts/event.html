@@ -4,7 +4,7 @@ title: "{{ page.Name | escape_once }}"
 ---
 
 <article class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-  <h2 class="text-2xl font-bold text-center mb-6 text-cyan-700">{{ page.Name }}</h2>
+  <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">{{ page.Name }}</h2>
   <div class="text-center mb-6">
     {% assign img_path = 'assets/images/' | append: page.Image | append: '.webp' %}
     <a href="{{ img_path | relative_url }}" target="_blank">
