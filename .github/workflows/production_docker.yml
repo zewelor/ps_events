@@ -70,7 +70,7 @@ jobs:
           package-type: "container"
           min-versions-to-keep: ${{ env.OLD_VERSIONS_TO_KEEP }}
 
-      - name: Deploy
+      - name: Deploy via webhook
         env:
           deploy_url: ${{ secrets.DEPLOY_HOOK_URL }}
         run: |
