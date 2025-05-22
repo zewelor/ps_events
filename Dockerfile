@@ -78,3 +78,4 @@ COPY --chown=app:app . ./
 USER app
 
 ENTRYPOINT ["/usr/bin/catatonit", "--"]
+CMD ["ruby", "bin/server"]
