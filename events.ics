@@ -24,8 +24,8 @@ TZNAME:WET
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:25022881-e0d1-467a-a7a5-95f8e8f851ef
+DTSTAMP:20250522T084803Z
+UID:caa0db6c-b5c0-4f25-94a9-d6e676eb4f4d
 DTSTART;TZID=Europe/Lisbon:20250517T170000
 DTEND;TZID=Europe/Lisbon:20250517T190000
 DESCRIPTION:Baking own bread
@@ -34,8 +34,8 @@ ORGANIZER:Digital Porto Santo
 SUMMARY:Bread Baking
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:01489771-dc7b-4561-bb56-33aa363ff373
+DTSTAMP:20250522T084803Z
+UID:4e039f20-af16-451f-90e9-96b35c0551d1
 DTSTART;TZID=Europe/Lisbon:20250522T183000
 DTEND;TZID=Europe/Lisbon:20250522T200000
 DESCRIPTION:Presentation of the book "A Revolução da Ilha Pequena" by Liv
@@ -45,8 +45,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:Presentation of the book "A Revolução da Ilha Pequena"
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:c8902b2c-fe77-4ebe-8490-47a59517d120
+DTSTAMP:20250522T084803Z
+UID:9b15971b-be81-477b-828a-3a00d07a3d8f
 DTSTART;TZID=Europe/Lisbon:20250524T133000
 DTEND;TZID=Europe/Lisbon:20250525T140000
 DESCRIPTION:The Porto Santo Island Open Water Swimming is a competitive sea
@@ -65,8 +65,8 @@ ORGANIZER:Associação de Natação da Madeira (ANM), Federação Portugues
 SUMMARY:Porto Santo Island Open Water Swimming
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:83d1c939-a01e-466f-a5c4-36a9e403b11a
+DTSTAMP:20250522T084803Z
+UID:c97dac61-9ec2-4b32-843a-b15339f3e5b5
 DTSTART;TZID=Europe/Lisbon:20250528T090000
 DTEND;TZID=Europe/Lisbon:20250529T150000
 DESCRIPTION:The 18th Environmental Symposium with the theme "Uniting Forces
@@ -77,8 +77,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:XVIII SIMPÓSIO AMBIENTAL
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:71fd47f2-0771-453c-9ab2-29418766b0fe
+DTSTAMP:20250522T084803Z
+UID:e9d69116-212b-41eb-bad7-6e2272b42494
 DTSTART;TZID=Europe/Lisbon:20250530T160000
 DTEND;TZID=Europe/Lisbon:20250530T190000
 DESCRIPTION:Concerto do Panda is a family-friendly musical event celebratin
@@ -91,8 +91,8 @@ ORGANIZER:Municipality of Porto Santo
 SUMMARY:Concerto do Panda
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:9ed9a69c-ce70-486b-96a7-2177ad5a4a91
+DTSTAMP:20250522T084803Z
+UID:6f84f7a7-40b0-411c-8469-4617bcced694
 DTSTART;TZID=Europe/Lisbon:20250604T000000
 DTEND;TZID=Europe/Lisbon:20250607T000000
 DESCRIPTION:A unique gastronomic festival celebrating the versatility and e
@@ -104,8 +104,8 @@ ORGANIZER:Holet Vila Baleira
 SUMMARY:5th Edition of the Tuna Route (5ª Edição da Rota do Atum)
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:ee3fb0c4-cf0d-4638-9b37-05ae717e6f18
+DTSTAMP:20250522T084803Z
+UID:797d011b-ba5d-459a-8bb1-452bcce58b64
 DTSTART;TZID=Europe/Lisbon:20250605T104000
 DTEND;TZID=Europe/Lisbon:20250606T220000
 DESCRIPTION:Event part of "Jubileu 2025 Peregrinos de Esperança". Program 
@@ -115,8 +115,8 @@ ORGANIZER:Coro do Centro Comunitário de Porto Santo
 SUMMARY:JUBILEU NO PORTO SANTO
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:7e5d370d-40b5-4765-9d91-773e3e195834
+DTSTAMP:20250522T084803Z
+UID:2e1e129d-81da-421d-b959-6d86436b322d
 DTSTART;TZID=Europe/Lisbon:20250605T140000
 DTEND;TZID=Europe/Lisbon:20250605T170000
 DESCRIPTION:This regional cultural and religious event aims to celebrate an
@@ -131,8 +131,8 @@ SUMMARY:17th Meeting of Songs of the Holy Spirit (XVII Encontro de Cantares
   do Espírito Santo)
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:daae3d1b-90e4-4868-8e87-74c94fe72a89
+DTSTAMP:20250522T084803Z
+UID:6ebe2e4c-3cfc-4a76-968c-803ce870810a
 DTSTART;TZID=Europe/Lisbon:20250614T180000
 DTEND;TZID=Europe/Lisbon:20250624T000000
 DESCRIPTION:The São João Festival in Porto Santo is a vibrant celebration
@@ -144,8 +144,8 @@ ORGANIZER:Câmara Municipal do Porto Santo
 SUMMARY:Sao Joao 2025
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:bd7019d5-764e-48d5-96b1-b710d5eed30b
+DTSTAMP:20250522T084803Z
+UID:fba80088-ca35-4821-b8d9-b85361ec86c5
 DTSTART;TZID=Europe/Lisbon:20250628T000000
 DTEND;TZID=Europe/Lisbon:20250701T000000
 DESCRIPTION:This is the fourth stage of the JLL Madeira Padel Tour\, a pade
@@ -156,8 +156,8 @@ ORGANIZER:Diário de Notícias, Padel Nuestro Madeira
 SUMMARY:JLL Madeira Padel Tour
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:958088a8-1b18-4ac2-9c70-608e64a3c87a
+DTSTAMP:20250522T084803Z
+UID:70ed937c-3c7d-4f07-9a10-bfe3e6a62c65
 DTSTART;TZID=Europe/Lisbon:20250825T000000
 DTEND;TZID=Europe/Lisbon:20250907T000000
 DESCRIPTION:Expo Porto Santo 2025 is a business and tourism fair that serve
@@ -172,8 +172,8 @@ ORGANIZER:Associação de Indústria, Comércio e Turismo do Porto Santo (A
 SUMMARY:Expo Porto Santo 2025
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:1f486f59-9e7d-4d77-a357-688c4882b899
+DTSTAMP:20250522T084803Z
+UID:45a1f08b-7d97-4219-82ab-d5bd870734fe
 DTSTART;TZID=Europe/Lisbon:20250918T190000
 DTEND;TZID=Europe/Lisbon:20250921T000000
 DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
@@ -185,49 +185,5 @@ DESCRIPTION:The Columbus Festival in Porto Santo is a vibrant historical an
 LOCATION:Porto Santo
 ORGANIZER:Regional Government of Madeira
 SUMMARY:Columbus Festival
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:523005a7-cb89-4f1a-91c5-1c8b7c0a16df
-DTSTART;TZID=Europe/Lisbon:20250825T000000
-DTEND;TZID=Europe/Lisbon:20250907T000000
-DESCRIPTION:Expo Porto Santo 2025 is a business and tourism fair that serve
- s as a platform for local and external companies to promote and sell their
-  products. It is a major event for the island of Porto Santo\, attracting 
- both tourists and exhibitors\, and contributes significantly to the local 
- economy. The fair also encourages tourism by offering an additional attrac
- tion during the summer holiday season.
-LOCATION:Porto Santo
-ORGANIZER:Associação de Indústria, Comércio e Turismo do Porto Santo (A
- ICTPS)
-SUMMARY:Expo Porto Santo 2025
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:d4881d29-f1e4-4d59-a795-2eba34e92b77
-DTSTART;TZID=Europe/Lisbon:20250605T140000
-DTEND;TZID=Europe/Lisbon:20250605T170000
-DESCRIPTION:This regional cultural and religious event aims to celebrate an
- d preserve the traditions of the Holy Spirit through music and community g
- athering. It brings together students and educational communities from dif
- ferent regions\, fostering cultural exchange\, spiritual reflection\, and 
- integral development. The event highlights the importance of maintaining a
- nd sharing cultural and religious heritage within the community.
-LOCATION:Largo das Palmeiras
-ORGANIZER:Escola Básica e Secundária Francisco de Freitas Branco
-SUMMARY:17th Meeting of Songs of the Holy Spirit (XVII Encontro de Cantares
-  do Espírito Santo)
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250522T082324Z
-UID:3e45daa9-52f4-45b8-8dd0-a6a5db393952
-DTSTART;TZID=Europe/Lisbon:20250628T000000
-DTEND;TZID=Europe/Lisbon:20250701T000000
-DESCRIPTION:This is the fourth stage of the JLL Madeira Padel Tour\, a pade
- l tournament taking place in Porto Santo. Registration is still open for t
- hose who want to participate and enjoy the sport in a scenic location.
-LOCATION:Porto Santo Racket Centre
-ORGANIZER:Diário de Notícias, Padel Nuestro Madeira
-SUMMARY:JLL Madeira Padel Tour
 END:VEVENT
 END:VCALENDAR
