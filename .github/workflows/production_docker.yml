@@ -22,8 +22,6 @@ permissions:
 
 jobs:
   push_production:
-    # needs:
-    #   - tests
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -74,6 +72,6 @@ jobs:
 
       - name: Deploy
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          deploy_url: ${{ secrets.DEPLOY_HOOK_URL }}
         run: |
           curl "$deploy_url"
