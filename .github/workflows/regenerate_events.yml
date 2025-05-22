@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'bin/spreadsheet_to_ical'
+      - 'images/inbox/**'
       - '.github/workflows/regenerate_events.yml'
     branches:
       - main
@@ -12,8 +13,46 @@ on:
   workflow_dispatch:
 
 jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick webp
+
+      - name: Convert images to WebP
+        run: |
+          for img in images/inbox/*; do
+            [ -f "$img" ] || continue
+            if [ "$(basename "$img")" = ".gitkeep" ]; then continue; fi
+            filename="$(basename "$img")"
+            basename_no_ext="${filename%.*}"
+            output="events_listing/assets/images/${basename_no_ext}.webp"
+            convert "$img" -resize 900x900\> -quality 80 "$output"
+            rm "$img"
+          done
+
+      - name: Auto-commit converted images
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Convert images to WebP"
+          file_pattern: "events_listing/assets/images/*.webp images/inbox/*"
+
   regenerate:
     runs-on: ubuntu-latest
+    needs: convert
 
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the
