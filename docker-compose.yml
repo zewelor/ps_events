@@ -30,6 +30,8 @@ services:
     <<: *x-app
     ports:
       - "127.0.0.1:4001:4567"
+    env_file:
+      - .env
     command:
       - rerun
       - ruby
