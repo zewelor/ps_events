@@ -6,7 +6,6 @@ title: Events Listing
 <section id="event-list" class="mb-8">
   <h2 class="text-2xl md:text-3xl font-semibold mb-6">Upcoming Events in Porto Santo</h2>
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center"></div>
-  <div id="no-results-message" class="text-center text-gray-500 py-4" style="display: none;">No events match your filter.</div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
     {% assign sorted_events = site.data.events %}
