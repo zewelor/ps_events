@@ -65,9 +65,11 @@ RUN bundle install "-j$(nproc)" --retry 3 && \
 FROM base AS live
 
 # We enable `BUNDLE_DEPLOYMENT` so that bundler won't take the liberty to upgrade any gems.
+# APP_ENV for sinatra
 ENV BUNDLE_DEPLOYMENT="1" \
     BUNDLE_WITHOUT="development:test:jekyll_plugins" \
-    RUBYOPT='--disable-did_you_mean'
+    RUBYOPT='--disable-did_you_mean' \
+    APP_ENV="production"
 
 # Workdir set in base image
 # hadolint ignore=DL3045
