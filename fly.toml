@@ -7,9 +7,10 @@ app = 'ps-events'
 primary_region = 'cdg'
 
 [build]
+  image = 'ghcr.io/zewelor/ps_events:latest'
 
 [http_service]
-  internal_port = 8080
+  internal_port = 4567
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
