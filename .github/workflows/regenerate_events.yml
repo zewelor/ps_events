@@ -15,6 +15,8 @@ on:
 jobs:
   convert:
     runs-on: ubuntu-latest
+    env:
+      INBOX_DIR: images/inbox
 
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the
@@ -27,17 +29,25 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Check for images
+        id: check-images
+        run: |
+          count=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.gitkeep' | wc -l)
+          echo "count=$count" >> $GITHUB_OUTPUT
+
       - name: Install ImageMagick
+        if: steps.check-images.outputs.count != '0'
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick webp
 
       - name: Convert images to WebP
+        if: steps.check-images.outputs.count != '0'
         run: |
-          for img in images/inbox/*; do
+          for img in "$INBOX_DIR"/*; do
             [ -f "$img" ] || continue
-            if [ "$(basename "$img")" = ".gitkeep" ]; then continue; fi
-            filename="$(basename "$img")"
+            if [ "$(basename "${img}")" = ".gitkeep" ]; then continue; fi
+            filename="$(basename "${img}")"
             basename_no_ext="${filename%.*}"
             output="events_listing/assets/images/${basename_no_ext}.webp"
             convert "$img" -resize 900x900\> -quality 80 "$output"
@@ -45,10 +55,11 @@ jobs:
           done
 
       - name: Auto-commit converted images
+        if: steps.check-images.outputs.count != '0'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Convert images to WebP"
-          file_pattern: "events_listing/assets/images/*.webp images/inbox/*"
+          file_pattern: "events_listing/assets/images/*.webp ${{ env.INBOX_DIR }}/*"
 
   regenerate:
     runs-on: ubuntu-latest

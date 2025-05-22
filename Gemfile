@@ -35,3 +35,6 @@ group :jekyll_plugins do
   gem "jekyll-sitemap", "~> 1.4"
   gem "jekyll-tailwindcss"
 end
+
+gem "rackup", "~> 2.2"
+gem "puma", "~> 6.6"
