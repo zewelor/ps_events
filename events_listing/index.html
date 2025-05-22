@@ -6,11 +6,19 @@ title: Events Listing
 <h1 class="text-2xl md:text-3xl font-semibold mb-6">Upcoming Events in Porto Santo</h1>
 <section id="event-list" class="mb-8">
   {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
+
+  {% comment %} group and sort categories before looping {% endcomment %}
+  {% assign grouped = site.data.events | group_by: "Category" %}
+  {% assign sorted_groups = grouped | sort: "name" %}
+
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
-    {% assign grouped = site.data.events | group_by: "Category" %}
-    <button data-filter-category="all" class="filter-btn filter-btn--active">All Categories ({{ upcoming_events | size }})</button>
-    {% for group in grouped | sort: "name" %}
-      <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">{{ group.name | default: 'Event' }} ({{ group.items | size }})</button>
+    <button data-filter-category="all" class="filter-btn filter-btn--active">
+      All Categories ({{ upcoming_events | size }})
+    </button>
+    {% for group in sorted_groups %}
+      <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">
+        {{ group.name | default: 'Event' }} ({{ group.items | size }})
+      </button>
     {% endfor %}
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
