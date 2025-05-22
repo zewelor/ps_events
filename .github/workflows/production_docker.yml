@@ -1,0 +1,79 @@
+name: Production Docker
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'bin/server'
+      - '.github/workflows/production_docker.yml'
+
+env:
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  # It counts some attestation etc packages, each commit gives 3 pckages
+  OLD_VERSIONS_TO_KEEP: 75 # 25 commits
+  DOCKER_BUILD_CHECKS_ANNOTATIONS: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  push_production:
+    # needs:
+    #   - tests
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # full length sha
+            type=sha,format=long,prefix=
+          flavor: |
+            latest=true
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          builder: ${{ steps.buildx.outputs.name }}
+          target: live
+          platforms: linux/amd64
+          cache-from: type=gha,scope=live           # scope=<scope>: which scope cache object belongs to (default buildkit)
+          cache-to: type=gha,mode=max,scope=live
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_CODE_VERSION=${{ github.sha }}
+
+      - name: Delete old images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: "container"
+          min-versions-to-keep: ${{ env.OLD_VERSIONS_TO_KEEP }}
+
+      - name: Deploy
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl "$deploy_url"
