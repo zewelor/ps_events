@@ -51,11 +51,9 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build Jekyll site
-        run: docker compose run app jekyll build --source /app/events_listing --destination /app/_site --baseurl "${{ steps.pages.outputs.base_path }}"
+        run: docker compose run -e JEKYLL_ENV=production -e FORM_ADD_EVENT_POST_ENDPOINT=${{ secrets.FORM_ADD_EVENT_POST_ENDPOINT }} app jekyll build --source /app/events_listing --destination /app/_site --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           COMPOSE_FILE: docker-compose.ci.yml
-          FORM_ADD_EVENT_POST_ENDPOINT: ${{ secrets.FORM_ADD_EVENT_POST_ENDPOINT }}
-          JEKYLL_ENV: production
 
       # Breaks some CSS styles
       - name: Minify HTML, CSS, and JS
