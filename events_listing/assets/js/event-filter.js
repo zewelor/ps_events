@@ -3,67 +3,25 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     const eventCards = document.querySelectorAll('.event-card');
-    const filterControlsContainer = document.getElementById('event-filter-controls');
-    const categories = new Set();
-    const categoryCounts = {};
-
-    eventCards.forEach(card => {
-        const category = card.dataset.category;
-        if (category) { // Ensure category exists and is not empty
-            categories.add(category);
-            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-        }
-    });
-
-    // Tailwind classes for buttons
-    const buttonBaseClasses = ['filter-btn'];
-    const inactiveButtonClasses = ['filter-btn--inactive'];
-    const activeButtonClasses = ['filter-btn--active'];
-
-    if (categories.size > 0 && filterControlsContainer) {
-        // Create "All" button
-        const totalEvents = eventCards.length;
-        const allButton = document.createElement('button');
-        allButton.textContent = `All Categories (${totalEvents})`;
-        allButton.classList.add(...buttonBaseClasses, ...activeButtonClasses); // "All" is active by default
-        allButton.dataset.filterCategory = 'all';
-        allButton.addEventListener('click', handleFilterClick);
-        filterControlsContainer.appendChild(allButton);
-
-        // Create buttons for each category, sorted alphabetically
-        Array.from(categories).sort().forEach(category => {
-            const button = document.createElement('button');
-            const count = categoryCounts[category] || 0;
-            button.textContent = `${category} (${count})`;
-            button.classList.add(...buttonBaseClasses, ...inactiveButtonClasses);
-            button.dataset.filterCategory = category;
-            button.addEventListener('click', handleFilterClick);
-            filterControlsContainer.appendChild(button);
-        });
-    } else if (filterControlsContainer && eventCards.length > 0) {
-        // This case might occur if events exist but have no categories.
-        // Or if categories set remains empty for some reason.
-        // You could add a message here if desired.
-        // filterControlsContainer.innerHTML = '<p class="text-sm text-gray-500">No categories available for filtering.</p>';
-    }
+    const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
+    filterButtons.forEach(btn => btn.addEventListener('click', handleFilterClick));
 
     function handleFilterClick(event) {
         const selectedCategory = event.target.dataset.filterCategory;
-        let visibleCount = 0;
 
         // Update active button style
         document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
-            btn.classList.remove(...activeButtonClasses);
-            btn.classList.add(...inactiveButtonClasses);
+            btn.classList.remove('filter-btn--active');
+            btn.classList.add('filter-btn--inactive');
         });
-        event.target.classList.remove(...inactiveButtonClasses);
-        event.target.classList.add(...activeButtonClasses);
+        event.target.classList.remove('filter-btn--inactive');
+        event.target.classList.add('filter-btn--active');
 
+        // Filter event cards
         eventCards.forEach(card => {
             const cardCategory = card.dataset.category;
-            if (selectedCategory === 'all' || (cardCategory && cardCategory === selectedCategory)) {
-                card.style.display = 'flex'; // Event cards use flex display
-                visibleCount++;
+            if (selectedCategory === 'all' || cardCategory === selectedCategory) {
+                card.style.display = 'flex';
             } else {
                 card.style.display = 'none';
             }

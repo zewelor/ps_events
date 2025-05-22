@@ -5,9 +5,16 @@ title: Events Listing
 
 <section id="event-list" class="mb-8">
   <h2 class="text-2xl md:text-3xl font-semibold mb-6">Upcoming Events in Porto Santo</h2>
-  <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center"></div>
+  {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
+  <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
+    {% assign upcoming_events = site.data.events | where_exp:"event", "event['Start time'] | append: ' +01:00' | date: '%s' | plus: 0 > current_utc_timestamp" %}
+    {% assign grouped = upcoming_events | group_by: "Category" %}
+    <button data-filter-category="all" class="filter-btn filter-btn--active">All Categories ({{ upcoming_events | size }})</button>
+    {% for group in grouped | sort: "name" %}
+      <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">{{ group.name | default: 'Event' }} ({{ group.items | size }})</button>
+    {% endfor %}
+  </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
-    {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
     {% assign sorted_events = site.data.events %}
     {% for event in sorted_events %}
       {% assign event_start_time_string = event['Start time'] %}
