@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.title }} | {{ site.title }}</title>
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{{ site.time | date: '%s' }}">
+    {% seo %}
   </head>
   <body class="bg-gray-50 font-sans flex flex-col min-h-screen">
     {% include header.html %}

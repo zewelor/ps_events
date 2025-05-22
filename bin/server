@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "json"
+
+Bundler.require(:default, :development)
+
+set :bind, "0.0.0.0"
+
+# Enable CORS for all routes
+before do
+  headers "Access-Control-Allow-Origin" => "*"
+end
+
+# Preflight OPTIONS handler
+options "*" do
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+  response.headers["Access-Control-Allow-Headers"] = "Content-Type,Accept,Origin"
+  200
+end
+
+# Handle form submissions to add new event
+post "/add_event" do
+  # Format start and end times
+  start_dt = DateTime.parse(params["start_date"])
+  start_str = start_dt.strftime("%d/%m/%Y %H:%M")
+  end_str = if params["end_date"] && !params["end_date"].strip.empty?
+    DateTime.parse(params["end_date"]).strftime("%d/%m/%Y %H:%M")
+  else
+    ""
+  end
+
+  ap [
+    params["name"],
+    start_str,
+    end_str,
+    params["location"],
+    params["description"],
+    params["category"],
+    params["organizer"],
+    params["contact_email"],
+    params["contact_tel"],
+    params["price"],
+    params["event_link1"],
+    params["event_link2"],
+    params["event_link3"],
+    params["event_link4"],
+    "" # image placeholder
+  ]
+
+  # Respond with JSON status
+  content_type :json
+  {status: "ok"}.to_json
+end

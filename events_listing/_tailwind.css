@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 .navigation-button {
-  @apply inline-block bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors
+  @apply inline-block bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-800 transition-colors
 }
 
 .event-card {
@@ -18,7 +18,7 @@
 }
 
 .filter-btn--active {
-  @apply bg-emerald-500 text-white hover:bg-emerald-600
+  @apply bg-emerald-700 text-white hover:bg-emerald-800
 }
 
 /* Form wrapper combining card styling and padding */
