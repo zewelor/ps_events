@@ -1,5 +1,6 @@
 title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
+description: "PXO Pulse is a website listing events happening at Porto Santo golden island."
 data_dir: _data
 
 page_gen:

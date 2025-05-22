@@ -62,8 +62,12 @@ GEM
       terminal-table (>= 1.8, < 4.0)
       webrick (~> 1.7)
     jekyll-datapage-generator (1.4.0)
+    jekyll-environment-variables (1.0.1)
+      jekyll (>= 3.0, < 5.x)
     jekyll-sass-converter (3.1.0)
       sass-embedded (~> 1.75)
+    jekyll-seo-tag (2.8.0)
+      jekyll (>= 3.8, < 5.0)
     jekyll-sitemap (1.4.0)
       jekyll (>= 3.7, < 5.0)
     jekyll-tailwindcss (0.7.0)
@@ -127,6 +131,8 @@ GEM
     regexp_parser (2.10.0)
     reline (0.6.1)
       io-console (~> 0.5)
+    rerun (0.14.0)
+      listen (~> 3.0)
     rexml (3.4.1)
     rouge (4.5.2)
     rubocop (1.75.5)
@@ -213,11 +219,14 @@ DEPENDENCIES
   irb
   jekyll (~> 4.4)
   jekyll-datapage-generator
+  jekyll-environment-variables
+  jekyll-seo-tag
   jekyll-sitemap (~> 1.4)
   jekyll-tailwindcss
   lefthook
   puma (~> 6.6)
   rackup (~> 2.2)
+  rerun
   ruby-lsp
   simplecov
   sinatra

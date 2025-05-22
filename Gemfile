@@ -24,6 +24,7 @@ group :development do
   gem "jekyll", "~> 4.4"
 
   gem "bigdecimal", "~> 3.1"
+  gem "rerun"
 end
 
 group :test do
@@ -34,6 +35,8 @@ group :jekyll_plugins do
   gem "jekyll-datapage-generator"
   gem "jekyll-sitemap", "~> 1.4"
   gem "jekyll-tailwindcss"
+  gem "jekyll-environment-variables"
+  gem "jekyll-seo-tag"
 end
 
 gem "rackup", "~> 2.2"

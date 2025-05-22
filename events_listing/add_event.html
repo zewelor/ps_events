@@ -4,9 +4,41 @@ title: "Add an Event"
 permalink: /add_event/
 ---
 
+{% if jekyll.environment == 'development' %}
+  {% assign test_name        = "Test Event" %}
+  {% assign test_description = "Sample description for testing form submission." %}
+  {% assign test_category    = "Music" %}
+  {% assign test_organizer   = "Test Organizer" %}
+  {% assign test_location    = "Test Venue, Town" %}
+  {% assign test_start       = "2025-05-23T10:00" %}
+  {% assign test_end         = "2025-05-23T12:00" %}
+  {% assign test_email       = "test@example.com" %}
+  {% assign test_tel         = "+1234567890" %}
+  {% assign test_price       = "25" %}
+  {% assign test_link1       = "https://example.com/event" %}
+  {% assign test_link2       = "" %}
+  {% assign test_link3       = "" %}
+  {% assign test_link4       = "" %}
+{% else %}
+  {% assign test_name = "" %}
+  {% assign test_description = "" %}
+  {% assign test_category = "" %}
+  {% assign test_organizer = "" %}
+  {% assign test_location = "" %}
+  {% assign test_start = "" %}
+  {% assign test_end = "" %}
+  {% assign test_email = "" %}
+  {% assign test_tel = "" %}
+  {% assign test_price = "" %}
+  {% assign test_link1 = "" %}
+  {% assign test_link2 = "" %}
+  {% assign test_link3 = "" %}
+  {% assign test_link4 = "" %}
+{% endif %}
+
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
   <h1 class="text-2xl md:text-3xl font-semibold mb-6">Add a New Event</h1>
-  <form action="/add_event" method="POST" class="form-card">
+  <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" class="form-card">
 
     <!-- Name -->
     <div>
@@ -17,6 +49,7 @@ permalink: /add_event/
         type="text"
         name="name"
         id="name"
+        value="{{ test_name }}"
         required
         maxlength="100"
         class="form-input"
@@ -36,7 +69,7 @@ permalink: /add_event/
         maxlength="500"
         rows="6"
         class="form-input resize-none"
-      ></textarea>
+      >{{ test_description }}</textarea>
       <p class="mt-1 text-xs text-gray-500">Brief description (max 500 chars)</p>
     </div>
 
@@ -52,14 +85,14 @@ permalink: /add_event/
         class="form-input"
       >
         <option value="">Select a category</option>
-        <option>Music</option>
-        <option>Food</option>
-        <option>Art</option>
-        <option>Nature</option>
-        <option>Health & Wellness</option>
-        <option>Sports</option>
-        <option>Learning & Workshops</option>
-        <option>Community & Culture</option>
+        <option value="Music" {% if test_category == 'Music' %}selected{% endif %}>Music</option>
+        <option value="Food" {% if test_category == 'Food' %}selected{% endif %}>Food</option>
+        <option value="Art" {% if test_category == 'Art' %}selected{% endif %}>Art</option>
+        <option value="Nature" {% if test_category == 'Nature' %}selected{% endif %}>Nature</option>
+        <option value="Health & Wellness" {% if test_category == 'Health & Wellness' %}selected{% endif %}>Health & Wellness</option>
+        <option value="Sports" {% if test_category == 'Sports' %}selected{% endif %}>Sports</option>
+        <option value="Learning & Workshops" {% if test_category == 'Learning & Workshops' %}selected{% endif %}>Learning & Workshops</option>
+        <option value="Community & Culture" {% if test_category == 'Community & Culture' %}selected{% endif %}>Community & Culture</option>
       </select>
     </div>
 
@@ -72,6 +105,7 @@ permalink: /add_event/
         type="text"
         name="organizer"
         id="organizer"
+        value="{{ test_organizer }}"
         required
         maxlength="100"
         class="form-input"
@@ -87,6 +121,7 @@ permalink: /add_event/
         type="text"
         name="location"
         id="location"
+        value="{{ test_location }}"
         required
         maxlength="150"
         class="form-input"
@@ -104,6 +139,7 @@ permalink: /add_event/
           type="datetime-local"
           name="start_date"
           id="start_date"
+          value="{{ test_start }}"
           required
           class="form-input"
         />
@@ -118,6 +154,7 @@ permalink: /add_event/
           type="datetime-local"
           name="end_date"
           id="end_date"
+          value="{{ test_end }}"
           class="form-input"
         />
         <p class="mt-1 text-xs text-gray-500">Leave blank if it's an all-day event</p>
@@ -134,6 +171,7 @@ permalink: /add_event/
           type="email"
           name="contact_email"
           id="contact_email"
+          value="{{ test_email }}"
           maxlength="100"
           class="form-input"
         />
@@ -147,6 +185,7 @@ permalink: /add_event/
           type="tel"
           name="contact_tel"
           id="contact_tel"
+          value="{{ test_tel }}"
           maxlength="20"
           class="form-input"
         />
@@ -162,6 +201,7 @@ permalink: /add_event/
         type="number"
         name="price"
         id="price"
+        value="{{ test_price }}"
         maxlength="10"
         max="10000"
         step="0.50"
@@ -180,6 +220,7 @@ permalink: /add_event/
           type="url"
           name="event_link1"
           id="event_link1"
+          value="{{ test_link1 }}"
           maxlength="200"
           placeholder="https://facebook.com/..."
           class="form-input"
@@ -193,6 +234,7 @@ permalink: /add_event/
           type="url"
           name="event_link2"
           id="event_link2"
+          value="{{ test_link2 }}"
           maxlength="200"
           placeholder="https://instagram.com/..."
           class="form-input"
@@ -206,6 +248,7 @@ permalink: /add_event/
           type="url"
           name="event_link3"
           id="event_link3"
+          value="{{ test_link3 }}"
           maxlength="200"
           placeholder="https://example.com"
           class="form-input"
@@ -219,6 +262,7 @@ permalink: /add_event/
           type="url"
           name="event_link4"
           id="event_link4"
+          value="{{ test_link4 }}"
           maxlength="200"
           placeholder="https://example.com"
           class="form-input"
@@ -230,11 +274,72 @@ permalink: /add_event/
     <div>
       <button
         type="submit"
-        class="navigation-button"
+        id="submit-btn"
+        class="navigation-button flex items-center justify-center"
+        aria-live="polite"
       >
-        Add Event
+        <!-- Spinner icon -->
+        <svg id="btn-spinner" class="h-5 w-5 text-white animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"></svg>
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        <span id="btn-text">Add Event</span>
       </button>
     </div>
 
   </form>
+
+  <!-- Toast notifications container -->
+  <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50" aria-live="polite" aria-atomic="true"></div>
 </section>
+
+<!-- AJAX form submission and toast logic -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('#add-event form');
+    const toastContainer = document.getElementById('toast-container');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const btnText = document.getElementById('btn-text');
+
+    function showToast(message, type = 'success') {
+      const bg = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+      const toast = document.createElement('div');
+      toast.setAttribute('role', 'alert');
+      toast.className = `${bg} text-white px-4 py-2 rounded shadow transition-opacity duration-500`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      // Auto-hide after 3s
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        toast.addEventListener('transitionend', () => toast.remove());
+      }, 3000);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // disable and show spinner
+      submitBtn.disabled = true;
+      btnSpinner.classList.remove('hidden');
+      btnText.textContent = 'Submitting...';
+      const data = new FormData(form);
+      try {
+        const response = await fetch(form.action, { method: 'POST', body: data });
+        if (response.ok) {
+          showToast('Event added successfully!');
+          form.reset();
+        } else {
+          const err = await response.text();
+          showToast('Error: ' + err, 'error');
+        }
+      } catch (error) {
+        showToast('Network error', 'error');
+      } finally {
+        // re-enable and hide spinner
+        submitBtn.disabled = false;
+        btnSpinner.classList.add('hidden');
+        btnText.textContent = 'Add Event';
+      }
+    });
+  });
+</script>

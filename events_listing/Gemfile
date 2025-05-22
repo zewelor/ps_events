@@ -1,3 +1,0 @@
-# Add Sinatra for form endpoint support
-source "https://rubygems.org"
-gem "sinatra"

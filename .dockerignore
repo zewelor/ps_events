@@ -55,3 +55,4 @@ images/*
 events_listing/*
 events.ics
 events.csv
+.rerun
