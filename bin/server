@@ -3,10 +3,13 @@
 require "bundler/setup"
 require "json"
 
-Bundler.require(:default, :development)
+Bundler.require(:default)
 
 set :bind, "0.0.0.0"
-set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
+
+configure :production do
+  set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
+end
 
 # Enable CORS for all routes
 before do
@@ -32,7 +35,7 @@ post "/add_event" do
     ""
   end
 
-  ap [
+  puts [
     params["name"],
     start_str,
     end_str,
