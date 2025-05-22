@@ -4,7 +4,7 @@ title: "{{ page.Name | escape_once }}"
 ---
 
 <article class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-  <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">{{ page.Name }}</h2>
+  <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">{{ page.Name }}</h1>
   <div class="text-center mb-6">
     {% assign img_path = 'assets/images/' | append: page.Image | append: '.webp' %}
     <a href="{{ img_path | relative_url }}" target="_blank">
@@ -12,7 +12,7 @@ title: "{{ page.Name | escape_once }}"
     </a>
   </div>
   <div class="bg-blue-50 p-6 rounded-lg shadow-sm mb-6">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Event Details</h3>
+    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Event Details</h2>
     <p class="mb-2"><strong class="text-gray-700">When:</strong> <span class="text-gray-600">{{ page["Start time"] }} - {{ page["End time"] }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Where:</strong> <span class="text-gray-600">{{ page.Location }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Organizer:</strong> <span class="text-gray-600">{{ page.Organizer }}
@@ -29,7 +29,7 @@ title: "{{ page.Name | escape_once }}"
     <p class="mb-2"><strong class="text-gray-700">Price:</strong> <span class="text-gray-600">{% if page.Price == "" or page.Price == nil %}No information provided{% else %}{{ page.Price }}{% endif %}</span></p>
   </div>
   <div class="bg-green-50 p-6 rounded-lg shadow-sm">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Description</h3>
+    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Description</h2>
     <p class="text-gray-700 leading-relaxed">{{ page.Description }}</p>
   </div>
   <div class="mt-6 text-center">
