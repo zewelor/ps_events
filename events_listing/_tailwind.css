@@ -4,6 +4,10 @@
   @apply inline-block bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors
 }
 
+.event-card {
+  @apply bg-white rounded-lg shadow-lg overflow-hidden flex flex-col;
+}
+
 /* Filter button styles */
 .filter-btn {
   @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors mr-2 mb-2;
@@ -15,4 +19,19 @@
 
 .filter-btn--active {
   @apply bg-emerald-500 text-white hover:bg-emerald-600
+}
+
+/* Form wrapper combining card styling and padding */
+.form-card {
+  @apply p-6 space-y-6;
+}
+
+/* Form input fields common styling */
+.form-input {
+  @apply mt-1 block w-full border-b-4 border-emerald-500 focus:ring-indigo-500 focus:border-indigo-500 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
+}
+
+/* Form label common styling */
+.form-label {
+  @apply block text-sm font-medium text-gray-700;
 }

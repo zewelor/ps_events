@@ -21,11 +21,6 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: true  # ensure the action can push changes
-
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
@@ -35,6 +30,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # ensure the action can push changes
 
       - name: Download CSV with events
         run: |
@@ -50,4 +50,3 @@ jobs:
         with:
           commit_message: "Regenerate events files"
           file_pattern: "events.ics events.csv"
-          push_options: --force # Add force push

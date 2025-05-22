@@ -16,7 +16,7 @@ title: Events Listing
       {% assign event_timestamp_utc = event_time_with_offset | date: '%s' | plus: 0 %}
 
       {% if event_timestamp_utc > current_utc_timestamp %}
-    <div class="event-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
+    <div class="event-card" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
           <h2 class="text-xl font-semibold text-gray-800 mb-2 h-14" title="{{ event['Name'] | escape_once }}">

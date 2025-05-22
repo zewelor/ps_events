@@ -1,0 +1,240 @@
+---
+layout: default
+title: "Add an Event"
+permalink: /add_event/
+---
+
+<section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
+  <h1 class="text-2xl md:text-3xl font-semibold mb-6">Add a New Event</h1>
+  <form action="/add_event" method="POST" class="form-card">
+
+    <!-- Name -->
+    <div>
+      <label for="name" class="form-label">
+        Name <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        name="name"
+        id="name"
+        required
+        maxlength="100"
+        class="form-input"
+      />
+      <p class="mt-1 text-xs text-gray-500">Name / Title of the event (max 100 chars)</p>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label for="description" class="form-label">
+        Description <span class="text-red-500">*</span>
+      </label>
+      <textarea
+        name="description"
+        id="description"
+        required
+        maxlength="500"
+        rows="6"
+        class="form-input resize-none"
+      ></textarea>
+      <p class="mt-1 text-xs text-gray-500">Brief description (max 500 chars)</p>
+    </div>
+
+    <!-- Category -->
+    <div>
+      <label for="category" class="form-label">
+        Category <span class="text-red-500">*</span>
+      </label>
+      <select
+        name="category"
+        id="category"
+        required
+        class="form-input"
+      >
+        <option value="">Select a category</option>
+        <option>Music</option>
+        <option>Food</option>
+        <option>Art</option>
+        <option>Nature</option>
+        <option>Health & Wellness</option>
+        <option>Sports</option>
+        <option>Learning & Workshops</option>
+        <option>Community & Culture</option>
+      </select>
+    </div>
+
+    <!-- Organizer -->
+    <div>
+      <label for="organizer" class="form-label">
+        Organizer <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        name="organizer"
+        id="organizer"
+        required
+        maxlength="100"
+        class="form-input"
+      />
+    </div>
+
+    <!-- Location -->
+    <div>
+      <label for="location" class="form-label">
+        Location <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        name="location"
+        id="location"
+        required
+        maxlength="150"
+        class="form-input"
+      />
+    </div>
+
+    <!-- Dates -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Start date -->
+      <div>
+        <label for="start_date" class="form-label">
+          Start date & time <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="datetime-local"
+          name="start_date"
+          id="start_date"
+          required
+          class="form-input"
+        />
+      </div>
+
+      <!-- End date -->
+      <div>
+        <label for="end_date" class="form-label">
+          End date & time
+        </label>
+        <input
+          type="datetime-local"
+          name="end_date"
+          id="end_date"
+          class="form-input"
+        />
+        <p class="mt-1 text-xs text-gray-500">Leave blank if it's an all-day event</p>
+      </div>
+    </div>
+
+    <!-- Contact info -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label for="contact_email" class="form-label">
+          Contact e-mail
+        </label>
+        <input
+          type="email"
+          name="contact_email"
+          id="contact_email"
+          maxlength="100"
+          class="form-input"
+        />
+      </div>
+
+      <div>
+        <label for="contact_tel" class="form-label">
+          Contact Telephone / Whatsapp
+        </label>
+        <input
+          type="tel"
+          name="contact_tel"
+          id="contact_tel"
+          maxlength="20"
+          class="form-input"
+        />
+      </div>
+    </div>
+
+    <!-- Price -->
+    <div>
+      <label for="price" class="form-label">
+        Price
+      </label>
+      <input
+        type="number"
+        name="price"
+        id="price"
+        maxlength="10"
+        max="10000"
+        step="0.50"
+        class="form-input"
+      />
+      <p class="mt-1 text-xs text-gray-500">Only if event is paid</p>
+    </div>
+
+    <!-- Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="event_link1" class="form-label">
+          Event / Social media link 1
+        </label>
+        <input
+          type="url"
+          name="event_link1"
+          id="event_link1"
+          maxlength="200"
+          placeholder="https://facebook.com/..."
+          class="form-input"
+        />
+      </div>
+      <div>
+        <label for="event_link2" class="form-label">
+          Event / Social media link 2
+        </label>
+        <input
+          type="url"
+          name="event_link2"
+          id="event_link2"
+          maxlength="200"
+          placeholder="https://instagram.com/..."
+          class="form-input"
+        />
+      </div>
+      <div>
+        <label for="event_link3" class="form-label">
+          Event / Social media link 3
+        </label>
+        <input
+          type="url"
+          name="event_link3"
+          id="event_link3"
+          maxlength="200"
+          placeholder="https://example.com"
+          class="form-input"
+        />
+      </div>
+      <div>
+        <label for="event_link4" class="form-label">
+          Event / Social media link 4
+        </label>
+        <input
+          type="url"
+          name="event_link4"
+          id="event_link4"
+          maxlength="200"
+          placeholder="https://example.com"
+          class="form-input"
+        />
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div>
+      <button
+        type="submit"
+        class="navigation-button"
+      >
+        Add Event
+      </button>
+    </div>
+
+  </form>
+</section>
