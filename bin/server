@@ -6,6 +6,7 @@ require "json"
 Bundler.require(:default)
 
 set :bind, "0.0.0.0"
+set :port, ENV["PORT"] || 4567
 
 configure :production do
   set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
