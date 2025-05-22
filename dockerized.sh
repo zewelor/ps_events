@@ -8,7 +8,7 @@ docker_compose_run_on_exec () {
   then
     docker compose --progress quiet exec -it $container_name "$@"
   else
-    docker compose --progress quiet run --rm -it --service-ports $container_name "$@"
+    docker compose --progress quiet run --rm -it $container_name "$@"
   fi
 }
 

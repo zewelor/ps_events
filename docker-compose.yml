@@ -1,17 +1,37 @@
+x-app: &x-app
+  build:
+    context: .
+    target: dev
+  tty: true
+  stdin_open: true
+  volumes:
+    - .:/app:cached
+    - bundler:/bundle
+    - vscode:/home/app/.vscode-server
+
 services:
   app:
-    build:
-      context: .
-      target: dev
-    tty: true
-    stdin_open: true
+    <<: *x-app
     ports:
       - "127.0.0.1:4000:4000"
       - "127.0.0.1:35729:35729"
-    volumes:
-      - .:/app:cached
-      - bundler:/bundle
-      - vscode:/home/app/.vscode-server
+    command: 
+      - jekyll
+      - server
+      - --force_polling
+      - -l
+      - -H
+      - 0.0.0.0
+      - -s 
+      - events_listing
+  sinatra:
+    <<: *x-app
+    ports:
+      - "127.0.0.1:4001:80"
+    command:
+      - ruby
+      - server.rb
+
 
 volumes:
   vscode:
