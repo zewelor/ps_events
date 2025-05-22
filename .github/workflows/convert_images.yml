@@ -52,7 +52,6 @@ jobs:
         with:
           commit_message: "Convert images to WebP"
           file_pattern: "events_listing/assets/images/*.webp images/inbox/*"
-          push_options: --force # Add force push
 
   # purge-history:
   #   needs: convert
