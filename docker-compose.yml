@@ -7,6 +7,7 @@ services:
     stdin_open: true
     ports:
       - "127.0.0.1:4000:4000"
+      - "127.0.0.1:35729:35729"
     volumes:
       - .:/app:cached
       - bundler:/bundle

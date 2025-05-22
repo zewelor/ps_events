@@ -4,7 +4,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const eventCards = document.querySelectorAll('.event-card');
     const filterControlsContainer = document.getElementById('event-filter-controls');
-    const noResultsMessage = document.getElementById('no-results-message');
     const categories = new Set();
     const categoryCounts = {};
 
@@ -69,13 +68,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.style.display = 'none';
             }
         });
-
-        if (noResultsMessage) {
-            if (visibleCount === 0) {
-                noResultsMessage.style.display = 'block';
-            } else {
-                noResultsMessage.style.display = 'none';
-            }
-        }
     }
 });
