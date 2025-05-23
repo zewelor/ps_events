@@ -8,7 +8,7 @@ on:
       - 'events_listing/**'
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   packages: read
 
@@ -62,133 +62,137 @@ jobs:
       - name: Create screenshots directory
         run: mkdir -p screenshots
 
-      - name: Take screenshots
+      # Take screenshot of homepage and post to PR
+      - uses: flameddd/screenshots-ci-action@v1.1.2
+        with:
+          url: http://localhost:8080/
+          width: 1280
+          height: 800
+          fullPage: true
+          disableAnimation: true
+          waitForSelector: "body"
+          output: './screenshots/homepage.png'
+
+      # Find a sample event page
+      - name: Find sample event URL
+        id: find-sample-event
         run: |
-          cat > screenshot.js << 'EOF'
-          const { chromium } = require('playwright');
+          # Use grep to find the first event link in the HTML
+          EVENT_PATH=$(grep -o -m 1 'href="/events/[^"]*"' _site/index.html | cut -d'"' -f2)
+          if [ -n "$EVENT_PATH" ]; then
+            echo "EVENT_PATH=$EVENT_PATH" >> $GITHUB_OUTPUT
+            echo "Found event path: $EVENT_PATH"
+          else
+            echo "No event paths found"
+            echo "EVENT_PATH=" >> $GITHUB_OUTPUT
+          fi
 
-          (async () => {
-            const browser = await chromium.launch();
-            const context = await browser.newContext({
-              viewport: { width: 1280, height: 800 }
-            });
+      # Take screenshot of sample event page if found
+      - uses: flameddd/screenshots-ci-action@master
+        if: ${{ steps.find-sample-event.outputs.EVENT_PATH != '' }}
+        with:
+          url: http://localhost:8080${{ steps.find-sample-event.outputs.EVENT_PATH }}
+          width: 1280
+          height: 800
+          fullPage: true
+          disableAnimation: true
+          waitForSelector: "body"
+          output: './screenshots/event.png'
 
-            // Screenshot homepage
-            const homePage = await context.newPage();
-            await homePage.goto('http://localhost:8080/');
-            await homePage.waitForLoadState('networkidle');
-            await homePage.screenshot({ path: 'screenshots/homepage.png', fullPage: true });
-
-            // Get a sample event page URL
-            const eventLinks = await homePage.$$eval('a[href^="/events/"]', links =>
-              links.slice(0, 1).map(link => link.href)
-            );
-
-            if (eventLinks.length > 0) {
-              // Screenshot sample event page
-              const eventPage = await context.newPage();
-              await eventPage.goto(eventLinks[0]);
-              await eventPage.waitForLoadState('networkidle');
-              await eventPage.screenshot({ path: 'screenshots/event.png', fullPage: true });
-            }
-
-            await browser.close();
-            console.log('Screenshots taken successfully');
-          })();
-          EOF
-
-          node screenshot.js
-
-      # Post screenshots directly as PR comments
-      - name: Post screenshots as PR comments
+      # Post screenshots to PR comment
+      - name: Post screenshots to PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
 
-            // Create a gist with the screenshot
-            async function createGistWithImage(filename, filepath) {
-              try {
-                // Read image file
-                const content = fs.readFileSync(filepath);
-                const base64Content = Buffer.from(content).toString('base64');
+            async function postScreenshotsComment() {
+              let commentBody = `## 📸 PR Preview Screenshots\n\n`;
+              commentBody += `*Screenshots taken at ${new Date().toUTCString()}*\n\n`;
 
-                // Create a unique name with timestamp to avoid conflicts
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const gistFilename = `${filename.split('.')[0]}-${timestamp}.png`;
+              // Add homepage screenshot to comment
+              if (fs.existsSync('screenshots/homepage.png')) {
+                commentBody += `### Homepage\n`;
+                commentBody += `<details><summary>Click to view screenshot</summary>\n\n`;
 
-                // Create gist with the screenshot
-                const response = await github.rest.gists.create({
-                  files: {
-                    [gistFilename]: {
-                      content: base64Content
-                    }
-                  },
-                  public: true,
-                  description: `PR #${context.issue.number} Preview - ${gistFilename}`
-                });
+                // Use github API to upload the image as an asset
+                const homepageBuffer = fs.readFileSync('screenshots/homepage.png');
 
-                // Get the raw URL to the file in the gist
-                const fileKey = Object.keys(response.data.files)[0];
-                return response.data.files[fileKey].raw_url;
-              } catch (error) {
-                console.error(`Error creating gist for ${filename}:`, error);
-                return null;
-              }
-            }
-
-            // Post screenshots as a comment
-            async function postScreenshotComment() {
-              try {
-                console.log('Checking for screenshots...');
-                const files = [];
-
-                // Check if files exist and upload to gists
-                if (fs.existsSync('screenshots/homepage.png')) {
-                  console.log('Homepage screenshot found, uploading...');
-                  const homepageUrl = await createGistWithImage('homepage.png', 'screenshots/homepage.png');
-                  if (homepageUrl) {
-                    files.push({ name: 'Homepage', url: homepageUrl });
-                  }
-                }
-
-                if (fs.existsSync('screenshots/event.png')) {
-                  console.log('Event page screenshot found, uploading...');
-                  const eventUrl = await createGistWithImage('event.png', 'screenshots/event.png');
-                  if (eventUrl) {
-                    files.push({ name: 'Sample Event Page', url: eventUrl });
-                  }
-                }
-
-                // Create comment text
-                let commentBody = `## 📸 PR Preview Screenshots\n\n`;
-                commentBody += `*Screenshots taken at ${new Date().toUTCString()}*\n\n`;
-
-                if (files.length === 0) {
-                  commentBody += '⚠️ No screenshots were successfully captured.';
-                } else {
-                  // Add each screenshot to the comment
-                  for (const file of files) {
-                    commentBody += `### ${file.name}\n`;
-                    commentBody += `![${file.name} Screenshot](${file.url})\n\n`;
-                  }
-                }
-
-                // Post the comment
-                await github.rest.issues.createComment({
+                const { data: homepageAsset } = await github.rest.repos.createOrUpdateFileContents({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  body: commentBody
+                  path: `pr-screenshots/${context.issue.number}/homepage-${Date.now()}.png`,
+                  message: `Add homepage screenshot for PR #${context.issue.number}`,
+                  content: Buffer.from(homepageBuffer).toString('base64'),
+                  branch: `pr-screenshots-${context.issue.number}`
+                }).catch(async err => {
+                  if (err.status === 422) {
+                    // Branch doesn't exist, create it
+                    const { data: { object: { sha } } } = await github.rest.git.getRef({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      ref: 'heads/main'
+                    });
+
+                    await github.rest.git.createRef({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      ref: `refs/heads/pr-screenshots-${context.issue.number}`,
+                      sha
+                    });
+
+                    // Try again with the new branch
+                    return await github.rest.repos.createOrUpdateFileContents({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      path: `pr-screenshots/${context.issue.number}/homepage-${Date.now()}.png`,
+                      message: `Add homepage screenshot for PR #${context.issue.number}`,
+                      content: Buffer.from(homepageBuffer).toString('base64'),
+                      branch: `pr-screenshots-${context.issue.number}`
+                    });
+                  }
+                  throw err;
                 });
 
-                console.log('PR comment with screenshots posted successfully');
-              } catch (error) {
-                console.error('Error posting PR comment:', error);
-                core.setFailed('Failed to post screenshots as PR comment');
+                const homepageUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/pr-screenshots-${context.issue.number}/pr-screenshots/${context.issue.number}/homepage-${Date.now()}.png`;
+                commentBody += `![Homepage](${homepageUrl})\n`;
+                commentBody += `</details>\n\n`;
+              } else {
+                commentBody += `### Homepage\n⚠️ Failed to capture homepage screenshot\n\n`;
               }
+
+              // Add event screenshot to comment if it exists
+              if (fs.existsSync('screenshots/event.png')) {
+                commentBody += `### Sample Event Page\n`;
+                commentBody += `<details><summary>Click to view screenshot</summary>\n\n`;
+
+                // Use github API to upload the image as an asset
+                const eventBuffer = fs.readFileSync('screenshots/event.png');
+
+                const { data: eventAsset } = await github.rest.repos.createOrUpdateFileContents({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  path: `pr-screenshots/${context.issue.number}/event-${Date.now()}.png`,
+                  message: `Add event screenshot for PR #${context.issue.number}`,
+                  content: Buffer.from(eventBuffer).toString('base64'),
+                  branch: `pr-screenshots-${context.issue.number}`
+                });
+
+                const eventUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/pr-screenshots-${context.issue.number}/pr-screenshots/${context.issue.number}/event-${Date.now()}.png`;
+                commentBody += `![Event](${eventUrl})\n`;
+                commentBody += `</details>\n\n`;
+              } else {
+                commentBody += `### Sample Event Page\n⚠️ Failed to capture event page screenshot or no events found\n\n`;
+              }
+
+              // Post comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
             }
 
-            // Execute the main function
-            await postScreenshotComment();
+            await postScreenshotsComment();
