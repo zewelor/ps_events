@@ -4,6 +4,49 @@ title: Events Listing
 ---
 
 <h1 class="text-2xl md:text-3xl font-semibold mb-6">Upcoming Events in Porto Santo</h1>
+
+<!-- Calendar View Section -->
+<section id="calendar-view" class="mb-8">
+  <div class="bg-white rounded-lg shadow-lg p-4 md:p-6">
+    <!-- Calendar Header -->
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg md:text-xl font-semibold text-gray-800">Events Calendar</h2>
+      <div class="flex items-center space-x-2">
+        <!-- Navigation buttons -->
+        <button id="prev-month" class="filter-btn filter-btn--inactive">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+            <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/>
+          </svg>
+        </button>
+        <span id="current-month" class="text-sm md:text-base font-medium text-gray-700 min-w-[120px] text-center"></span>
+        <button id="next-month" class="filter-btn filter-btn--inactive">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+            <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Grid - Now visible on all devices -->
+    <div id="calendar-grid" class="block">
+      <!-- Days of week header -->
+      <div class="grid grid-cols-7 gap-1 mb-2">
+        <div class="calendar-day-name">Sun</div>
+        <div class="calendar-day-name">Mon</div>
+        <div class="calendar-day-name">Tue</div>
+        <div class="calendar-day-name">Wed</div>
+        <div class="calendar-day-name">Thu</div>
+        <div class="calendar-day-name">Fri</div>
+        <div class="calendar-day-name">Sat</div>
+      </div>
+      <!-- Calendar days -->
+      <div id="calendar-days" class="grid grid-cols-7 gap-1">
+        <!-- Days will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="event-list" class="mb-8">
   {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
 
@@ -58,3 +101,4 @@ title: Events Listing
 </section>
 
 <script src="{{ '/assets/js/event-filter.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/calendar.js' | relative_url }}" defer></script>

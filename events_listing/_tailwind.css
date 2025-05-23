@@ -21,6 +21,80 @@
   @apply bg-emerald-700 text-white hover:bg-emerald-800
 }
 
+/* Date filter indicator */
+#date-filter-indicator {
+  @apply bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg mb-4 transition-all shadow-sm;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Calendar specific styles */
+.calendar-day {
+  @apply relative min-h-[80px] p-2 border border-gray-100 hover:bg-gray-50 transition-colors rounded-md;
+}
+
+.calendar-day--today {
+  @apply bg-emerald-50 border-emerald-200;
+}
+
+.calendar-day--other-month {
+  @apply text-gray-400 bg-gray-50;
+}
+
+.calendar-day--has-events {
+  @apply cursor-pointer hover:bg-blue-50 border-blue-200;
+}
+
+.calendar-day--active {
+  @apply bg-blue-100 border-blue-300 ring-2 ring-blue-400 z-10 shadow-md;
+}
+
+.calendar-day-number {
+  @apply text-sm font-medium text-gray-700 mb-1;
+}
+
+.calendar-day-name {
+  @apply text-center text-xs md:text-sm font-medium text-gray-500 p-2;
+}
+
+.calendar-event-dot {
+  @apply w-3 h-3 rounded-full inline-block mr-1 mb-1 shadow-sm;
+}
+
+.calendar-event-badge {
+  @apply inline-block px-1.5 py-0.5 text-xs font-medium rounded-full text-white mr-1 mb-1 shadow-sm;
+}
+
+.calendar-event-indicator {
+  @apply absolute top-1 right-1 bg-emerald-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center;
+}
+
+.mobile-event-item {
+  @apply bg-gray-50 rounded-lg p-3 border-l-4;
+}
+
+.mobile-event-date {
+  @apply text-xs font-semibold text-gray-600 mb-1;
+}
+
+.mobile-event-title {
+  @apply text-sm font-medium text-gray-800 mb-1;
+}
+
+.mobile-event-time {
+  @apply text-xs text-gray-500;
+}
+
 /* Form wrapper combining card styling and padding */
 .form-card {
   @apply p-6 space-y-6;

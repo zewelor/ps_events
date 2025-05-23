@@ -20,6 +20,7 @@ Used in this project
 - Use Shadcn UI, Radix, and Tailwind and its plugins, for components and styling.
 - Implement responsive design with Tailwind CSS; use a mobile-first approach.
 - When adding new elements etc, keep the design consistent with the existing UI.
+- When multiple elements have same style, extract it to some class ( in _tailwind.css ). DRY css styles
 
 ### Project Structure
 
