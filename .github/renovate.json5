@@ -58,6 +58,7 @@
         'lefthook',
         'rubocop-performance',
         'ruby-lsp',
+        'amazing_print',
         'standard'
       ],
     },
