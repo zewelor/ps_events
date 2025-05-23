@@ -22,6 +22,8 @@ RUN apt-get update && \
 
 FROM base AS basedev
 
+ENV BUNDLE_AUTO_INSTALL=true
+
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
 RUN apt-get update && \
