@@ -2,7 +2,7 @@ name: PR Visual Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
     paths:
       - 'events_listing/**'
       - 'events.csv'
@@ -53,17 +53,17 @@ jobs:
       - name: Take screenshots
         run: |
           mkdir -p screenshots
-
+          
           # Take screenshot of homepage
           npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4000 screenshots/homepage-desktop.png
           npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4000 screenshots/homepage-mobile.png
-
+          
           # Try to take screenshot of events page if it exists
           if curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/events | grep -q "200"; then
             npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4000/events screenshots/events-desktop.png
             npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4000/events screenshots/events-mobile.png
           fi
-
+          
           # List all available pages and take screenshots of up to 3 more pages
           pages=$(curl -s http://localhost:4000/sitemap.xml | grep -oP '(?<=<loc>)[^<]*' | head -5 | tail -3 || echo "")
           for page in $pages; do
@@ -76,14 +76,7 @@ jobs:
             fi
           done
 
-      - name: Upload main branch screenshots as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-screenshots
-          path: screenshots-main/
-          retention-days: 30
-
-      - name: Upload PR screenshots as artifacts
+      - name: Upload screenshots as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pr-screenshots
@@ -114,11 +107,11 @@ jobs:
       - name: Take main branch screenshots
         run: |
           mkdir -p screenshots-main
-
+          
           # Take screenshot of main homepage
           npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4001 screenshots-main/homepage-desktop.png
           npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4001 screenshots-main/homepage-mobile.png
-
+          
           # Try to take screenshot of main events page if it exists
           if curl -s -o /dev/null -w "%{http_code}" http://localhost:4001/events | grep -q "200"; then
             npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4001/events screenshots-main/events-desktop.png
@@ -131,38 +124,75 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-
-            const screenshotDir = 'screenshots';
-            const runId = context.runId;
-            const repo = context.repo;
-
+            
+            // Function to upload image and get URL
+            async function uploadImage(imagePath, filename) {
+              try {
+                const imageBuffer = fs.readFileSync(imagePath);
+                const base64Image = imageBuffer.toString('base64');
+                
+                // Create a gist with the image
+                const gist = await github.rest.gists.create({
+                  description: `Screenshot for PR #${{ github.event.number }} - ${filename}`,
+                  public: false,
+                  files: {
+                    [filename]: {
+                      content: base64Image
+                    }
+                  }
+                });
+                
+                return `https://gist.githubusercontent.com/${gist.data.owner.login}/${gist.data.id}/raw/${filename}`;
+              } catch (error) {
+                console.log(`Failed to upload ${filename}:`, error);
+                return null;
+              }
+            }
+            
             let comment = "## 📸 Visual Preview\n\n";
-
+            comment += "Here's how your changes look:\n\n";
+            
+            const screenshotDir = 'screenshots';
+            const mainScreenshotDir = 'screenshots-main';
+            
             try {
               const screenshots = fs.readdirSync(screenshotDir);
-
-              if (screenshots.length === 0) {
-                comment += "❌ No screenshots were generated.\n";
-              } else {
-                comment += `✅ Generated ${screenshots.length} screenshots comparing this PR to main branch.\n\n`;
-                comment += `📦 **[Download Screenshots](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})**\n\n`;
-                comment += "**Available screenshots:**\n";
-
-                // Just list the screenshot names, don't create long URLs for each
-                screenshots.forEach(screenshot => {
+              
+              for (const screenshot of screenshots) {
+                const prPath = path.join(screenshotDir, screenshot);
+                const mainPath = path.join(mainScreenshotDir, screenshot);
+                
+                if (fs.existsSync(prPath)) {
                   const pageName = screenshot.replace(/-(desktop|mobile)\.png$/, '');
-                  const device = screenshot.includes('desktop') ? '🖥️' : '📱';
-                  comment += `- ${device} ${pageName}\n`;
-                });
-
-                comment += "\nDownload the `pr-screenshots` and `main-screenshots` artifacts to compare before/after.";
+                  const device = screenshot.includes('desktop') ? 'Desktop' : 'Mobile';
+                  
+                  comment += `### ${pageName.charAt(0).toUpperCase() + pageName.slice(1)} - ${device}\n\n`;
+                  
+                  // Add PR screenshot
+                  const prImageBuffer = fs.readFileSync(prPath);
+                  const prBase64 = prImageBuffer.toString('base64');
+                  comment += `**After (PR):**\n`;
+                  comment += `![${screenshot}](data:image/png;base64,${prBase64})\n\n`;
+                  
+                  // Add main screenshot if exists
+                  if (fs.existsSync(mainPath)) {
+                    const mainImageBuffer = fs.readFileSync(mainPath);
+                    const mainBase64 = mainImageBuffer.toString('base64');
+                    comment += `**Before (main):**\n`;
+                    comment += `![main-${screenshot}](data:image/png;base64,${mainBase64})\n\n`;
+                  }
+                  
+                  comment += "---\n\n";
+                }
               }
-
+              
+              comment += "\n*Screenshots are automatically generated for visual review. They show the current state of your PR compared to the main branch.*";
+              
             } catch (error) {
-              comment += "❌ Failed to generate screenshots. Check workflow logs.";
-              console.error('Error:', error);
+              comment += "❌ Failed to generate screenshots. Please check the workflow logs.";
+              console.error('Error processing screenshots:', error);
             }
-
+            
             // Post comment
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -170,3 +200,4 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+
