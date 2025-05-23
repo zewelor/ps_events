@@ -2,7 +2,7 @@ name: PR Visual Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
     paths:
       - 'events_listing/**'
       - 'events.csv'
