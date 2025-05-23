@@ -194,20 +194,15 @@ permalink: /add_event/
 
     <!-- Price -->
     <div>
-      <label for="price" class="form-label">
+      <label for="price_type" class="form-label">
         Price
       </label>
-      <input
-        type="number"
-        name="price"
-        id="price"
-        value="{{ test_price }}"
-        maxlength="10"
-        max="10000"
-        step="0.50"
-        class="form-input"
-      />
-      <p class="mt-1 text-xs text-gray-500">Only if event is paid</p>
+      <select name="price_type" id="price_type" class="form-input">
+        <option value="free">Free</option>
+        <option value="paid">Paid</option>
+        <option value="unknown">Unknown</option>
+      </select>
+      <p class="mt-1 text-xs text-gray-500">Select whether the event is free, paid, or unknown</p>
     </div>
 
     <!-- Links -->
