@@ -9,8 +9,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  packages: read
+  pull-requests: write # Required for commenting on the PR
+  packages: read       # For docker login to ghcr.io
 
 jobs:
   build-and-screenshot:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
@@ -29,82 +29,117 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Server jekyll
-        run: docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site
-        env:
-          COMPOSE_FILE: docker-compose.ci.yml
+      - name: Build Jekyll site with Docker Compose
+        run: |
+          # Ensure the _site directory exists on the host for volume mapping
+          mkdir -p _site
+          # Run docker compose, mounting the host's _site directory to the container's /app/_site
+          # This way, the jekyll build output inside the container is written directly to the host's _site
+          docker compose --file docker-compose.ci.yml run --rm \
+            -e JEKYLL_ENV=production \
+            -v "$(pwd)/_site:/app/_site" \
+            app jekyll build --source /app/events_listing --destination /app/_site
+        # No need for 'env: COMPOSE_FILE' here, as it's specified with --file
 
-      # Setup a web server to serve the built site
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # Cache npm dependencies for faster subsequent runs
 
-      - name: Install http-server
-        run: npm install -g http-server
-
-      # Install Playwright
-      - name: Install Playwright
+      - name: Install Node.js dependencies (Playwright, http-server)
         run: |
+          # Create a minimal package.json if it doesn't exist, to track dependencies
           npm init -y
-          npm install playwright
-          npx playwright install chromium
+          npm install playwright http-server
+          # Install Playwright browsers and their OS dependencies
+          npx playwright install --with-deps chromium
 
-      # Start the server in background
-      - name: Start http-server
-        run: http-server _site -p 8080 &
+      - name: Start http-server in background
+        run: npx http-server _site -p 8080 & # Serve the _site directory populated by Docker
 
-      # Wait for server to start
-      - name: Wait for server
-        run: sleep 5
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for server to start..."
+          timeout 30s bash -c 'until curl -s -f -o /dev/null http://localhost:8080; do echo -n "." && sleep 1; done'
+          echo "Server is up!"
 
-      # Take screenshots
       - name: Create screenshots directory
         run: mkdir -p screenshots
 
       - name: Take screenshots with Playwright
+        id: screenshots # Give this step an id to potentially use its output later
         run: |
           cat > screenshot.js << 'EOL'
           const { chromium } = require('playwright');
+          const fs = require('fs');
 
           (async () => {
-            const browser = await chromium.launch();
+            const browser = await chromium.launch({
+              args: ['--no-sandbox', '--disable-setuid-sandbox'] // Recommended for CI environments
+            });
             const context = await browser.newContext({
-              viewport: { width: 1280, height: 720 }
+              viewport: { width: 1280, height: 720 },
+              baseURL: 'http://localhost:8080', // Set base URL for easier navigation
+              ignoreHTTPSErrors: true // Useful if your local server is http
             });
 
-            // Homepage screenshot
-            const homePage = await context.newPage();
-            await homePage.goto('http://localhost:8080/');
-            await homePage.waitForLoadState('networkidle');
-            await homePage.screenshot({ path: 'screenshots/homepage.png', fullPage: true });
+            const screenshotsTaken = [];
+            const pagesToScreenshot = [
+              { name: 'homepage', path: '/', fullPage: true },
+              { name: 'events', path: '/events/', fullPage: true },
+              { name: 'add_event', path: '/add_event/', fullPage: true }
+            ];
 
-            // Events page screenshot (if it exists)
-            try {
-              const eventsPage = await context.newPage();
-              await eventsPage.goto('http://localhost:8080/events/');
-              await eventsPage.waitForLoadState('networkidle');
-              await eventsPage.screenshot({ path: 'screenshots/events.png', fullPage: true });
-            } catch (e) {
-              console.log('Events page not found or error capturing screenshot');
+            for (const pageInfo of pagesToScreenshot) {
+              const page = await context.newPage();
+              try {
+                console.log(`Navigating to ${pageInfo.path}`);
+                await page.goto(pageInfo.path, { waitUntil: 'networkidle', timeout: 20000 }); // Increased timeout
+                const screenshotPath = `screenshots/${pageInfo.name}.png`;
+                await page.screenshot({ path: screenshotPath, fullPage: pageInfo.fullPage });
+                console.log(`Screenshot saved: ${screenshotPath}`);
+                screenshotsTaken.push(pageInfo.name);
+              } catch (e) {
+                console.error(`Error taking screenshot for ${pageInfo.name} at ${pageInfo.path}: ${e.message}`);
+                // Create an empty file as a placeholder if screenshot fails, to avoid upload errors
+                // Or simply log and continue
+              } finally {
+                await page.close();
+              }
             }
-
-            // Add event page screenshot
-            const addEventPage = await context.newPage();
-            await addEventPage.goto('http://localhost:8080/add_event/');
-            await addEventPage.waitForLoadState('networkidle');
-            await addEventPage.screenshot({ path: 'screenshots/add_event.png', fullPage: true });
-
             await browser.close();
+            // Output a list of successfully taken screenshots for potential use in PR comment
+            console.log(`::set-output name=taken_screenshots::${screenshotsTaken.join(',')}`);
           })();
           EOL
 
           node screenshot.js
 
-      # Post screenshots to PR comment
-      - name: Comment PR with images
-        uses: opengisch/comment-pr-with-images@upload_only
+      - name: Upload screenshots as artifacts
+        uses: actions/upload-artifact@v4
         with:
-          images: "screenshots/*.png"
-          upload_to: github_branch
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          name: pr-preview-screenshots
+          path: screenshots/
+          retention-days: 7 # Keep artifacts for 7 days
+
+      - name: Comment on PR with screenshot links (or images if hosted)
+        uses: marocchino/sticky-pull-request-comment@v2
+        # Only run this step if the event is a pull request
+        if: github.event_name == 'pull_request'
+        with:
+          # This will create or update a comment with a consistent header
+          header: pr-preview-screenshots-comment
+          message: |
+            🖼️ **PR Preview Screenshots** 🖼️
+
+            Screenshots have been generated for this Pull Request.
+            You can download them as a ZIP archive from the [workflow artifacts here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            **Individual Screenshots (if uploaded and publicly accessible):**
+            *(To display images directly here, they need to be uploaded to a publicly accessible URL. The links below are placeholders if you set up such a service.)*
+            - Homepage: `[View Homepage Screenshot]` (link to homepage.png if hosted)
+            - Events: `[View Events Screenshot]` (link to events.png if hosted)
+            - Add Event: `[View Add Event Screenshot]` (link to add_event.png if hosted)
+
+            *Successfully captured: ${{ steps.screenshots.outputs.taken_screenshots || 'None (check logs)' }}*
