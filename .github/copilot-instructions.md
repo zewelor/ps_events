@@ -12,6 +12,7 @@ Its MVP so lets keep it simple and focus on the core functionality.
 Used in this project
 
 - Jekyll for static site generation.
+  - Dont suggest to start jekyll build / server. I've already done that in other shell
 - Tailwind CSS for styling. We are using version 4
 - Sinatra for the backend.
 
