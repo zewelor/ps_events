@@ -1,0 +1,199 @@
+name: PR Visual Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'events_listing/**'
+      - 'events.csv'
+      - '.github/workflows/pr_visual_preview.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  packages: read
+  pull-requests: write
+
+jobs:
+  visual-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Jekyll site (PR version)
+        run: |
+          docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+
+      - name: Serve Jekyll site
+        run: |
+          docker compose run -d -p 4000:4000 app jekyll serve --host 0.0.0.0 --source /app/events_listing --destination /app/_site --no-watch &
+          sleep 10
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+
+      - name: Install Playwright
+        run: |
+          npm install -g playwright
+          npx playwright install chromium
+
+      - name: Take screenshots
+        run: |
+          mkdir -p screenshots
+
+          # Take screenshot of homepage
+          npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4000 screenshots/homepage-desktop.png
+          npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4000 screenshots/homepage-mobile.png
+
+          # Try to take screenshot of events page if it exists
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/events | grep -q "200"; then
+            npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4000/events screenshots/events-desktop.png
+            npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4000/events screenshots/events-mobile.png
+          fi
+
+          # List all available pages and take screenshots of up to 3 more pages
+          pages=$(curl -s http://localhost:4000/sitemap.xml | grep -oP '(?<=<loc>)[^<]*' | head -5 | tail -3 || echo "")
+          for page in $pages; do
+            if [[ "$page" != *"localhost:4000"* ]]; then
+              page="http://localhost:4000${page#http://localhost:4000}"
+            fi
+            filename=$(echo "$page" | sed 's|http://localhost:4000||g' | sed 's|/||g' | sed 's|^$|homepage|g')
+            if [[ "$filename" != "homepage" ]] && [[ "$filename" != "events" ]]; then
+              npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 "$page" "screenshots/${filename}-desktop.png" 2>/dev/null || true
+            fi
+          done
+
+      - name: Upload main branch screenshots as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-screenshots
+          path: screenshots-main/
+          retention-days: 30
+
+      - name: Upload PR screenshots as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-screenshots
+          path: screenshots/
+          retention-days: 30
+
+      - name: Checkout main branch for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-branch
+
+      - name: Build Jekyll site (main version)
+        run: |
+          cd main-branch
+          docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site_main
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+
+      - name: Serve main Jekyll site
+        run: |
+          cd main-branch
+          docker compose run -d -p 4001:4000 app jekyll serve --host 0.0.0.0 --port 4000 --source /app/events_listing --destination /app/_site_main --no-watch &
+          sleep 10
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+
+      - name: Take main branch screenshots
+        run: |
+          mkdir -p screenshots-main
+
+          # Take screenshot of main homepage
+          npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4001 screenshots-main/homepage-desktop.png
+          npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4001 screenshots-main/homepage-mobile.png
+
+          # Try to take screenshot of main events page if it exists
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:4001/events | grep -q "200"; then
+            npx playwright screenshot --wait-for-selector='body' --viewport-size=1280,720 http://localhost:4001/events screenshots-main/events-desktop.png
+            npx playwright screenshot --wait-for-selector='body' --viewport-size=375,667 http://localhost:4001/events screenshots-main/events-mobile.png
+          fi
+
+      - name: Create comparison comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let comment = "## 📸 Visual Preview\n\n";
+            comment += "Here's how your changes look:\n\n";
+
+            const screenshotDir = 'screenshots';
+            const mainScreenshotDir = 'screenshots-main';
+            const runId = context.runId;
+            const repo = context.repo;
+
+            try {
+              const screenshots = fs.readdirSync(screenshotDir);
+              let screenshotCount = 0;
+
+              // Group screenshots by page
+              const pageGroups = {};
+              screenshots.forEach(screenshot => {
+                const pageName = screenshot.replace(/-(desktop|mobile)\.png$/, '');
+                if (!pageGroups[pageName]) pageGroups[pageName] = [];
+                pageGroups[pageName].push(screenshot);
+              });
+
+              for (const [pageName, pageScreenshots] of Object.entries(pageGroups)) {
+                comment += `### ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}\n\n`;
+
+                for (const screenshot of pageScreenshots) {
+                  const device = screenshot.includes('desktop') ? 'Desktop' : 'Mobile';
+                  const prPath = path.join(screenshotDir, screenshot);
+                  const mainPath = path.join(mainScreenshotDir, screenshot);
+
+                  if (fs.existsSync(prPath)) {
+                    screenshotCount++;
+
+                    comment += `**${device}:**\n`;
+                    comment += `- 🆕 **After (PR):** [View Screenshot](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}/artifacts) (Download \`pr-screenshots\` artifact → \`${screenshot}\`)\n`;
+
+                    if (fs.existsSync(mainPath)) {
+                      comment += `- 📋 **Before (main):** [View Screenshot](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}/artifacts) (Download \`main-screenshots\` artifact → \`${screenshot}\`)\n`;
+                    }
+                    comment += "\n";
+                  }
+                }
+
+                comment += "---\n\n";
+              }
+
+              if (screenshotCount === 0) {
+                comment += "❌ No screenshots were generated. Please check the workflow logs.\n\n";
+              } else {
+                comment += `📦 **Download all screenshots:** [Workflow Artifacts](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})\n\n`;
+                comment += `*${screenshotCount} screenshots generated. Click the links above to download and view them.*\n\n`;
+              }
+
+              comment += "*Screenshots are automatically generated for visual review. They show the current state of your PR compared to the main branch.*";
+
+            } catch (error) {
+              comment += "❌ Failed to generate screenshots. Please check the workflow logs.";
+              console.error('Error processing screenshots:', error);
+            }
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
