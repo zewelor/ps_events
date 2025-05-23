@@ -132,62 +132,35 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            let comment = "## 📸 Visual Preview\n\n";
-            comment += "Here's how your changes look:\n\n";
-
             const screenshotDir = 'screenshots';
-            const mainScreenshotDir = 'screenshots-main';
             const runId = context.runId;
             const repo = context.repo;
 
+            let comment = "## 📸 Visual Preview\n\n";
+
             try {
               const screenshots = fs.readdirSync(screenshotDir);
-              let screenshotCount = 0;
 
-              // Group screenshots by page
-              const pageGroups = {};
-              screenshots.forEach(screenshot => {
-                const pageName = screenshot.replace(/-(desktop|mobile)\.png$/, '');
-                if (!pageGroups[pageName]) pageGroups[pageName] = [];
-                pageGroups[pageName].push(screenshot);
-              });
-
-              for (const [pageName, pageScreenshots] of Object.entries(pageGroups)) {
-                comment += `### ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}\n\n`;
-
-                for (const screenshot of pageScreenshots) {
-                  const device = screenshot.includes('desktop') ? 'Desktop' : 'Mobile';
-                  const prPath = path.join(screenshotDir, screenshot);
-                  const mainPath = path.join(mainScreenshotDir, screenshot);
-
-                  if (fs.existsSync(prPath)) {
-                    screenshotCount++;
-
-                    comment += `**${device}:**\n`;
-                    comment += `- 🆕 **After (PR):** [View Screenshot](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}/artifacts) (Download \`pr-screenshots\` artifact → \`${screenshot}\`)\n`;
-
-                    if (fs.existsSync(mainPath)) {
-                      comment += `- 📋 **Before (main):** [View Screenshot](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}/artifacts) (Download \`main-screenshots\` artifact → \`${screenshot}\`)\n`;
-                    }
-                    comment += "\n";
-                  }
-                }
-
-                comment += "---\n\n";
-              }
-
-              if (screenshotCount === 0) {
-                comment += "❌ No screenshots were generated. Please check the workflow logs.\n\n";
+              if (screenshots.length === 0) {
+                comment += "❌ No screenshots were generated.\n";
               } else {
-                comment += `📦 **Download all screenshots:** [Workflow Artifacts](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})\n\n`;
-                comment += `*${screenshotCount} screenshots generated. Click the links above to download and view them.*\n\n`;
-              }
+                comment += `✅ Generated ${screenshots.length} screenshots comparing this PR to main branch.\n\n`;
+                comment += `📦 **[Download Screenshots](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})**\n\n`;
+                comment += "**Available screenshots:**\n";
 
-              comment += "*Screenshots are automatically generated for visual review. They show the current state of your PR compared to the main branch.*";
+                // Just list the screenshot names, don't create long URLs for each
+                screenshots.forEach(screenshot => {
+                  const pageName = screenshot.replace(/-(desktop|mobile)\.png$/, '');
+                  const device = screenshot.includes('desktop') ? '🖥️' : '📱';
+                  comment += `- ${device} ${pageName}\n`;
+                });
+
+                comment += "\nDownload the `pr-screenshots` and `main-screenshots` artifacts to compare before/after.";
+              }
 
             } catch (error) {
-              comment += "❌ Failed to generate screenshots. Please check the workflow logs.";
-              console.error('Error processing screenshots:', error);
+              comment += "❌ Failed to generate screenshots. Check workflow logs.";
+              console.error('Error:', error);
             }
 
             // Post comment
