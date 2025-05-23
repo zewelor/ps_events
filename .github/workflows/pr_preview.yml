@@ -99,13 +99,6 @@ jobs:
 
           node screenshot.js
 
-      # Upload screenshots as artifacts (just for record keeping)
-      - name: Upload screenshots as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: preview-screenshots
-          path: screenshots/
-
       # Post screenshots directly as PR comments
       - name: Post screenshots as PR comments
         uses: actions/github-script@v7
@@ -114,65 +107,88 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // Function to encode image to base64
-            function encodeImage(filepath) {
-              const content = fs.readFileSync(filepath);
-              return Buffer.from(content).toString('base64');
+            // Create a gist with the screenshot
+            async function createGistWithImage(filename, filepath) {
+              try {
+                // Read image file
+                const content = fs.readFileSync(filepath);
+                const base64Content = Buffer.from(content).toString('base64');
+
+                // Create a unique name with timestamp to avoid conflicts
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const gistFilename = `${filename.split('.')[0]}-${timestamp}.png`;
+
+                // Create gist with the screenshot
+                const response = await github.rest.gists.create({
+                  files: {
+                    [gistFilename]: {
+                      content: base64Content
+                    }
+                  },
+                  public: true,
+                  description: `PR #${context.issue.number} Preview - ${gistFilename}`
+                });
+
+                // Get the raw URL to the file in the gist
+                const fileKey = Object.keys(response.data.files)[0];
+                return response.data.files[fileKey].raw_url;
+              } catch (error) {
+                console.error(`Error creating gist for ${filename}:`, error);
+                return null;
+              }
             }
 
-            // Create comment with embedded images
-            async function createComment() {
-              // Encode images
-              let homepageBase64, eventBase64;
-
+            // Post screenshots as a comment
+            async function postScreenshotComment() {
               try {
-                homepageBase64 = encodeImage('screenshots/homepage.png');
-                console.log('Homepage screenshot encoded');
-              } catch (error) {
-                console.error('Error encoding homepage screenshot:', error);
-                homepageBase64 = null;
-              }
+                console.log('Checking for screenshots...');
+                const files = [];
 
-              try {
-                if (fs.existsSync('screenshots/event.png')) {
-                  eventBase64 = encodeImage('screenshots/event.png');
-                  console.log('Event page screenshot encoded');
+                // Check if files exist and upload to gists
+                if (fs.existsSync('screenshots/homepage.png')) {
+                  console.log('Homepage screenshot found, uploading...');
+                  const homepageUrl = await createGistWithImage('homepage.png', 'screenshots/homepage.png');
+                  if (homepageUrl) {
+                    files.push({ name: 'Homepage', url: homepageUrl });
+                  }
                 }
+
+                if (fs.existsSync('screenshots/event.png')) {
+                  console.log('Event page screenshot found, uploading...');
+                  const eventUrl = await createGistWithImage('event.png', 'screenshots/event.png');
+                  if (eventUrl) {
+                    files.push({ name: 'Sample Event Page', url: eventUrl });
+                  }
+                }
+
+                // Create comment text
+                let commentBody = `## 📸 PR Preview Screenshots\n\n`;
+                commentBody += `*Screenshots taken at ${new Date().toUTCString()}*\n\n`;
+
+                if (files.length === 0) {
+                  commentBody += '⚠️ No screenshots were successfully captured.';
+                } else {
+                  // Add each screenshot to the comment
+                  for (const file of files) {
+                    commentBody += `### ${file.name}\n`;
+                    commentBody += `![${file.name} Screenshot](${file.url})\n\n`;
+                  }
+                }
+
+                // Post the comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+
+                console.log('PR comment with screenshots posted successfully');
               } catch (error) {
-                console.error('Error encoding event screenshot:', error);
-                eventBase64 = null;
+                console.error('Error posting PR comment:', error);
+                core.setFailed('Failed to post screenshots as PR comment');
               }
-
-              // Build comment with any successful screenshots
-              let comment = `## 📸 PR Preview Screenshots\n\n*Screenshots taken at ${new Date().toUTCString()}*\n\n`;
-
-              if (homepageBase64) {
-                comment += '### Homepage\n';
-                comment += `<details><summary>Click to expand</summary>\n\n`;
-                comment += `<img src="data:image/png;base64,${homepageBase64}" width="800" />\n`;
-                comment += `</details>\n\n`;
-              } else {
-                comment += '### Homepage\nFailed to capture homepage screenshot\n\n';
-              }
-
-              if (eventBase64) {
-                comment += '### Sample Event Page\n';
-                comment += `<details><summary>Click to expand</summary>\n\n`;
-                comment += `<img src="data:image/png;base64,${eventBase64}" width="800" />\n`;
-                comment += `</details>\n\n`;
-              } else {
-                comment += '### Sample Event Page\nFailed to capture event page screenshot or no event pages found\n\n';
-              }
-
-              // Post comment to PR
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-
-              console.log('PR comment with screenshots posted');
             }
 
-            await createComment();
+            // Execute the main function
+            await postScreenshotComment();
