@@ -1,0 +1,179 @@
+name: PR Preview
+
+on:
+  pull_request:
+    paths:
+      - 'events.csv'
+      - '.github/workflows/pr_preview.yml'
+      - 'events_listing/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  packages: read
+
+jobs:
+  build-and-screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Server jekyll
+        run: just jekyll
+          docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+
+      # Setup a web server to serve the built site
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install http-server
+        run: npm install -g http-server
+
+      # Install Playwright
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install chromium
+
+      # Start the server in background
+      - name: Start http-server
+        run: http-server _site -p 8080 &
+
+      # Wait for server to start
+      - name: Wait for server
+        run: sleep 5
+
+      # Take screenshots
+      - name: Create screenshots directory
+        run: mkdir -p screenshots
+
+      - name: Take screenshots
+        run: |
+          cat > screenshot.js << 'EOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch();
+            const context = await browser.newContext({
+              viewport: { width: 1280, height: 800 }
+            });
+
+            // Screenshot homepage
+            const homePage = await context.newPage();
+            await homePage.goto('http://localhost:8080/');
+            await homePage.waitForLoadState('networkidle');
+            await homePage.screenshot({ path: 'screenshots/homepage.png', fullPage: true });
+
+            // Get a sample event page URL
+            const eventLinks = await homePage.$$eval('a[href^="/events/"]', links =>
+              links.slice(0, 1).map(link => link.href)
+            );
+
+            if (eventLinks.length > 0) {
+              // Screenshot sample event page
+              const eventPage = await context.newPage();
+              await eventPage.goto(eventLinks[0]);
+              await eventPage.waitForLoadState('networkidle');
+              await eventPage.screenshot({ path: 'screenshots/event.png', fullPage: true });
+            }
+
+            await browser.close();
+            console.log('Screenshots taken successfully');
+          })();
+          EOF
+
+          node screenshot.js
+
+      # Upload screenshots as artifacts (just for record keeping)
+      - name: Upload screenshots as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: preview-screenshots
+          path: screenshots/
+
+      # Post screenshots directly as PR comments
+      - name: Post screenshots as PR comments
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // Function to encode image to base64
+            function encodeImage(filepath) {
+              const content = fs.readFileSync(filepath);
+              return Buffer.from(content).toString('base64');
+            }
+
+            // Create comment with embedded images
+            async function createComment() {
+              // Encode images
+              let homepageBase64, eventBase64;
+
+              try {
+                homepageBase64 = encodeImage('screenshots/homepage.png');
+                console.log('Homepage screenshot encoded');
+              } catch (error) {
+                console.error('Error encoding homepage screenshot:', error);
+                homepageBase64 = null;
+              }
+
+              try {
+                if (fs.existsSync('screenshots/event.png')) {
+                  eventBase64 = encodeImage('screenshots/event.png');
+                  console.log('Event page screenshot encoded');
+                }
+              } catch (error) {
+                console.error('Error encoding event screenshot:', error);
+                eventBase64 = null;
+              }
+
+              // Build comment with any successful screenshots
+              let comment = `## 📸 PR Preview Screenshots\n\n*Screenshots taken at ${new Date().toUTCString()}*\n\n`;
+
+              if (homepageBase64) {
+                comment += '### Homepage\n';
+                comment += `<details><summary>Click to expand</summary>\n\n`;
+                comment += `<img src="data:image/png;base64,${homepageBase64}" width="800" />\n`;
+                comment += `</details>\n\n`;
+              } else {
+                comment += '### Homepage\nFailed to capture homepage screenshot\n\n';
+              }
+
+              if (eventBase64) {
+                comment += '### Sample Event Page\n';
+                comment += `<details><summary>Click to expand</summary>\n\n`;
+                comment += `<img src="data:image/png;base64,${eventBase64}" width="800" />\n`;
+                comment += `</details>\n\n`;
+              } else {
+                comment += '### Sample Event Page\nFailed to capture event page screenshot or no event pages found\n\n';
+              }
+
+              // Post comment to PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+
+              console.log('PR comment with screenshots posted');
+            }
+
+            await createComment();
