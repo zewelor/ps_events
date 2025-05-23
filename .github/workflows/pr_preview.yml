@@ -102,7 +102,7 @@ jobs:
 
       # Upload screenshots as artifacts (just for record keeping)
       - name: Upload screenshots as artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: preview-screenshots
           path: screenshots/
