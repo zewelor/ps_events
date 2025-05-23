@@ -30,8 +30,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Server jekyll
-        run: just jekyll
-          docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site
+        run: docker compose run -e JEKYLL_ENV=production app jekyll build --source /app/events_listing --destination /app/_site
         env:
           COMPOSE_FILE: docker-compose.ci.yml
 
