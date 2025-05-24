@@ -185,7 +185,7 @@ GEM
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.1.15)
-    rack-protection (4.0.1)
+    rack-protection (4.1.0)
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
       rack (>= 3.0.0, < 4)
@@ -257,17 +257,13 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.1)
     simplecov_json_formatter (0.1.4)
-    sinatra (4.0.1)
+    sinatra (4.1.0)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
       rack (>= 3.0.0, < 4)
-      rack-protection (= 4.0.1)
+      rack-protection (= 4.1.0)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
-    sinatra-validation (0.4.0)
-      dry-validation (~> 1.10)
-      rack (>= 3.0.9)
-      sinatra (~> 4.0.0)
     sorbet-runtime (0.5.12124)
     standard (1.50.0)
       language_server-protocol (~> 3.17.0.2)
@@ -324,7 +320,6 @@ DEPENDENCIES
   ruby-lsp
   simplecov
   sinatra
-  sinatra-validation (~> 0.3)
   standard
   tzinfo (~> 2.0)
   tzinfo-data (~> 1.2025)
