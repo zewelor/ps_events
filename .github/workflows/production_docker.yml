@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - 'Dockerfile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
       - 'bin/server'
       - 'lib/server/**/*'
       - '.github/workflows/production_docker.yml'
