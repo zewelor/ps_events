@@ -60,13 +60,28 @@ post "/add_event" do
     puts "✅ Validation successful for event: #{validated_params[:name]}"
 
     # Format start and end times
-    start_dt = DateTime.parse(validated_params[:start_date])
-    start_str = start_dt.strftime("%d/%m/%Y %H:%M")
+    # Combine date and time if time is provided, otherwise use date only
+    start_date = Date.parse(validated_params[:start_date])
+    start_time = (validated_params[:start_time] && !validated_params[:start_time].strip.empty?) ?
+                 validated_params[:start_time] : nil
 
-    end_str = if validated_params[:end_date] && !validated_params[:end_date].strip.empty?
-      DateTime.parse(validated_params[:end_date]).strftime("%d/%m/%Y %H:%M")
+    if start_time
+      start_dt = DateTime.parse("#{validated_params[:start_date]} #{start_time}")
+      start_str = start_dt.strftime("%d/%m/%Y %H:%M")
     else
-      ""
+      start_str = start_date.strftime("%d/%m/%Y")
+    end
+
+    # Handle end date and time
+    end_date = Date.parse(validated_params[:end_date])
+    end_time = (validated_params[:end_time] && !validated_params[:end_time].strip.empty?) ?
+               validated_params[:end_time] : nil
+
+    if end_time
+      end_dt = DateTime.parse("#{validated_params[:end_date]} #{end_time}")
+      end_str = end_dt.strftime("%d/%m/%Y %H:%M")
+    else
+      end_str = end_date.strftime("%d/%m/%Y")
     end
 
     # Format submitted at timestamp
