@@ -53,14 +53,7 @@
         'minor',
       ],
       automerge: true,
-      automergeType: 'branch',
-      matchPackageNames: [
-        'lefthook',
-        'rubocop-performance',
-        'ruby-lsp',
-        'amazing_print',
-        'standard'
-      ],
+      automergeType: 'branch'
     },
   ],
 }
