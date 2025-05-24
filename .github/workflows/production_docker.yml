@@ -8,6 +8,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'bin/server'
+      - 'lib/server/**/*'
       - '.github/workflows/production_docker.yml'
 
 env:

@@ -14,7 +14,7 @@ permalink: /add_event/
   {% assign test_end         = "2025-05-23T12:00" %}
   {% assign test_email       = "test@example.com" %}
   {% assign test_tel         = "+1234567890" %}
-  {% assign test_price       = "25" %}
+  {% assign test_price_type   = "Free" %}
   {% assign test_link1       = "https://example.com/event" %}
   {% assign test_link2       = "" %}
   {% assign test_link3       = "" %}
@@ -29,7 +29,7 @@ permalink: /add_event/
   {% assign test_end = "" %}
   {% assign test_email = "" %}
   {% assign test_tel = "" %}
-  {% assign test_price = "" %}
+  {% assign test_price_type = "" %}
   {% assign test_link1 = "" %}
   {% assign test_link2 = "" %}
   {% assign test_link3 = "" %}
@@ -192,15 +192,15 @@ permalink: /add_event/
       </div>
     </div>
 
-    <!-- Price -->
+    <!-- Price Type -->
     <div>
       <label for="price_type" class="form-label">
-        Price
+        Price Type
       </label>
       <select name="price_type" id="price_type" class="form-input">
-        <option value="free">Free</option>
-        <option value="paid">Paid</option>
-        <option value="unknown">Unknown</option>
+        <option value="Free" {% if test_price_type == 'Free' %}selected{% endif %}>Free</option>
+        <option value="Paid" {% if test_price_type == 'Paid' %}selected{% endif %}>Paid</option>
+        <option value="Unknown" {% if test_price_type == 'Unknown' %}selected{% endif %}>Unknown</option>
       </select>
       <p class="mt-1 text-xs text-gray-500">Select whether the event is free, paid, or unknown</p>
     </div>
@@ -320,15 +320,18 @@ permalink: /add_event/
       const data = new FormData(form);
       try {
         const response = await fetch(form.action, { method: 'POST', body: data });
-        if (response.ok) {
-          showToast('Event added successfully!');
+        const result = await response.json();
+
+        if (response.ok && result.status === 'ok') {
+          showToast(`Event "${result.event_name}" added successfully!`);
           form.reset();
         } else {
-          const err = await response.text();
-          showToast('Error: ' + err, 'error');
+          const errorMsg = result.message || 'Unknown error occurred';
+          showToast(`Error: ${errorMsg}`, 'error');
         }
       } catch (error) {
-        showToast('Network error', 'error');
+        console.error('Submission error:', error);
+        showToast('Network error. Please check your connection and try again.', 'error');
       } finally {
         // re-enable and hide spinner
         submitBtn.disabled = false;

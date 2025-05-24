@@ -2,7 +2,7 @@ FROM ghcr.io/zewelor/ruby:3.4.4-slim AS base
 
 ARG BUNDLER_VERSION=2.6.8
 ARG RUNTIME_PACKAGES=""
-ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client"
+ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl"
 
 # We mount whole . dir into app, so vendor/bundle would get overwritten
 ENV BUNDLE_PATH=/bundle \

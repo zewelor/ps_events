@@ -3,6 +3,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "zeitwerk"
 gem "sinatra"
+gem "dotenv"
 
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]
@@ -41,3 +42,5 @@ end
 
 gem "rackup", "~> 2.2"
 gem "puma", "~> 6.6"
+
+gem "google-apis-sheets_v4", "~> 0.44.0"
