@@ -2,11 +2,22 @@
 
 require "bundler/setup"
 require "json"
+require "dotenv/load"
 
 Bundler.require(:default)
 
+# Load server modules
+require_relative "../lib/server/google_sheets_service"
+
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
+
+# Initialize Google Sheets service
+configure do
+  set :google_sheets, GoogleSheetsService.new
+  set :spreadsheet_id, ENV.fetch("GOOGLE_SPREADSHEET_ID")
+  set :events_range, ENV.fetch("EVENTS_SHEET_RANGE")
+end
 
 configure :production do
   set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
@@ -25,36 +36,124 @@ options "*" do
   200
 end
 
+# Health check endpoint
+get "/health" do
+  content_type :json
+  {
+    status: "ok",
+    timestamp: Time.now.iso8601,
+    google_sheets_connected: !settings.google_sheets.nil?
+  }.to_json
+end
+
 # Handle form submissions to add new event
 post "/add_event" do
+  puts "📝 Received event submission with params: #{params.keys}"
+
+  # Validate required fields
+  required_fields = %w[name start_date location description category organizer contact_email]
+  missing_fields = required_fields.select { |field| params[field].nil? || params[field].strip.empty? }
+
+  if missing_fields.any?
+    puts "❌ Missing required fields: #{missing_fields.join(", ")}"
+    content_type :json
+    status 400
+    return {
+      status: "error",
+      message: "Missing required fields: #{missing_fields.join(", ")}"
+    }.to_json
+  end
+
+  # Validate email format
+  email_regex = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
+  unless params["contact_email"].match?(email_regex)
+    puts "❌ Invalid email format: #{params["contact_email"]}"
+    content_type :json
+    status 400
+    return {
+      status: "error",
+      message: "Invalid email format"
+    }.to_json
+  end
+
   # Format start and end times
-  start_dt = DateTime.parse(params["start_date"])
-  start_str = start_dt.strftime("%d/%m/%Y %H:%M")
+  begin
+    start_dt = DateTime.parse(params["start_date"])
+    start_str = start_dt.strftime("%d/%m/%Y %H:%M")
+  rescue ArgumentError
+    puts "❌ Invalid start date format: #{params["start_date"]}"
+    content_type :json
+    status 400
+    return {
+      status: "error",
+      message: "Invalid start date format"
+    }.to_json
+  end
+
   end_str = if params["end_date"] && !params["end_date"].strip.empty?
-    DateTime.parse(params["end_date"]).strftime("%d/%m/%Y %H:%M")
+    begin
+      DateTime.parse(params["end_date"]).strftime("%d/%m/%Y %H:%M")
+    rescue ArgumentError
+      puts "❌ Invalid end date format: #{params["end_date"]}"
+      content_type :json
+      status 400
+      return {
+        status: "error",
+        message: "Invalid end date format"
+      }.to_json
+    end
   else
     ""
   end
 
-  puts [
-    params["name"],
+  # Prepare event data for spreadsheet
+  event_data = [
+    params["name"].strip,
     start_str,
     end_str,
-    params["location"],
-    params["description"],
-    params["category"],
-    params["organizer"],
-    params["contact_email"],
-    params["contact_tel"],
-    params["price"],
-    params["event_link1"],
-    params["event_link2"],
-    params["event_link3"],
-    params["event_link4"],
+    params["location"].strip,
+    params["description"].strip,
+    params["category"].strip,
+    params["organizer"].strip,
+    params["contact_email"].strip.downcase,
+    params["contact_tel"]&.strip || "",
+    params["price_type"]&.strip || "",
+    params["event_link1"]&.strip || "",
+    params["event_link2"]&.strip || "",
+    params["event_link3"]&.strip || "",
+    params["event_link4"]&.strip || "",
     "" # image placeholder
   ]
 
+  # Log the event data (mask sensitive info)
+  masked_data = event_data.dup
+  masked_data[7] = "#{masked_data[7].split("@").first}@***" if masked_data[7].include?("@")
+  puts "✅ Adding event: #{masked_data[0]} by #{masked_data[6]} at #{masked_data[3]}"
+
+  # Add to Google Sheets
+  settings.google_sheets.append_row(
+    settings.spreadsheet_id,
+    settings.events_range,
+    event_data
+  )
+
+  puts "✅ Event successfully added to spreadsheet"
+
   # Respond with JSON status
   content_type :json
-  {status: "ok"}.to_json
+  {
+    status: "ok",
+    message: "Event added successfully",
+    event_name: params["name"],
+    event_date: start_str
+  }.to_json
+rescue => e
+  puts "❌ Error adding event: #{e.message}"
+  puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
+  content_type :json
+  status 500
+  {
+    status: "error",
+    message: "Failed to add event. Please try again."
+  }.to_json
 end

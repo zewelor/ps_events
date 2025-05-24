@@ -15,6 +15,7 @@ Used in this project
   - Dont suggest to start jekyll build / server. I've already done that in other shell
 - Tailwind CSS for styling. We are using version 4
 - Sinatra for the backend.
+  - Dont start the Sinatra server. I've already done that in other shell. Its launched via bin/server
 
 ## UI and Styling
 
@@ -24,7 +25,10 @@ Used in this project
 
 ### Project Structure
 
+- Envs are loaded from the .env file, in docker-compose.yml
 - Jekyll site resides in the events_listing directory.
 - .github directory contains GitHub Actions workflows. They are used for CI/CD.
 - Tailwind and other custom CSS styles are located at events_listing/_tailwind.css
 - Gems are managed in the Gemfile located in the root directory.
+- Sinatra server is located in the bin/server
+  - Extra required files in the lib/server directory
