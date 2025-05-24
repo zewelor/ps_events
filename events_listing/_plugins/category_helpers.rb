@@ -5,13 +5,13 @@ module Jekyll
     # Central metadata mapping for categories
     CATEGORY_META = {
       "Music" => {"color" => "#1e3a8a"},
-      "Food" => {"color" => "#3b82f6"},
+      "Food" => {"color" => "#c26e5e"},
       "Art" => {"color" => "#f97316"},
       "Nature" => {"color" => "#fdba74"},
       "Health & Wellness" => {"color" => "#10b981"},
-      "Sports" => {"color" => "#047857"},
-      "Learning & Workshops" => {"color" => "#d1d5db"},
-      "Community & Culture" => {"color" => "#fcd34d"}
+      "Sports" => {"color" => "#75c8e2"},
+      "Learning & Workshops" => {"color" => "#d0a670"},
+      "Community & Culture" => {"color" => "#7abdcd"}
     }
 
     # Combined metadata: returns a hash with color and icon keys

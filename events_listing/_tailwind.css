@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
+@theme{
+  --color-buttons: oklch(0.7512 0.0863 72.88);
+}
+
 .navigation-button {
-  @apply inline-block bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-800 transition-colors
+  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors
 }
 
 .event-card {
@@ -18,7 +22,7 @@
 }
 
 .filter-btn--active {
-  @apply bg-emerald-700 text-white hover:bg-emerald-800
+  @apply bg-buttons text-zinc-800 hover:bg-yellow-700
 }
 
 /* Form wrapper combining card styling and padding */
@@ -28,7 +32,7 @@
 
 /* Form input fields common styling */
 .form-input {
-  @apply mt-1 block w-full border-b-4 border-emerald-500 focus:ring-indigo-500 focus:border-indigo-500 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
+  @apply mt-1 block w-full border-b-4 border-yellow-600 focus:ring-cyan-700 focus:border-cyan-700 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
 }
 
 /* Form label common styling */
