@@ -5,7 +5,9 @@ class EventValidation < Dry::Validation::Contract
   params do
     required(:name).filled(:string)
     required(:start_date).filled(:string)
-    optional(:end_date).maybe(:string)
+    optional(:start_time).maybe(:string)
+    required(:end_date).filled(:string)
+    optional(:end_time).maybe(:string)
     required(:location).filled(:string)
     required(:description).filled(:string)
     required(:category).filled(:string)
@@ -26,22 +28,60 @@ class EventValidation < Dry::Validation::Contract
   end
 
   rule(:start_date) do
-    DateTime.parse(value)
+    Date.parse(value)
   rescue ArgumentError
-    key.failure("must be a valid date and time format")
+    key.failure("must be a valid date format (YYYY-MM-DD)")
+  end
+
+  rule(:start_time) do
+    if key? && value && !value.empty?
+      begin
+        Time.parse(value)
+      rescue ArgumentError
+        key.failure("must be a valid time format (HH:MM)")
+      end
+    end
   end
 
   rule(:end_date) do
+    end_date = Date.parse(value)
+    start_date = Date.parse(values[:start_date]) if values[:start_date]
+
+    if start_date && end_date < start_date
+      key.failure("must be on or after start date")
+    end
+  rescue ArgumentError
+    key.failure("must be a valid date format (YYYY-MM-DD)")
+  end
+
+  rule(:end_time) do
     if key? && value && !value.empty?
       begin
-        end_dt = DateTime.parse(value)
-        start_dt = DateTime.parse(values[:start_date]) if values[:start_date]
+        Time.parse(value)
+      rescue ArgumentError
+        key.failure("must be a valid time format (HH:MM)")
+      end
+    end
+  end
 
-        if start_dt && end_dt < start_dt
-          key.failure("must be after start date")
+  rule(:start_date, :start_time, :end_date, :end_time) do
+    if values[:start_date] && values[:end_date]
+      begin
+        start_date = Date.parse(values[:start_date])
+        end_date = Date.parse(values[:end_date])
+
+        # If dates are the same and both times are provided, check time order
+        if start_date == end_date && values[:start_time] && values[:end_time] &&
+            !values[:start_time].empty? && !values[:end_time].empty?
+          start_time = Time.parse(values[:start_time])
+          end_time = Time.parse(values[:end_time])
+
+          if end_time <= start_time
+            key(:end_time).failure("must be after start time when on the same date")
+          end
         end
       rescue ArgumentError
-        key.failure("must be a valid date and time format")
+        # Individual field validations will catch parsing errors
       end
     end
   end
