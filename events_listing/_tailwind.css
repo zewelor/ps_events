@@ -2,10 +2,13 @@
 
 @theme{
   --color-buttons: oklch(0.7512 0.0863 72.88);
+  --color-buttons-hover: oklch(0.6484 0.0863 72.88);
+  --color-selected-filter: oklch(0.3 0.0045 325.69);
+  --color-selected-filter-hover: oklch(0.1588 0.0045 325.69);
 }
 
 .navigation-button {
-  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors
+  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors
 }
 
 .event-card {
@@ -18,11 +21,11 @@
 }
 
 .filter-btn--inactive {
-  @apply bg-gray-200 text-gray-700 hover:bg-gray-300
+  @apply bg-buttons text-gray-700 hover:bg-buttons-hover
 }
 
 .filter-btn--active {
-  @apply bg-buttons text-zinc-800 hover:bg-yellow-700
+  @apply bg-selected-filter text-white hover:bg-selected-filter-hover
 }
 
 /* Form wrapper combining card styling and padding */
