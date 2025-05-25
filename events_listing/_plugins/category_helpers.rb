@@ -4,14 +4,14 @@ module Jekyll
   module CategoryHelpers
     # Central metadata mapping for categories
     CATEGORY_META = {
-      "Music" => {"color" => "#1e3a8a"},
+      "Music" => {"color" => "#3f7182"},
       "Food" => {"color" => "#c26e5e"},
-      "Art" => {"color" => "#f97316"},
-      "Nature" => {"color" => "#fdba74"},
-      "Health & Wellness" => {"color" => "#10b981"},
-      "Sports" => {"color" => "#75c8e2"},
-      "Learning & Workshops" => {"color" => "#d0a670"},
-      "Community & Culture" => {"color" => "#7abdcd"}
+      "Art" => {"color" => "#7abdc5"},
+      "Nature" => {"color" => "#7b55a50"},
+      "Health & Wellness" => {"color" => "#75c8e2"},
+      "Sports" => {"color" => "#d0a670"},
+      "Learning & Workshops" => {"color" => "#2f2d2f"},
+      "Community & Culture" => {"color" => "#99aab8"}
     }
 
     # Combined metadata: returns a hash with color and icon keys
