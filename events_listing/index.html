@@ -13,7 +13,7 @@ title: Events Listing
 
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
     <button data-filter-category="all" class="filter-btn filter-btn--active">
-      All Categories ({{ upcoming_events | size }})
+      All Categories ({{ site.data.events | size }})
     </button>
     {% for group in sorted_groups %}
       <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">
