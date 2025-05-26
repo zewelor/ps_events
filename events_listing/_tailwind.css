@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+@theme{
+  --color-buttons: oklch(0.7565 0.0688 205.39);
+  --color-buttons-hover: oklch(0.595 0.0688 205.39);
+  --color-selected-filter: oklch(0.3 0.0045 325.69);
+  --color-selected-filter-hover: oklch(0.1588 0.0045 325.69);
+}
+
 .navigation-button {
-  @apply inline-block bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-800 transition-colors
+  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors
 }
 
 .event-card {
@@ -14,11 +21,11 @@
 }
 
 .filter-btn--inactive {
-  @apply bg-gray-200 text-gray-700 hover:bg-gray-300
+  @apply bg-buttons text-gray-700 hover:bg-buttons-hover
 }
 
 .filter-btn--active {
-  @apply bg-emerald-700 text-white hover:bg-emerald-800
+  @apply bg-selected-filter text-white hover:bg-selected-filter-hover
 }
 
 /* Form wrapper combining card styling and padding */
@@ -28,7 +35,7 @@
 
 /* Form input fields common styling */
 .form-input {
-  @apply mt-1 block w-full border-b-4 border-emerald-500 focus:ring-indigo-500 focus:border-indigo-500 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
+  @apply mt-1 block w-full border-b-4 border-yellow-600 focus:ring-cyan-700 focus:border-cyan-700 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
 }
 
 /* Form label common styling */
