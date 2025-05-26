@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme{
-  --color-buttons: oklch(0.7512 0.0863 72.88);
-  --color-buttons-hover: oklch(0.6484 0.0863 72.88);
+  --color-buttons: oklch(0.7565 0.0688 205.39);
+  --color-buttons-hover: oklch(0.595 0.0688 205.39);
   --color-selected-filter: oklch(0.3 0.0045 325.69);
   --color-selected-filter-hover: oklch(0.1588 0.0045 325.69);
 }
