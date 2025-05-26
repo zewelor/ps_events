@@ -121,11 +121,8 @@ class EventValidation < Dry::Validation::Contract
 
   rule(:category) do
     valid_categories = [
-      "Arts & Culture", "Business & Professional", "Community & Social",
-      "Education & Learning", "Entertainment", "Family & Kids",
-      "Food & Drink", "Health & Wellness", "Music", "Outdoors & Adventure",
-      "Religion & Spirituality", "Science & Technology", "Sports & Fitness",
-      "Travel & Tourism", "Other"
+      "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
+      "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
     ]
 
     unless valid_categories.include?(value)
