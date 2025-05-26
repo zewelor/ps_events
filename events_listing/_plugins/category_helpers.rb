@@ -7,7 +7,7 @@ module Jekyll
       "Music" => {"color" => "#3f7182"},
       "Food" => {"color" => "#c26e5e"},
       "Art" => {"color" => "#7abdc5"},
-      "Nature" => {"color" => "#7b55a50"},
+      "Nature" => {"color" => "#7b5a50"},
       "Health & Wellness" => {"color" => "#75c8e2"},
       "Sports" => {"color" => "#d0a670"},
       "Learning & Workshops" => {"color" => "#2f2d2f"},
