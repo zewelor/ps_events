@@ -35,7 +35,7 @@
 
 /* Form input fields common styling */
 .form-input {
-  @apply mt-1 block w-full border-b-4 border-yellow-600 focus:ring-cyan-700 focus:border-cyan-700 focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
+  @apply mt-1 block w-full border-b-4 border-buttons focus:ring-buttons-hover focus:border-buttons-hover focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
 }
 
 /* Form label common styling */

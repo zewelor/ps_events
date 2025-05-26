@@ -1,13 +1,13 @@
 ---
 layout: default
-title: "Add an Event"
+title: "Adicionar um Evento"
 permalink: /add_event/
 ---
 
 {% if jekyll.environment == 'development' %}
   {% assign test_name        = "Test Event" %}
   {% assign test_description = "Sample description for testing form submission." %}
-  {% assign test_category    = "Music" %}
+  {% assign test_category    = "Música" %}
   {% assign test_organizer   = "Test Organizer" %}
   {% assign test_location    = "Test Venue, Town" %}
   {% assign test_start       = "2025-05-23T10:00" %}
@@ -37,13 +37,13 @@ permalink: /add_event/
 {% endif %}
 
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
-  <h1 class="text-2xl md:text-3xl font-semibold mb-6">Add a New Event</h1>
+  <h1 class="text-2xl md:text-3xl font-semibold mb-6">Adicionar um Novo Evento</h1>
   <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" enctype="multipart/form-data" class="form-card">
 
     <!-- Name -->
     <div>
       <label for="name" class="form-label">
-        Name <span class="text-red-500">*</span>
+        Nome <span class="text-red-500">*</span>
       </label>
       <input
         type="text"
@@ -54,13 +54,13 @@ permalink: /add_event/
         maxlength="100"
         class="form-input"
       />
-      <p class="form-help">Name / Title of the event (max 100 chars)</p>
+      <p class="form-help">Nome / Título do evento (máx. 100 caracteres)</p>
     </div>
 
     <!-- Description -->
     <div>
       <label for="description" class="form-label">
-        Description <span class="text-red-500">*</span>
+        Descrição <span class="text-red-500">*</span>
       </label>
       <textarea
         name="description"
@@ -70,13 +70,13 @@ permalink: /add_event/
         rows="6"
         class="form-input resize-none"
       >{{ test_description }}</textarea>
-      <p class="form-help">Brief description (max 500 chars)</p>
+      <p class="form-help">Breve descrição (máx. 500 caracteres)</p>
     </div>
 
     <!-- Category -->
     <div>
       <label for="category" class="form-label">
-        Category <span class="text-red-500">*</span>
+        Categoria <span class="text-red-500">*</span>
       </label>
       <select
         name="category"
@@ -84,22 +84,22 @@ permalink: /add_event/
         required
         class="form-input"
       >
-        <option value="">Select a category</option>
-        <option value="Music" {% if test_category == 'Music' %}selected{% endif %}>Music</option>
-        <option value="Food" {% if test_category == 'Food' %}selected{% endif %}>Food</option>
-        <option value="Art" {% if test_category == 'Art' %}selected{% endif %}>Art</option>
-        <option value="Nature" {% if test_category == 'Nature' %}selected{% endif %}>Nature</option>
-        <option value="Health & Wellness" {% if test_category == 'Health & Wellness' %}selected{% endif %}>Health & Wellness</option>
-        <option value="Sports" {% if test_category == 'Sports' %}selected{% endif %}>Sports</option>
-        <option value="Learning & Workshops" {% if test_category == 'Learning & Workshops' %}selected{% endif %}>Learning & Workshops</option>
-        <option value="Community & Culture" {% if test_category == 'Community & Culture' %}selected{% endif %}>Community & Culture</option>
+        <option value="">Selecione uma categoria</option>
+        <option value="Música" {% if test_category == 'Música' %}selected{% endif %}>Música</option>
+        <option value="Comida" {% if test_category == 'Comida' %}selected{% endif %}>Comida</option>
+        <option value="Arte" {% if test_category == 'Arte' %}selected{% endif %}>Arte</option>
+        <option value="Natureza" {% if test_category == 'Natureza' %}selected{% endif %}>Natureza</option>
+        <option value="Saúde & Bem-Estar" {% if test_category == 'Saúde & Bem-Estar' %}selected{% endif %}>Saúde & Bem-Estar</option>
+        <option value="Desporto" {% if test_category == 'Desporto' %}selected{% endif %}>Desporto</option>
+        <option value="Aprendizagem & Workshops" {% if test_category == 'Aprendizagem & Workshops' %}selected{% endif %}>Aprendizagem & Workshops</option>
+        <option value="Comunidade & Cultura" {% if test_category == 'Comunidade & Cultura' %}selected{% endif %}>Comunidade & Cultura</option>
       </select>
     </div>
 
     <!-- Organizer -->
     <div>
       <label for="organizer" class="form-label">
-        Organizer <span class="text-red-500">*</span>
+        Organizador <span class="text-red-500">*</span>
       </label>
       <input
         type="text"
@@ -115,7 +115,7 @@ permalink: /add_event/
     <!-- Location -->
     <div>
       <label for="location" class="form-label">
-        Location <span class="text-red-500">*</span>
+        Local <span class="text-red-500">*</span>
       </label>
       <input
         type="text"
@@ -133,7 +133,7 @@ permalink: /add_event/
       <!-- Start date -->
       <div>
         <label for="start_date" class="form-label">
-          Start date <span class="text-red-500">*</span>
+          Data de início <span class="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -216,14 +216,14 @@ permalink: /add_event/
     <!-- Price Type -->
     <div>
       <label for="price_type" class="form-label">
-        Price Type
+        Tipo de Preço
       </label>
       <select name="price_type" id="price_type" class="form-input">
-        <option value="Free" {% if test_price_type == 'Free' %}selected{% endif %}>Free</option>
-        <option value="Paid" {% if test_price_type == 'Paid' %}selected{% endif %}>Paid</option>
-        <option value="Unknown" {% if test_price_type == 'Unknown' %}selected{% endif %}>Unknown</option>
+        <option value="Free" {% if test_price_type == 'Free' %}selected{% endif %}>Gratuito</option>
+        <option value="Paid" {% if test_price_type == 'Paid' %}selected{% endif %}>Pago</option>
+        <option value="Unknown" {% if test_price_type == 'Unknown' %}selected{% endif %}>Desconhecido</option>
       </select>
-      <p class="form-help">Select whether the event is free, paid, or unknown</p>
+      <p class="form-help">Selecione se o evento é gratuito, pago ou desconhecido</p>
     </div>
 
     <!-- Event Image -->

@@ -122,6 +122,9 @@ post "/add_event" do
     submitted_at = Time.now.strftime("%d/%m/%Y %H:%M")
 
     # Prepare event data for spreadsheet
+    # Extract only filename from image_path if present
+    image_filename = image_path.empty? ? "" : File.basename(image_path)
+
     event_data = [
       submitted_at,
       "someone@gmail.com", # Placeholder for user email
@@ -135,7 +138,7 @@ post "/add_event" do
       validated_params[:contact_email].strip.downcase,
       validated_params[:contact_tel]&.strip || "",
       validated_params[:price_type]&.strip || "",
-      image_path, # Store the processed image path
+      image_filename, # Store only the filename
       validated_params[:event_link1]&.strip || "",
       validated_params[:event_link2]&.strip || "",
       validated_params[:event_link3]&.strip || "",
