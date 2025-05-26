@@ -35,3 +35,8 @@
 .form-label {
   @apply block text-sm font-medium text-gray-700;
 }
+
+/* Form field description/help text styling */
+.form-help {
+  @apply mt-1 text-xs text-gray-500;
+}
