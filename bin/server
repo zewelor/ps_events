@@ -122,8 +122,8 @@ post "/add_event" do
     submitted_at = Time.now.strftime("%d/%m/%Y %H:%M")
 
     # Prepare event data for spreadsheet
-    # Extract only filename from image_path if present
-    image_filename = image_path.empty? ? "" : File.basename(image_path)
+    # Extract only filename from image_path if present (without extension)
+    image_filename = image_path.empty? ? "" : File.basename(image_path, ".*")
 
     event_data = [
       submitted_at,
