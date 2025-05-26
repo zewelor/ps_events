@@ -11,3 +11,7 @@ page_gen:
 
 tailwindcss:
   css_path: ./events_listing/_tailwind.css
+
+twitter:
+  username: pxopulse87799
+  card: summary
