@@ -54,7 +54,7 @@ permalink: /add_event/
         maxlength="100"
         class="form-input"
       />
-      <p class="mt-1 text-xs text-gray-500">Name / Title of the event (max 100 chars)</p>
+      <p class="form-help">Name / Title of the event (max 100 chars)</p>
     </div>
 
     <!-- Description -->
@@ -70,7 +70,7 @@ permalink: /add_event/
         rows="6"
         class="form-input resize-none"
       >{{ test_description }}</textarea>
-      <p class="mt-1 text-xs text-gray-500">Brief description (max 500 chars)</p>
+      <p class="form-help">Brief description (max 500 chars)</p>
     </div>
 
     <!-- Category -->
@@ -178,7 +178,7 @@ permalink: /add_event/
           value="{{ test_end | date: '%H:%M' }}"
           class="form-input"
         />
-        <p class="mt-1 text-xs text-gray-500">End date is required. Times are optional for all-day events.</p>
+        <p class="form-help">End date is required. Times are optional for all-day events.</p>
       </div>
     </div>
 
@@ -223,7 +223,7 @@ permalink: /add_event/
         <option value="Paid" {% if test_price_type == 'Paid' %}selected{% endif %}>Paid</option>
         <option value="Unknown" {% if test_price_type == 'Unknown' %}selected{% endif %}>Unknown</option>
       </select>
-      <p class="mt-1 text-xs text-gray-500">Select whether the event is free, paid, or unknown</p>
+      <p class="form-help">Select whether the event is free, paid, or unknown</p>
     </div>
 
     <!-- Links -->
