@@ -19,6 +19,7 @@ class EventValidation < Dry::Validation::Contract
     optional(:event_link2).maybe(:string)
     optional(:event_link3).maybe(:string)
     optional(:event_link4).maybe(:string)
+    optional(:event_image).maybe(:hash)
   end
 
   rule(:contact_email) do

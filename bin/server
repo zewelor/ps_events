@@ -9,6 +9,7 @@ Bundler.require(:default)
 # Load server modules
 require_relative "../lib/server/google_sheets_service"
 require_relative "../lib/server/event_validation"
+require_relative "../lib/server/image_service"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -51,9 +52,42 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
+  # Handle image upload first (if provided)
+  image_path = ""
+  if params[:event_image] && params[:event_image][:tempfile]
+    begin
+      # Validate the image
+      validation_error = ImageService.validate_upload(params[:event_image])
+      if validation_error
+        content_type :json
+        status 422
+        return {
+          status: "error",
+          message: validation_error
+        }.to_json
+      end
+
+      # Process the image
+      image_path = ImageService.process_upload(params[:event_image])
+      puts "✅ Image processed successfully: #{image_path}"
+    rescue => e
+      puts "❌ Image processing error: #{e.message}"
+      content_type :json
+      status 422
+      return {
+        status: "error",
+        message: "Image processing failed: #{e.message}"
+      }.to_json
+    end
+  end
+
+  # Remove the file upload from params for validation
+  validation_params = params.dup
+  validation_params.delete(:event_image)
+
   # Validate the event data using dry-validation directly
   validator = EventValidation.new
-  result = validator.call(params)
+  result = validator.call(validation_params)
 
   if result.success?
     validated_params = result.to_h
@@ -101,12 +135,11 @@ post "/add_event" do
       validated_params[:contact_email].strip.downcase,
       validated_params[:contact_tel]&.strip || "",
       validated_params[:price_type]&.strip || "",
-      "",
+      image_path, # Store the processed image path
       validated_params[:event_link1]&.strip || "",
       validated_params[:event_link2]&.strip || "",
       validated_params[:event_link3]&.strip || "",
-      validated_params[:event_link4]&.strip || "",
-      "" # image placeholder
+      validated_params[:event_link4]&.strip || ""
     ]
 
     # Log the event data (mask sensitive info)
