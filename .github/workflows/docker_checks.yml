@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - 'images/**'
       - '.github/workflows/**'
-      - 'bin/server'
+      - 'bin/server.rb'
       - 'events_listing/**'
       - '!.github/workflows/docker_checks.yml'
 
