@@ -17,6 +17,7 @@ services:
       - "127.0.0.1:35729:35729"
     environment:
       FORM_ADD_EVENT_POST_ENDPOINT: "http://localhost:4001/add_event"
+      JEKYLL_ENV: development
     command:
       - jekyll
       - server
