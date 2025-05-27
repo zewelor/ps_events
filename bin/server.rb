@@ -9,6 +9,7 @@ Bundler.require(:default)
 require_relative "../lib/server/google_sheets_service"
 require_relative "../lib/server/event_validation"
 require_relative "../lib/server/image_service"
+require_relative "../lib/server/github_service"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -69,6 +70,12 @@ post "/add_event" do
       # Process the image
       image_path = ImageService.process_upload(params[:event_image])
       puts "✅ Image processed successfully: #{image_path}"
+
+      # Get the full file path for GitHub upload
+      full_image_path = File.join(File.dirname(__FILE__), "..", "events_listing", image_path)
+      filename = File.basename(image_path)
+
+      GitHubService.upload_image(full_image_path, filename)
     rescue => e
       puts "❌ Image processing error: #{e.message}"
       content_type :json
