@@ -8,7 +8,11 @@
 }
 
 .navigation-button {
-  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors
+  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors;
+}
+
+.file-input-button {
+  @apply file:mr-4 file:px-5 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-buttons file:text-zinc-800 hover:file:bg-buttons-hover file:transition-colors file:cursor-pointer;
 }
 
 .event-card {
