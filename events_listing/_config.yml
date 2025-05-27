@@ -1,5 +1,6 @@
 title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
+logo: /assets/logo180.webp
 description: "PXO Pulse is a website listing events happening at Porto Santo golden island."
 data_dir: _data
 
@@ -8,6 +9,7 @@ page_gen:
     template: event
     dir: events
     data: events
+    filter_condition: "require 'date'; end_time = record['End time']; Date.strptime(end_time.split(' ')[0], '%d/%m/%Y') >= (Date.today - 1)"
 
 tailwindcss:
   css_path: ./events_listing/_tailwind.css
@@ -15,3 +17,4 @@ tailwindcss:
 twitter:
   username: pxopulse87799
   card: summary
+
