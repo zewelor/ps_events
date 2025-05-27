@@ -24,8 +24,8 @@ TZNAME:WET
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:1816db60-4bc0-4687-a97d-b4797d6ca2b2
+DTSTAMP:20250527T200035Z
+UID:4fa08b4d-bdbb-4432-b8aa-2833469898ab
 DTSTART;TZID=Europe/Lisbon:20250517T170000
 DTEND;TZID=Europe/Lisbon:20250517T190000
 DESCRIPTION:Fazer Pão Caseiro
@@ -34,8 +34,8 @@ ORGANIZER:Digital Porto Santo
 SUMMARY:Pão Caseiro
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:8a61cca7-9a62-4ece-b902-39736254c2cc
+DTSTAMP:20250527T200035Z
+UID:3530d772-823f-43cd-a65d-181d92af0137
 DTSTART;TZID=Europe/Lisbon:20250522T183000
 DTEND;TZID=Europe/Lisbon:20250522T200000
 DESCRIPTION:Apresentação do livro "A Revolução da Ilha Pequena"\, de Li
@@ -45,8 +45,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:Apresentação do livro "A Revolução da Ilha Pequena"
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:3907643a-a599-47d7-b42a-d89e01606880
+DTSTAMP:20250527T200035Z
+UID:9622dd1e-a1db-4f0b-af6a-acdcf3086a76
 DTSTART;TZID=Europe/Lisbon:20250524T133000
 DTEND;TZID=Europe/Lisbon:20250525T140000
 DESCRIPTION:A Natação em Águas Abertas na Ilha do Porto Santo é uma pro
@@ -66,8 +66,8 @@ ORGANIZER:Associação de Natação da Madeira (ANM), Federação Portugues
 SUMMARY:Natação em Águas Abertas na Ilha do Porto Santo
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:515b9826-b6a3-4c7d-afca-7cf33346465d
+DTSTAMP:20250527T200035Z
+UID:665ad379-a727-4e4b-83e7-1a543f5f60f4
 DTSTART;TZID=Europe/Lisbon:20250528T090000
 DTEND;TZID=Europe/Lisbon:20250529T150000
 DESCRIPTION:Com o tema "Unir Forças pela Ilha – Sustentabilidade em Aç
@@ -77,8 +77,8 @@ ORGANIZER:Município do Porto Santo
 SUMMARY:XVIII Simpósio Ambiental
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:cd493250-de29-415e-9d27-c150173037c8
+DTSTAMP:20250527T200035Z
+UID:9c84af72-1e86-4c3c-9f9d-8e7447670828
 DTSTART;TZID=Europe/Lisbon:20250530T160000
 DTEND;TZID=Europe/Lisbon:20250530T190000
 DESCRIPTION:Um evento musical para toda a família em celebração do Dia d
@@ -91,48 +91,10 @@ ORGANIZER:Municipality of Porto Santo
 SUMMARY:Concerto do Panda
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:12f5655c-b51e-49e5-ab53-45100013a53e
+DTSTAMP:20250527T200035Z
+UID:777a7c40-b0c6-402f-83bb-f19d26cfcc05
 DTSTART;TZID=Europe/Lisbon:20250604T000000
 DTEND;TZID=Europe/Lisbon:20250607T000000
-DESCRIPTION:Evento inserido no "Jubileu 2025 Peregrinos de Esperança". O p
- rograma inclui atividades durante dois dias em Porto Santo.
-LOCATION:Largo das Palmeiras
-ORGANIZER:Coro do Centro Comunitário de Porto Santo
-SUMMARY:Jubileu no Porto Santo
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:5678b86d-224b-46c4-9839-ce6b4622a3e3
-DTSTART;TZID=Europe/Lisbon:20250605T104000
-DTEND;TZID=Europe/Lisbon:20250606T220000
-DESCRIPTION:O Festival de São João em Porto Santo é uma celebração vib
- rante do rico património cultural da ilha\, que decorre de 14 a 24 de jun
- ho de 2025. É um dos eventos mais significativos da ilha\, oferecendo uma
-  combinação única de festividades tradicionais e contemporâneas.
-LOCATION:Porto Santo
-ORGANIZER:Câmara Municipal do Porto Santo
-SUMMARY:São João 2025
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:191e7b97-a0b2-4198-aff1-61961f2de591
-DTSTART;TZID=Europe/Lisbon:20250605T140000
-DTEND;TZID=Europe/Lisbon:20250605T170000
-DESCRIPTION:O Festival Colombo em Porto Santo é um evento histórico e cul
- tural que transporta os visitantes ao século XV\, celebrando a ligação 
- da ilha a Cristóvão Colombo. Realiza-se anualmente de 18 a 21 de setembr
- o de 2025\, na cidade de Vila Baleira\, e oferece um conjunto diversificad
- o de atividades que recriam a Era dos Descobrimentos.
-LOCATION:Porto Santo
-ORGANIZER:Regional Government of Madeira
-SUMMARY:Festival Colombo
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:01b77b3f-3a4c-4ae0-ac5b-3ba3ff4297de
-DTSTART;TZID=Europe/Lisbon:20250614T180000
-DTEND;TZID=Europe/Lisbon:20250624T000000
 DESCRIPTION:Um festival gastronómico único que celebra a versatilidade e 
  excelência do atum. O evento conta com chefs de renome que criam pratos e
  xcecionais inspirados nos sabores do Atlântico. É uma viagem culinária 
@@ -142,10 +104,61 @@ ORGANIZER:Holet Vila Baleira
 SUMMARY:5ª Edição da Rota do Atum
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:7a306fdf-1300-4097-8dd7-4c76846ed37f
+DTSTAMP:20250527T200035Z
+UID:0c1eef3f-0fcb-464d-8d93-58b39749b627
+DTSTART;TZID=Europe/Lisbon:20250605T104000
+DTEND;TZID=Europe/Lisbon:20250606T220000
+DESCRIPTION:Evento inserido no "Jubileu 2025 Peregrinos de Esperança". O p
+ rograma inclui atividades durante dois dias em Porto Santo.
+LOCATION:Largo das Palmeiras
+ORGANIZER:Coro do Centro Comunitário de Porto Santo
+SUMMARY:Jubileu no Porto Santo
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250527T200035Z
+UID:10dfcfa9-8b99-428d-a1c7-35f35cb4eb70
+DTSTART;TZID=Europe/Lisbon:20250605T140000
+DTEND;TZID=Europe/Lisbon:20250605T170000
+DESCRIPTION:Este evento cultural e religioso regional tem como objetivo cel
+ ebrar e preservar as tradições do Espírito Santo através da música e 
+ do convívio comunitário. Reúne alunos e comunidades educativas de difer
+ entes regiões\, promovendo o intercâmbio cultural\, a reflexão espiritu
+ al e o desenvolvimento integral. Destaca a importância de manter e partil
+ har o património cultural e religioso na comunidade
+LOCATION:Largo das Palmeiras
+ORGANIZER:Escola Básica e Secundária Francisco de Freitas Branco
+SUMMARY:XVII Encontro de Cantares do Espírito Santo
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250527T200035Z
+UID:a6a528b4-1112-4fd0-a391-c77c48fc4801
+DTSTART;TZID=Europe/Lisbon:20250614T180000
+DTEND;TZID=Europe/Lisbon:20250624T000000
+DESCRIPTION:O Festival de São João em Porto Santo é uma celebração vib
+ rante do rico património cultural da ilha\, que decorre de 14 a 24 de jun
+ ho de 2025. É um dos eventos mais significativos da ilha\, oferecendo uma
+  combinação única de festividades tradicionais e contemporâneas.
+LOCATION:Porto Santo
+ORGANIZER:Câmara Municipal do Porto Santo
+SUMMARY:São João 2025
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250527T200035Z
+UID:6adfff1e-4f64-489e-8962-10373565b57e
 DTSTART;TZID=Europe/Lisbon:20250628T000000
 DTEND;TZID=Europe/Lisbon:20250701T000000
+DESCRIPTION:Esta é a quarta etapa do JLL Madeira Padel Tour\, um torneio d
+ e padel que decorre em Porto Santo. As inscrições ainda estão abertas p
+ ara quem quiser participar e desfrutar do desporto num local deslumbrante.
+LOCATION:Porto Santo Racket Centre
+ORGANIZER:Diário de Notícias, Padel Nuestro Madeira
+SUMMARY:JLL Madeira Padel Tour
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250527T200035Z
+UID:40c5b034-312a-429e-bfd6-2ba6841b41ae
+DTSTART;TZID=Europe/Lisbon:20250825T000000
+DTEND;TZID=Europe/Lisbon:20250907T000000
 DESCRIPTION:Uma feira de negócios e turismo que serve como plataforma para
   empresas locais e externas promoverem e venderem os seus produtos. É um 
  dos principais eventos da ilha de Porto Santo\, atraindo turistas e exposi
@@ -158,30 +171,17 @@ ORGANIZER:Associação de Indústria, Comércio e Turismo do Porto Santo (A
 SUMMARY:Expo Porto Santo 2025
 END:VEVENT
 BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:7b9dd353-02d9-47b4-924a-d6de88ebf78e
-DTSTART;TZID=Europe/Lisbon:20250825T000000
-DTEND;TZID=Europe/Lisbon:20250907T000000
-DESCRIPTION:Este evento cultural e religioso regional tem como objetivo cel
- ebrar e preservar as tradições do Espírito Santo através da música e 
- do convívio comunitário. Reúne alunos e comunidades educativas de difer
- entes regiões\, promovendo o intercâmbio cultural\, a reflexão espiritu
- al e o desenvolvimento integral. Destaca a importância de manter e partil
- har o património cultural e religioso na comunidade
-LOCATION:Largo das Palmeiras
-ORGANIZER:Escola Básica e Secundária Francisco de Freitas Branco
-SUMMARY:XVII Encontro de Cantares do Espírito Santo
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20250526T203652Z
-UID:2a12f125-f542-4c8f-a0c2-bf0f6a4d72ed
+DTSTAMP:20250527T200035Z
+UID:844010d1-9a75-4c60-80a4-cbbaf8d02ddb
 DTSTART;TZID=Europe/Lisbon:20250918T190000
 DTEND;TZID=Europe/Lisbon:20250921T000000
-DESCRIPTION:Esta é a quarta etapa do JLL Madeira Padel Tour\, um torneio d
- e padel que decorre em Porto Santo. As inscrições ainda estão abertas p
- ara quem quiser participar e desfrutar do desporto num local deslumbrante.
-LOCATION:Porto Santo Racket Centre
-ORGANIZER:Diário de Notícias, Padel Nuestro Madeira
-SUMMARY:JLL Madeira Padel Tour
+DESCRIPTION:O Festival Colombo em Porto Santo é um evento histórico e cul
+ tural que transporta os visitantes ao século XV\, celebrando a ligação 
+ da ilha a Cristóvão Colombo. Realiza-se anualmente de 18 a 21 de setembr
+ o de 2025\, na cidade de Vila Baleira\, e oferece um conjunto diversificad
+ o de atividades que recriam a Era dos Descobrimentos.
+LOCATION:Porto Santo
+ORGANIZER:Regional Government of Madeira
+SUMMARY:Festival Colombo
 END:VEVENT
 END:VCALENDAR
