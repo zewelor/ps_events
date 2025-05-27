@@ -5,15 +5,16 @@ title: Events Listing
 
 <h1 class="text-2xl md:text-3xl font-semibold mb-6 text-zinc-800 text-center">Próximos eventos no Porto Santo</h1>
 <section id="event-list" class="mb-8">
-  {% assign current_utc_timestamp = site.time | date: '%s' | plus: 0 %}
+  {% comment %} Filter events to only include current and future events (events that haven't ended yet) {% endcomment %}
+  {% assign future_events = site.data.events | filter_current_and_future_events %}
 
-  {% comment %} group and sort categories before looping {% endcomment %}
-  {% assign grouped = site.data.events | group_by: "Category" %}
+  {% comment %} group and sort categories using only future events {% endcomment %}
+  {% assign grouped = future_events | group_by: "Category" %}
   {% assign sorted_groups = grouped | sort: "name" %}
 
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
     <button data-filter-category="all" class="filter-btn filter-btn--active">
-      Todas as Categorias ({{ site.data.events | size }})
+      Todas as Categorias ({{ future_events | size }})
     </button>
     {% for group in sorted_groups %}
       <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">
@@ -22,14 +23,8 @@ title: Events Listing
     {% endfor %}
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
-    {% assign sorted_events = site.data.events %}
+    {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
-      {% assign event_start_time_string = event['Start time'] %}
-      {% comment %} Assuming event times are in Lisbon time (UTC+1 during summer like May) {% endcomment %}
-      {% assign event_time_with_offset = event_start_time_string | append: ' +01:00' %}
-      {% assign event_timestamp_utc = event_time_with_offset | date: '%s' | plus: 0 %}
-
-      {% if event_timestamp_utc > current_utc_timestamp %}
     <div class="event-card" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
@@ -52,7 +47,6 @@ title: Events Listing
       {% assign meta = event.Category | category_metadata %}
       <div style="background-color: {{ meta.color }};" class="h-2"></div>
     </div>
-      {% endif %}
     {% endfor %}
   </div>
 </section>

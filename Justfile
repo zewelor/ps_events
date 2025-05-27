@@ -8,3 +8,6 @@ docker_build:
 
 test_dockerignore:
   rsync -avn . /dev/shm --exclude-from .dockerignore
+
+jekyll *args='':
+  docker compose run --rm --service-ports app jekyll server --force_polling -l -H 0.0.0.0 -s events_listing {{ args }}
