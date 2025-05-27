@@ -3,8 +3,8 @@ require "fileutils"
 require "securerandom"
 
 class ImageService
-  MAX_SIZE = 900
-  QUALITY = 90
+  MAX_SIZE = 800
+  QUALITY = 80
   UPLOAD_DIR = File.join(File.dirname(__FILE__), "..", "..", "events_listing", "assets", "images")
 
   # Configure MiniMagick timeout
