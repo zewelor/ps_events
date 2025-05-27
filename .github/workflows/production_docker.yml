@@ -9,7 +9,7 @@ on:
       - 'Dockerfile'
       - 'Gemfile'
       - 'Gemfile.lock'
-      - 'bin/server'
+      - 'bin/server.rb'
       - 'lib/server/**/*'
       - '.github/workflows/production_docker.yml'
 

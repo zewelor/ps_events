@@ -36,7 +36,7 @@ services:
     command:
       - rerun
       - ruby
-      - bin/server
+      - bin/server.rb
 
 
 volumes:

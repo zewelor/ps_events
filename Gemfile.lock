@@ -16,7 +16,6 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     declarative (0.0.20)
-    docile (1.4.1)
     dotenv (3.1.8)
     dry-configurable (1.3.0)
       dry-core (~> 1.1)
@@ -63,7 +62,6 @@ GEM
       logger
     faraday-net_http (3.4.0)
       net-http (>= 0.5.0)
-    ffi (1.17.2)
     ffi (1.17.2-x86_64-linux-gnu)
     forwardable-extended (2.6.0)
     google-apis-core (0.18.0)
@@ -80,9 +78,6 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-logging-utils (0.2.0)
-    google-protobuf (4.31.0)
-      bigdecimal
-      rake (>= 13)
     google-protobuf (4.31.0-x86_64-linux-gnu)
       bigdecimal
       rake (>= 13)
@@ -245,9 +240,6 @@ GEM
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     safe_yaml (1.0.5)
-    sass-embedded (1.89.0)
-      google-protobuf (~> 4.31)
-      rake (>= 13)
     sass-embedded (1.89.0-x86_64-linux-gnu)
       google-protobuf (~> 4.31)
     signet (0.20.0)
@@ -255,12 +247,6 @@ GEM
       faraday (>= 0.17.5, < 3.a)
       jwt (>= 1.5, < 3.0)
       multi_json (~> 1.10)
-    simplecov (0.22.0)
-      docile (~> 1.1)
-      simplecov-html (~> 0.11)
-      simplecov_json_formatter (~> 0.1)
-    simplecov-html (0.13.1)
-    simplecov_json_formatter (0.1.4)
     sinatra (4.1.1)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
@@ -282,7 +268,6 @@ GEM
       lint_roller (~> 1.1)
       rubocop-performance (~> 1.25.0)
     stringio (3.1.7)
-    tailwindcss-ruby (4.1.7)
     tailwindcss-ruby (4.1.7-x86_64-linux-gnu)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
@@ -323,7 +308,6 @@ DEPENDENCIES
   rackup (~> 2.2)
   rerun
   ruby-lsp
-  simplecov
   sinatra
   standard
   tzinfo (~> 2.0)

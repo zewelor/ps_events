@@ -2,7 +2,6 @@
 
 require "bundler/setup"
 require "json"
-require "dotenv/load"
 
 Bundler.require(:default)
 

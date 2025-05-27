@@ -29,10 +29,6 @@ group :development do
   gem "rerun"
 end
 
-group :test do
-  gem "simplecov", require: false
-end
-
 group :jekyll_plugins do
   gem "jekyll-datapage-generator"
   gem "jekyll-sitemap", "~> 1.4"
