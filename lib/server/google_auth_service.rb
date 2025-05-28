@@ -6,7 +6,7 @@ require "openssl"
 module GoogleAuthService
   extend self
 
-  GOOGLE_CLIENT_ID = ENV["GOOGLE_OAUTH_CLIENT_ID"]
+  GOOGLE_CLIENT_ID = "730968670456-4kvre8am1isuqe3dbmdqs8845ntog6cq.apps.googleusercontent.com"
   GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v1/certs"
 
   def validate_token(id_token)
