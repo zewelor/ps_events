@@ -10,6 +10,7 @@ require_relative "../lib/server/google_sheets_service"
 require_relative "../lib/server/event_validation"
 require_relative "../lib/server/image_service"
 require_relative "../lib/server/github_service"
+require_relative "../lib/server/google_auth_service"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -52,6 +53,24 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
+  # Validate Google token if provided
+  google_user_email = nil
+  if params[:google_token] && !params[:google_token].strip.empty?
+    auth_result = GoogleAuthService.validate_token(params[:google_token])
+    if auth_result[:success]
+      google_user_email = auth_result[:email]
+      puts "✅ Google auth validated for: #{google_user_email}"
+    else
+      puts "❌ Google auth failed: #{auth_result[:error]}"
+      content_type :json
+      status 401
+      return {
+        status: "error",
+        message: "Google authentication failed: #{auth_result[:error]}"
+      }.to_json
+    end
+  end
+
   # Handle image upload first (if provided)
   image_path = ""
   if params[:event_image] && params[:event_image][:tempfile]
@@ -71,10 +90,15 @@ post "/add_event" do
       image_path = ImageService.process_upload(params[:event_image])
       puts "✅ Image processed successfully: #{image_path}"
 
-      # Get the full file path for GitHub upload
-      full_image_path = File.join(File.dirname(__FILE__), "..", "events_listing", image_path)
-
-      GitHubService.upload_image(full_image_path)
+      # Upload to GitHub only in production environment
+      if settings.environment == :production
+        # Get the full file path for GitHub upload
+        full_image_path = File.join(File.dirname(__FILE__), "..", "events_listing", image_path)
+        GitHubService.upload_image(full_image_path)
+        puts "✅ Image uploaded to GitHub (production)"
+      else
+        puts "ℹ️ Skipping GitHub upload (not in production environment)"
+      end
     rescue => e
       puts "❌ Image processing error: #{e.message}"
       content_type :json
@@ -130,9 +154,12 @@ post "/add_event" do
     # Extract only filename from image_path if present (without extension)
     image_filename = image_path.empty? ? "" : File.basename(image_path, ".*")
 
+    # Use Google authenticated email or fallback
+    submitter_email = google_user_email || "UNKNOWN"
+
     event_data = [
       submitted_at,
-      "someone@gmail.com", # Placeholder for user email
+      submitter_email,
       validated_params[:name].strip,
       start_str,
       end_str,
