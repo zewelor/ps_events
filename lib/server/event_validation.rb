@@ -12,7 +12,7 @@ class EventValidation < Dry::Validation::Contract
     required(:description).filled(:string)
     required(:category).filled(:string)
     required(:organizer).filled(:string)
-    required(:contact_email).filled(:string)
+    optional(:contact_email).filled(:string)
     optional(:contact_tel).maybe(:string)
     optional(:price_type).maybe(:string)
     optional(:event_link1).maybe(:string)
