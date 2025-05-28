@@ -215,6 +215,6 @@ post "/add_event" do
   else
     puts "❌ Validation failed: #{result.errors.to_h.inspect}"
     # Validation failed: return errors as JSON
-    json_error("Validation failed", 422, result.errors.to_h)
+    json_error("Validation failed\n#{result.errors.to_h.map { |k, v| "#{k}: #{v.join(", ")}" }.join("\n")}", 422)
   end
 end

@@ -92,6 +92,7 @@ permalink: /add_event/
         name="description"
         id="description"
         required
+        minlength="10"
         maxlength="500"
         rows="6"
         class="form-input resize-none"
@@ -502,9 +503,21 @@ permalink: /add_event/
       const data = new FormData(form);
       try {
         const response = await fetch(form.action, { method: 'POST', body: data });
-        const result = await response.json();
 
-        if (response.ok && result.status === 'ok') {
+        if (!response.ok) {
+          let errorMsg = `HTTP ${response.status}`;
+          try {
+            const result = await response.json();
+            errorMsg = result.message || errorMsg;
+          } catch (parseError) {
+            errorMsg += ` - ${response.statusText}`;
+          }
+          showToast(`Erro do servidor: ${errorMsg}`, 'error');
+          return;
+        }
+
+        const result = await response.json();
+        if (result.status === 'ok') {
           showToast(`Evento "${result.event_name}" adicionado com sucesso!`);
           form.reset();
           imagePreview.classList.add('hidden'); // Hide image preview after reset
@@ -514,7 +527,17 @@ permalink: /add_event/
         }
       } catch (error) {
         console.error('Submission error:', error);
-        showToast('Erro de rede. Por favor, verifique a sua ligação e tente novamente.', 'error');
+        let errorMsg = 'Erro de rede';
+
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMsg += ' - Não foi possível conectar ao servidor';
+        } else if (error.name === 'SyntaxError') {
+          errorMsg += ' - Resposta inválida do servidor';
+        } else if (error.message) {
+          errorMsg += ` - ${error.message}`;
+        }
+
+        showToast(`${errorMsg}. Por favor, verifique a sua ligação e tente novamente.`, 'error');
       } finally {
         // re-enable and hide spinner
         submitBtn.disabled = false;
