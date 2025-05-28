@@ -73,9 +73,8 @@ post "/add_event" do
 
       # Get the full file path for GitHub upload
       full_image_path = File.join(File.dirname(__FILE__), "..", "events_listing", image_path)
-      filename = File.basename(image_path)
 
-      GitHubService.upload_image(full_image_path, filename)
+      GitHubService.upload_image(full_image_path)
     rescue => e
       puts "❌ Image processing error: #{e.message}"
       content_type :json

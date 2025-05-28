@@ -5,7 +5,7 @@ require "securerandom"
 class ImageService
   MAX_SIZE = 800
   QUALITY = 80
-  UPLOAD_DIR = File.join(File.dirname(__FILE__), "..", "..", "events_listing", "assets", "images")
+  UPLOAD_DIR = "/tmp"
 
   # Configure MiniMagick timeout
   MiniMagick.configure do |config|
@@ -53,8 +53,8 @@ class ImageService
       # Write to final destination
       image.write output_path
 
-      # Return relative path for storage
-      "assets/images/#{filename}"
+      # Return absolute path for storage
+      output_path
     rescue => e
       # Clean up the output file if it was created
       File.delete(output_path) if File.exist?(output_path)
