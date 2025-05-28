@@ -159,7 +159,7 @@ post "/add_event" do
     submitter_email = google_user_email
 
     # Use the provided contact email (which may be different from submitter)
-    contact_email = validated_params[:contact_email].strip.downcase
+    contact_email = validated_params[:contact_email]&.strip&.downcase
 
     # Log if submitter and contact are different (for moderator cases)
     if contact_email != google_user_email.downcase
@@ -189,7 +189,7 @@ post "/add_event" do
     # Log the event data (mask sensitive info)
     masked_data = event_data.dup
     masked_data[1] = "#{masked_data[1].split("@").first}@***" if masked_data[1].include?("@") # submitter
-    masked_data[9] = "#{masked_data[9].split("@").first}@***" if masked_data[9].include?("@") # contact
+    masked_data[9] = "#{masked_data[9].split("@").first}@***" if masked_data[9]&.include?("@") # contact
     puts "✅ Adding event: #{masked_data[2]} by #{masked_data[8]} at #{masked_data[3]} (submitted by #{masked_data[1]}, contact: #{masked_data[9]})"
 
     begin

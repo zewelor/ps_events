@@ -12,7 +12,7 @@ class EventValidation < Dry::Validation::Contract
     required(:description).filled(:string)
     required(:category).filled(:string)
     required(:organizer).filled(:string)
-    optional(:contact_email).filled(:string)
+    optional(:contact_email).maybe(:string)
     optional(:contact_tel).maybe(:string)
     optional(:price_type).maybe(:string)
     optional(:event_link1).maybe(:string)
@@ -23,8 +23,10 @@ class EventValidation < Dry::Validation::Contract
   end
 
   rule(:contact_email) do
-    unless /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i.match?(value)
-      key.failure("must be a valid email address")
+    if key? && value && !value.empty?
+      unless /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i.match?(value)
+        key.failure("must be a valid email address")
+      end
     end
   end
 
