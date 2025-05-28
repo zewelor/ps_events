@@ -15,6 +15,41 @@ require_relative "../lib/server/google_auth_service"
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
 
+# Helper methods for JSON responses
+helpers do
+  def json_response(data, status_code = 200)
+    content_type :json
+    status status_code
+    data.to_json
+  end
+
+  def json_error(message, status_code = 422, errors = nil)
+    response_data = {
+      status: "error",
+      message: message
+    }
+    response_data[:errors] = errors if errors
+    json_response(response_data, status_code)
+  end
+
+  def json_success(message, data = {})
+    response_data = {
+      status: "ok",
+      message: message
+    }.merge(data)
+    json_response(response_data, 200)
+  end
+
+  def format_datetime(date_str, time_str = nil)
+    date = Date.parse(date_str)
+    if time_str && !time_str.strip.empty?
+      DateTime.parse("#{date_str} #{time_str}").strftime("%d/%m/%Y %H:%M")
+    else
+      date.strftime("%d/%m/%Y")
+    end
+  end
+end
+
 # Initialize Google Sheets service
 configure do
   set :google_sheets, GoogleSheetsService.new
@@ -41,12 +76,11 @@ end
 
 # Health check endpoint
 get "/health" do
-  content_type :json
-  {
+  json_response({
     status: "ok",
     timestamp: Time.now.iso8601,
     google_sheets_connected: !settings.google_sheets.nil?
-  }.to_json
+  })
 end
 
 # Handle form submissions to add new event
@@ -62,12 +96,7 @@ post "/add_event" do
       puts "✅ Google auth validated for: #{google_user_email}"
     else
       puts "❌ Google auth failed: #{auth_result[:error]}"
-      content_type :json
-      status 401
-      return {
-        status: "error",
-        message: "Google authentication failed: #{auth_result[:error]}"
-      }.to_json
+      return json_error("Google authentication failed: #{auth_result[:error]}", 401)
     end
   end
 
@@ -78,12 +107,7 @@ post "/add_event" do
       # Validate the image
       validation_error = ImageService.validate_upload(params[:event_image])
       if validation_error
-        content_type :json
-        status 422
-        return {
-          status: "error",
-          message: validation_error
-        }.to_json
+        return json_error(validation_error)
       end
 
       # Process the image
@@ -101,12 +125,7 @@ post "/add_event" do
       end
     rescue => e
       puts "❌ Image processing error: #{e.message}"
-      content_type :json
-      status 422
-      return {
-        status: "error",
-        message: "Image processing failed: #{e.message}"
-      }.to_json
+      return json_error("Image processing failed: #{e.message}")
     end
   end
 
@@ -122,30 +141,9 @@ post "/add_event" do
     validated_params = result.to_h
     puts "✅ Validation successful for event: #{validated_params[:name]}"
 
-    # Format start and end times
-    # Combine date and time if time is provided, otherwise use date only
-    start_date = Date.parse(validated_params[:start_date])
-    start_time = (validated_params[:start_time] && !validated_params[:start_time].strip.empty?) ?
-                 validated_params[:start_time] : nil
-
-    if start_time
-      start_dt = DateTime.parse("#{validated_params[:start_date]} #{start_time}")
-      start_str = start_dt.strftime("%d/%m/%Y %H:%M")
-    else
-      start_str = start_date.strftime("%d/%m/%Y")
-    end
-
-    # Handle end date and time
-    end_date = Date.parse(validated_params[:end_date])
-    end_time = (validated_params[:end_time] && !validated_params[:end_time].strip.empty?) ?
-               validated_params[:end_time] : nil
-
-    if end_time
-      end_dt = DateTime.parse("#{validated_params[:end_date]} #{end_time}")
-      end_str = end_dt.strftime("%d/%m/%Y %H:%M")
-    else
-      end_str = end_date.strftime("%d/%m/%Y")
-    end
+    # Format start and end times using helper method
+    start_str = format_datetime(validated_params[:start_date], validated_params[:start_time])
+    end_str = format_datetime(validated_params[:end_date], validated_params[:end_time])
 
     # Format submitted at timestamp
     submitted_at = Time.now.strftime("%d/%m/%Y %H:%M")
@@ -193,31 +191,18 @@ post "/add_event" do
       puts "✅ Event successfully added to spreadsheet"
 
       # Respond with JSON status
-      content_type :json
-      {
-        status: "ok",
-        message: "Event added successfully",
+      json_success("Event added successfully", {
         event_name: validated_params[:name],
         event_date: start_str
-      }.to_json
+      })
     rescue => e
       puts "❌ Error adding event: #{e.message}"
       puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
-      content_type :json
-      status 500
-      {
-        status: "error",
-        message: "Failed to add event. Please try again."
-      }.to_json
+      json_error("Failed to add event. Please try again.", 500)
     end
   else
+    puts "❌ Validation failed: #{result.errors.to_h.inspect}"
     # Validation failed: return errors as JSON
-    content_type :json
-    status 422
-    {
-      status: "error",
-      message: "Validation failed",
-      errors: result.errors.to_h
-    }.to_json
+    json_error("Validation failed", 422, result.errors.to_h)
   end
 end
