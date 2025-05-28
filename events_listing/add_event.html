@@ -42,8 +42,8 @@ permalink: /add_event/
   <!-- Google Sign-In Section - Top of page -->
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
-      <h3 class="text-lg font-medium mb-3 text-gray-700">Opcional: Iniciar sessão com o Google</h3>
-      <p class="text-sm text-gray-500 mb-4">Inicie sessão para verificar a sua identidade ao submeter o evento.</p>
+      <h3 class="text-lg font-medium mb-3 text-gray-700">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
+      <p class="text-sm text-gray-500 mb-4">É obrigatório iniciar sessão com o Google para submeter um evento. O seu email do Google será utilizado como email de contacto.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -212,16 +212,18 @@ permalink: /add_event/
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label for="contact_email" class="form-label">
-          Contact e-mail
+          Email de contacto <span class="text-red-500">*</span>
         </label>
         <input
           type="email"
           name="contact_email"
           id="contact_email"
           value="{{ test_email }}"
+          required
           maxlength="100"
           class="form-input"
         />
+        <p class="form-help">Email de contacto para o evento. Por defeito, será o seu email do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</p>
       </div>
 
       <div>
@@ -420,6 +422,10 @@ permalink: /add_event/
         // Set the token for form submission
         googleTokenInput.value = response.credential;
 
+        // Auto-fill contact email with Google email (but allow editing)
+        contactEmailInput.value = payload.email;
+        contactEmailInput.removeAttribute('readonly');
+
         showToast(`Verificado com o Google como ${payload.email}`);
       } catch (error) {
         console.error('Error processing Google sign-in:', error);
@@ -483,6 +489,13 @@ permalink: /add_event/
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      // Check if user is authenticated with Google
+      if (!googleCredential || !googleTokenInput.value) {
+        showToast('É obrigatório iniciar sessão com o Google antes de submeter um evento.', 'error');
+        return;
+      }
+
       // disable and show spinner
       submitBtn.disabled = true;
       btnSpinner.classList.remove('hidden');

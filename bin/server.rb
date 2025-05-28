@@ -87,18 +87,21 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
-  # Validate Google token if provided
-  google_user_email = nil
-  if params[:google_token] && !params[:google_token].strip.empty?
-    auth_result = GoogleAuthService.validate_token(params[:google_token])
-    if auth_result[:success]
-      google_user_email = auth_result[:email]
-      puts "✅ Google auth validated for: #{google_user_email}"
-    else
-      puts "❌ Google auth failed: #{auth_result[:error]}"
-      return json_error("Google authentication failed: #{auth_result[:error]}", 401)
-    end
+  # Require Google token
+  unless params[:google_token] && !params[:google_token].strip.empty?
+    puts "❌ No Google token provided"
+    return json_error("Google authentication is required to submit an event", 401)
   end
+
+  # Validate Google token (now required)
+  auth_result = GoogleAuthService.validate_token(params[:google_token])
+  unless auth_result[:success]
+    puts "❌ Google auth failed: #{auth_result[:error]}"
+    return json_error("Google authentication failed: #{auth_result[:error]}", 401)
+  end
+
+  google_user_email = auth_result[:email]
+  puts "✅ Google auth validated for: #{google_user_email}"
 
   # Handle image upload first (if provided)
   image_path = ""
@@ -152,8 +155,16 @@ post "/add_event" do
     # Extract only filename from image_path if present (without extension)
     image_filename = image_path.empty? ? "" : File.basename(image_path, ".*")
 
-    # Use Google authenticated email or fallback
-    submitter_email = google_user_email || "UNKNOWN"
+    # Use Google authenticated email as submitter (who actually submitted)
+    submitter_email = google_user_email
+
+    # Use the provided contact email (which may be different from submitter)
+    contact_email = validated_params[:contact_email].strip.downcase
+
+    # Log if submitter and contact are different (for moderator cases)
+    if contact_email != google_user_email.downcase
+      puts "ℹ️ Event submitted by #{google_user_email} for contact #{contact_email}"
+    end
 
     event_data = [
       submitted_at,
@@ -165,7 +176,7 @@ post "/add_event" do
       validated_params[:description].strip,
       validated_params[:category].strip,
       validated_params[:organizer].strip,
-      validated_params[:contact_email].strip.downcase,
+      contact_email, # Use the provided contact email
       validated_params[:contact_tel]&.strip || "",
       validated_params[:price_type]&.strip || "",
       image_filename, # Store only the filename
@@ -177,8 +188,9 @@ post "/add_event" do
 
     # Log the event data (mask sensitive info)
     masked_data = event_data.dup
-    masked_data[7] = "#{masked_data[7].split("@").first}@***" if masked_data[7].include?("@")
-    puts "✅ Adding event: #{masked_data[0]} by #{masked_data[6]} at #{masked_data[3]}"
+    masked_data[1] = "#{masked_data[1].split("@").first}@***" if masked_data[1].include?("@") # submitter
+    masked_data[9] = "#{masked_data[9].split("@").first}@***" if masked_data[9].include?("@") # contact
+    puts "✅ Adding event: #{masked_data[2]} by #{masked_data[8]} at #{masked_data[3]} (submitted by #{masked_data[1]}, contact: #{masked_data[9]})"
 
     begin
       # Add to Google Sheets
