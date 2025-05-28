@@ -529,15 +529,21 @@ permalink: /add_event/
         console.error('Submission error:', error);
         let errorMsg = 'Erro de rede';
 
+        // Add file info if image is attached
+        const imageFile = imageInput.files[0];
+        const fileInfo = imageFile ? ` (Com imagem: ${imageFile.name}, ${(imageFile.size/1024/1024).toFixed(1)}MB)` : '';
+
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
           errorMsg += ' - Não foi possível conectar ao servidor';
         } else if (error.name === 'SyntaxError') {
           errorMsg += ' - Resposta inválida do servidor';
+        } else if (error.name === 'AbortError') {
+          errorMsg += ' - Timeout (demorou muito tempo)';
         } else if (error.message) {
-          errorMsg += ` - ${error.message}`;
+          errorMsg += ` - ${error.name}: ${error.message}`;
         }
 
-        showToast(`${errorMsg}. Por favor, verifique a sua ligação e tente novamente.`, 'error');
+        showToast(`${errorMsg}${fileInfo}. Verifique a ligação e tente novamente.`, 'error');
       } finally {
         // re-enable and hide spinner
         submitBtn.disabled = false;
