@@ -38,7 +38,33 @@ permalink: /add_event/
 
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
   <h1 class="text-2xl md:text-3xl font-semibold mb-6">Adicionar um Novo Evento</h1>
+
+  <!-- Google Sign-In Section - Top of page -->
+  <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
+    <div id="google-signin-section">
+      <h3 class="text-lg font-medium mb-3 text-gray-700">Opcional: Iniciar sessão com o Google</h3>
+      <p class="text-sm text-gray-500 mb-4">Inicie sessão para verificar a sua identidade ao submeter o evento.</p>
+      <div id="google-signin-button"></div>
+    </div>
+    <div id="google-user-info" class="hidden">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-selected-filter rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-700">Verificado com o Google</p>
+          <p id="user-email" class="text-sm text-gray-500"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" enctype="multipart/form-data" class="form-card">
+
+    <!-- Hidden field for Google token -->
+    <input type="hidden" name="google_token" id="google_token" value="">
 
     <!-- Name -->
     <div>
@@ -318,7 +344,7 @@ permalink: /add_event/
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
         </svg>
-        <span id="btn-text">Add Event</span>
+        <span id="btn-text">Adicionar Evento</span>
       </button>
     </div>
 
@@ -328,8 +354,13 @@ permalink: /add_event/
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50" aria-live="polite" aria-atomic="true"></div>
 </section>
 
+<!-- Google Sign-In Library -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <!-- AJAX form submission and toast logic -->
 <script>
+  let googleCredential = null;
+
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#add-event form');
     const toastContainer = document.getElementById('toast-container');
@@ -340,6 +371,64 @@ permalink: /add_event/
     const imagePreview = document.getElementById('image-preview');
     const previewImg = document.getElementById('preview-img');
     const removeImageBtn = document.getElementById('remove-image');
+    const contactEmailInput = document.getElementById('contact_email');
+    const googleTokenInput = document.getElementById('google_token');
+
+    // Google Sign-In elements
+    const googleSigninSection = document.getElementById('google-signin-section');
+    const googleUserInfo = document.getElementById('google-user-info');
+    const userEmailDisplay = document.getElementById('user-email');
+
+    // Initialize Google Sign-In
+    function initializeGoogleSignIn() {
+      if (typeof google !== 'undefined') {
+        google.accounts.id.initialize({
+          client_id: '{{ site.env.GOOGLE_OAUTH_CLIENT_ID }}',
+          callback: handleGoogleSignIn
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            locale: 'pt-PT'
+          }
+        );
+      } else {
+        setTimeout(initializeGoogleSignIn, 100);
+      }
+    }
+
+    // Handle Google Sign-In response
+    function handleGoogleSignIn(response) {
+      googleCredential = response.credential;
+
+      try {
+        // Decode the JWT payload to get user info (client-side only for display)
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+
+        // Update UI
+        userEmailDisplay.textContent = payload.email;
+        googleSigninSection.classList.add('hidden');
+        googleUserInfo.classList.remove('hidden');
+
+        // Set the token for form submission
+        googleTokenInput.value = response.credential;
+
+        showToast(`Verificado com o Google como ${payload.email}`);
+      } catch (error) {
+        console.error('Error processing Google sign-in:', error);
+        showToast('Erro ao processar o início de sessão', 'error');
+      }
+    }
+
+    // Initialize Google Sign-In when page loads
+    initializeGoogleSignIn();
 
     // Image preview functionality
     imageInput.addEventListener('change', function(e) {
@@ -347,7 +436,7 @@ permalink: /add_event/
       if (file) {
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          showToast('File size too large. Maximum size is 10MB.', 'error');
+          showToast('Tamanho do ficheiro muito grande. Tamanho máximo é 10MB.', 'error');
           imageInput.value = '';
           return;
         }
@@ -355,7 +444,7 @@ permalink: /add_event/
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
         if (!allowedTypes.includes(file.type)) {
-          showToast('Invalid file type. Please upload an image file.', 'error');
+          showToast('Tipo de ficheiro inválido. Por favor, carregue um ficheiro de imagem.', 'error');
           imageInput.value = '';
           return;
         }
@@ -397,28 +486,28 @@ permalink: /add_event/
       // disable and show spinner
       submitBtn.disabled = true;
       btnSpinner.classList.remove('hidden');
-      btnText.textContent = 'Submitting...';
+      btnText.textContent = 'A submeter...';
       const data = new FormData(form);
       try {
         const response = await fetch(form.action, { method: 'POST', body: data });
         const result = await response.json();
 
         if (response.ok && result.status === 'ok') {
-          showToast(`Event "${result.event_name}" added successfully!`);
+          showToast(`Evento "${result.event_name}" adicionado com sucesso!`);
           form.reset();
           imagePreview.classList.add('hidden'); // Hide image preview after reset
         } else {
-          const errorMsg = result.message || 'Unknown error occurred';
-          showToast(`Error: ${errorMsg}`, 'error');
+          const errorMsg = result.message || 'Ocorreu um erro desconhecido';
+          showToast(`Erro: ${errorMsg}`, 'error');
         }
       } catch (error) {
         console.error('Submission error:', error);
-        showToast('Network error. Please check your connection and try again.', 'error');
+        showToast('Erro de rede. Por favor, verifique a sua ligação e tente novamente.', 'error');
       } finally {
         // re-enable and hide spinner
         submitBtn.disabled = false;
         btnSpinner.classList.add('hidden');
-        btnText.textContent = 'Add Event';
+        btnText.textContent = 'Adicionar Evento';
       }
     });
   });

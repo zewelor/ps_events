@@ -302,6 +302,7 @@ DEPENDENCIES
   jekyll-seo-tag
   jekyll-sitemap (~> 1.4)
   jekyll-tailwindcss
+  jwt (~> 2.10)
   lefthook
   mini_magick (~> 5.2)
   puma (~> 6.6)
