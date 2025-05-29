@@ -10,7 +10,7 @@ on:
       - 'events_listing/**'
   workflow_dispatch:
   workflow_run:
-    workflows: ["Regenerate events.ics"]
+    workflows: ["Regenerate events"]
     branches: [main]
     types:
       - completed
