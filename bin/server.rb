@@ -120,8 +120,7 @@ post "/add_event" do
       # Upload to GitHub only in production environment
       if settings.environment == :production
         # Get the full file path for GitHub upload
-        full_image_path = File.join(File.dirname(__FILE__), "..", "events_listing", image_path)
-        GitHubService.upload_image(full_image_path)
+        GitHubService.upload_image(image_path)
         puts "✅ Image uploaded to GitHub (production)"
       else
         puts "ℹ️ Skipping GitHub upload (not in production environment)"
