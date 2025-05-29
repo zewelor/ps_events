@@ -1,4 +1,4 @@
-name: Regenerate events.ics
+name: Regenerate events
 
 on:
   push:
@@ -90,12 +90,12 @@ jobs:
         run: |
           curl -Lo events.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzDO4xR7fFMB53s98OETbwFNzhiMJ7N2I-kroaNQt4iB3mUthr7z1wGj3NhRXpVi8MQDzFKB0UjY9G/pub?gid=0&single=true&output=csv"
 
-      - name: Generate events.ics
-        run: docker compose run app bin/spreadsheet_to_ical -o events.ics
-        env:
-          COMPOSE_FILE: docker-compose.ci.yml
+      # - name: Generate events.ics
+      #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
+      #   env:
+      #     COMPOSE_FILE: docker-compose.ci.yml
 
-      - name: Auto-commit updated events.ics
+      - name: Auto-commit updated events files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Regenerate events files"

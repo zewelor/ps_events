@@ -9,6 +9,7 @@ gem "dry-validation", "~> 1.11"
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]
   gem "irb"
+  gem "rack-test", "~> 2.2"
 end
 
 group :development do
@@ -29,6 +30,10 @@ group :development do
   gem "rerun"
 end
 
+group :test do
+  gem "simplecov", require: false
+end
+
 group :jekyll_plugins do
   gem "jekyll-datapage-generator"
   gem "jekyll-sitemap", "~> 1.4"
@@ -41,7 +46,6 @@ gem "rackup", "~> 2.2"
 gem "puma", "~> 6.6"
 
 gem "google-apis-sheets_v4", "~> 0.44.0"
-gem "jwt", "~> 2.10"
 
 # Image processing gem
 gem "mini_magick", "~> 5.2"

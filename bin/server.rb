@@ -144,9 +144,11 @@ post "/add_event" do
     validated_params = result.to_h
     puts "✅ Validation successful for event: #{validated_params[:name]}"
 
-    # Format start and end times using helper method
-    start_str = format_datetime(validated_params[:start_date], validated_params[:start_time])
-    end_str = format_datetime(validated_params[:end_date], validated_params[:end_time])
+    # Format individual start and end date and time components
+    start_date_str = Date.parse(validated_params[:start_date]).strftime("%d/%m/%Y")
+    start_time_str = validated_params[:start_time]&.strip || ""
+    end_date_str = Date.parse(validated_params[:end_date]).strftime("%d/%m/%Y")
+    end_time_str = validated_params[:end_time]&.strip || ""
 
     # Format submitted at timestamp
     submitted_at = Time.now.strftime("%d/%m/%Y %H:%M")
@@ -170,8 +172,10 @@ post "/add_event" do
       submitted_at,
       submitter_email,
       validated_params[:name].strip,
-      start_str,
-      end_str,
+      start_date_str,
+      start_time_str,
+      end_date_str,
+      end_time_str,
       validated_params[:location].strip,
       validated_params[:description].strip,
       validated_params[:category].strip,
@@ -189,8 +193,8 @@ post "/add_event" do
     # Log the event data (mask sensitive info)
     masked_data = event_data.dup
     masked_data[1] = "#{masked_data[1].split("@").first}@***" if masked_data[1].include?("@") # submitter
-    masked_data[9] = "#{masked_data[9].split("@").first}@***" if masked_data[9]&.include?("@") # contact
-    puts "✅ Adding event: #{masked_data[2]} by #{masked_data[8]} at #{masked_data[3]} (submitted by #{masked_data[1]}, contact: #{masked_data[9]})"
+    masked_data[11] = "#{masked_data[11].split("@").first}@***" if masked_data[11]&.include?("@") # contact
+    puts "✅ Adding event: #{masked_data[2]} by #{masked_data[10]} on #{masked_data[3]} #{masked_data[4]} (submitted by #{masked_data[1]}, contact: #{masked_data[11]})"
 
     begin
       # Add to Google Sheets
@@ -205,7 +209,7 @@ post "/add_event" do
       # Respond with JSON status
       json_success("Event added successfully", {
         event_name: validated_params[:name],
-        event_date: start_str
+        event_date: start_date_str
       })
     rescue => e
       puts "❌ Error adding event: #{e.message}"

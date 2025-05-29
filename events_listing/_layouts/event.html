@@ -15,7 +15,7 @@ title: "{{ page.Name | escape_once }}"
   </div>
   <div class="bg-blue-50 p-6 rounded-lg shadow-sm mb-6">
     <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Detalhes do Evento</h2>
-    <p class="mb-2"><strong class="text-gray-700">Quando:</strong> <span class="text-gray-600">{{ page["Start time"] }} - {{ page["End time"] }}</span></p>
+    <p class="mb-2"><strong class="text-gray-700">Quando:</strong> <span class="text-gray-600">{{ page | format_event_datetime }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Onde:</strong> <span class="text-gray-600">{{ page.Location }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Organizador:</strong> <span class="text-gray-600">{{ page.Organizer }}
       {% if page.Email or page.Phone %}
