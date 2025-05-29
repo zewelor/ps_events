@@ -157,7 +157,7 @@ class EventValidation < Dry::Validation::Contract
 
   rule(:price_type) do
     if key? && value && !value.empty?
-      valid_price_types = ["Free", "Paid", "Donation", "Members Only"]
+      valid_price_types = ["Free", "Paid", "Unknown"]
       unless valid_price_types.include?(value)
         key.failure("must be one of: #{valid_price_types.join(", ")}")
       end
