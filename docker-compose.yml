@@ -19,6 +19,10 @@ services:
       FORM_ADD_EVENT_POST_ENDPOINT: "http://localhost:4001/add_event"
       JEKYLL_ENV: development
     command:
+      - rerun
+      - --pattern
+      - '{events_listing/_plugins/**/*.rb,events.csv}'
+      - --
       - jekyll
       - server
       - --force_polling
@@ -35,6 +39,9 @@ services:
       - .env
     command:
       - rerun
+      - --pattern
+      - '{bin/server.rb,lib/server/**/*.rb}'
+      - --
       - ruby
       - bin/server.rb
 

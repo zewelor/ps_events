@@ -9,7 +9,7 @@ page_gen:
     template: event
     dir: events
     data: events
-    filter_condition: "require 'date'; end_time = record['End time']; Date.strptime(end_time.split(' ')[0], '%d/%m/%Y') >= (Date.today - 1)"
+    filter_condition: "require 'date'; end_date = record['End date']; Date.strptime(end_date.split(' ')[0], '%d/%m/%Y') >= (Date.today - 1)"
 
 tailwindcss:
   css_path: ./events_listing/_tailwind.css
