@@ -43,7 +43,7 @@ permalink: /add_event/
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
       <h3 class="text-lg font-medium mb-3 text-gray-700">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
-      <p class="text-sm text-gray-500 mb-4">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito.</p>
+      <p class="text-sm text-gray-500 mb-4">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -171,7 +171,7 @@ permalink: /add_event/
           class="form-input"
         />
         <label for="start_time" class="form-label mt-2">
-          Start time
+          Hora de início
         </label>
         <input
           type="time"
@@ -180,13 +180,13 @@ permalink: /add_event/
           value="{{ test_start | date: '%H:%M' }}"
           class="form-input"
         />
-        <p class="form-help">Dates are mandatory, times are optional</p>
+        <p class="form-help">As datas são obrigatórias, as horas são opcionais</p>
       </div>
 
       <!-- End date -->
       <div>
         <label for="end_date" class="form-label">
-          End date <span class="text-red-500">*</span>
+          Data de fim <span class="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -197,7 +197,7 @@ permalink: /add_event/
           class="form-input"
         />
         <label for="end_time" class="form-label mt-2">
-          End time
+          Hora de fim
         </label>
         <input
           type="time"
@@ -228,7 +228,7 @@ permalink: /add_event/
 
       <div>
         <label for="contact_tel" class="form-label">
-          Contact Telephone / Whatsapp
+          Telefone de Contacto / Whatsapp
         </label>
         <input
           type="tel"
@@ -257,7 +257,7 @@ permalink: /add_event/
     <!-- Event Image -->
     <div>
       <label for="event_image" class="form-label">
-        Event Image
+        Imagem do Evento
       </label>
       <input
         type="file"
@@ -266,10 +266,10 @@ permalink: /add_event/
         accept="image/*"
         class="form-input file-input-button"
       />
-      <p class="form-help">Upload an image for your event (optional). Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF. Max size: 10MB.</p>
+      <p class="form-help">Carregue uma imagem para o seu evento (opcional). Formatos suportados: JPEG, PNG, GIF, WebP, BMP, TIFF. Tamanho máximo: 10MB.</p>
       <div id="image-preview" class="mt-3 hidden">
         <img id="preview-img" src="" alt="Image preview" class="max-w-xs max-h-48 rounded-lg border border-gray-200" />
-        <button type="button" id="remove-image" class="mt-2 text-sm text-red-600 hover:text-red-800">Remove image</button>
+        <button type="button" id="remove-image" class="mt-2 text-sm text-red-600 hover:text-red-800">Remover imagem</button>
       </div>
     </div>
 
@@ -277,7 +277,7 @@ permalink: /add_event/
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div>
         <label for="event_link1" class="form-label">
-          Event / Social media link 1
+          Link do evento / redes sociais 1
         </label>
         <input
           type="url"
@@ -291,7 +291,7 @@ permalink: /add_event/
       </div>
       <div>
         <label for="event_link2" class="form-label">
-          Event / Social media link 2
+          Link do evento / redes sociais 2
         </label>
         <input
           type="url"
@@ -305,7 +305,7 @@ permalink: /add_event/
       </div>
       <div>
         <label for="event_link3" class="form-label">
-          Event / Social media link 3
+          Link do evento / redes sociais 3
         </label>
         <input
           type="url"
@@ -319,7 +319,7 @@ permalink: /add_event/
       </div>
       <div>
         <label for="event_link4" class="form-label">
-          Event / Social media link 4
+          Link do evento / redes sociais 4
         </label>
         <input
           type="url"
@@ -330,6 +330,26 @@ permalink: /add_event/
           placeholder="https://example.com"
           class="form-input"
         />
+      </div>
+    </div>
+
+    <!-- Responsibility Declaration -->
+    <div class="mb-6 p-6 bg-white shadow-md rounded-md border-b-4 border-buttons">
+      <h3 class="text-lg font-medium mb-3 text-gray-700">Declaração de responsabilidade</h3>
+      <p class="text-sm text-gray-600 mb-4">
+        Confirmo que as informações fornecidas são verdadeiras e corretas, segundo o meu melhor conhecimento. Comprometo-me a mantê-las atualizadas e a solicitar quaisquer correções ou alterações, se necessário, através do e-mail pxopulse@gmail.com.
+      </p>
+      <div class="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          id="responsibility_agreement"
+          name="responsibility_agreement"
+          required
+          class="mt-1 w-4 h-4 text-selected-filter bg-white border-gray-300 rounded focus:ring-selected-filter focus:ring-2"
+        />
+        <label for="responsibility_agreement" class="text-sm text-gray-700">
+          Li e concordo com os termos acima. <span class="text-red-500">*</span>
+        </label>
       </div>
     </div>
 
