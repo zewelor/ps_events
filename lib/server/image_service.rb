@@ -43,9 +43,6 @@ class ImageService
         # Set quality
         cmd.quality QUALITY
 
-        # Optional: Add auto-orient to fix rotation issues from camera EXIF data
-        cmd.auto_orient
-
         # Optional: Strip metadata to reduce file size
         cmd.strip
       end
