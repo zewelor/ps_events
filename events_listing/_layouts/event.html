@@ -14,7 +14,10 @@ title: "{{ page.Name | escape_once }}"
     {% endif %}
   </div>
   <div class="bg-blue-50 p-6 rounded-lg shadow-sm mb-6">
-    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Detalhes do Evento</h2>
+    <h2 class="event-details-section-title">
+      <span class="text-3xl mr-3">📅</span>
+      Info do Evento
+    </h2>
     <p class="mb-2"><strong class="text-gray-700">Quando:</strong> <span class="text-gray-600">{{ page | format_event_datetime }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Onde:</strong> <span class="text-gray-600">{{ page.Location }}</span></p>
     <p class="mb-2"><strong class="text-gray-700">Organizador:</strong> <span class="text-gray-600">{{ page.Organizer }}
@@ -31,9 +34,48 @@ title: "{{ page.Name | escape_once }}"
     <p class="mb-2"><strong class="text-gray-700">Preço:</strong> <span class="text-gray-600">{% if page.Price == "" or page.Price == nil %}Sem informação disponível{% else %}{{ page.Price }}{% endif %}</span></p>
   </div>
   <div class="bg-green-50 p-6 rounded-lg shadow-sm">
-    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Descrição</h2>
+    <h2 class="event-details-section-title">
+      <span class="text-3xl mr-3">🎉</span>
+       O que vai rolar?
+    </h2>
     <p class="text-gray-700 leading-relaxed">{{ page.Description }}</p>
   </div>
+
+  {% comment %} Display links if any are available {% endcomment %}
+  {% assign has_links = false %}
+  {% if page["Link 1"] and page["Link 1"] != "" %}
+    {% assign has_links = true %}
+  {% elsif page["Link 2"] and page["Link 2"] != "" %}
+    {% assign has_links = true %}
+  {% elsif page["Link 3"] and page["Link 3"] != "" %}
+    {% assign has_links = true %}
+  {% elsif page["Link 4"] and page["Link 4"] != "" %}
+    {% assign has_links = true %}
+  {% endif %}
+
+  {% if has_links %}
+  <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl shadow-sm mt-6 border-2 border-dashed border-orange-200">
+    <h2 class="event-details-section-title">
+      <span class="text-3xl mr-3">🚀</span>
+      Vê também isto!
+    </h2>
+    <div class="space-y-2">
+      {% assign link_array = "Link 1,Link 2,Link 3,Link 4" | split: "," %}
+      {% for link_key in link_array %}
+        {% if page[link_key] and page[link_key] != "" %}
+          {% assign link_url = page[link_key] %}
+
+          <a href="{{ link_url }}" target="_blank" rel="noopener noreferrer" class="block p-2 rounded-lg hover:bg-orange-100 transition-colors duration-200 group">
+            <div class="text-blue-600 hover:text-blue-800 transition-colors duration-200 break-all">
+              {{ link_url }}
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="mt-6 text-center">
     <a href="/" class="navigation-button">Voltar aos Eventos</a>
   </div>
