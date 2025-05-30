@@ -56,7 +56,13 @@ module Jekyll
 
       # Case 4: Start date + start time + end date only (no end time)
       if present.call(start_time) && present.call(end_date) && !present.call(end_time)
-        return "#{start_date_formatted} #{format_time_with_seconds.call(start_time)}"
+        # If it's the same day, just show start date and time
+        if start_date == end_date
+          return "#{start_date_formatted} #{format_time_with_seconds.call(start_time)}"
+        else
+          # If it's a multi-day event, show the date range with start time
+          return "#{start_date_formatted} #{format_time_with_seconds.call(start_time)} - #{end_date_formatted}"
+        end
       end
 
       # Case 5: Start date + end time only (no start time, no end date)
