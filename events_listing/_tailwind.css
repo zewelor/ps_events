@@ -51,3 +51,7 @@
 .form-help {
   @apply mt-1 text-xs text-gray-500;
 }
+
+.event-details-section-title {
+  @apply text-xl font-bold mb-4 text-gray-800 border-b pb-2
+}
