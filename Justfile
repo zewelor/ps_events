@@ -11,3 +11,7 @@ test_dockerignore:
 
 jekyll *args='':
   docker compose run --rm --service-ports app jekyll server --force_polling -l -H 0.0.0.0 -s events_listing {{ args }}
+
+# Run all tests
+test:
+  @source dockerized.sh > /dev/null ; rake test
