@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'bin/spreadsheet_to_ical'
-      - 'images/inbox/**'
       - '.github/workflows/regenerate_events.yml'
     branches:
       - main
@@ -12,58 +11,67 @@ on:
     types: [regenerate-events]
   workflow_dispatch:
 
+# Ensure only one workflow runs at a time to prevent conflicts
+concurrency:
+  group: regenerate-events
+  cancel-in-progress: false
+
 jobs:
-  convert:
-    runs-on: ubuntu-latest
-    env:
-      INBOX_DIR: images/inbox
+  # convert:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     INBOX_DIR: images/inbox
 
-    permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the
-      # added or changed files to the repository.
-      contents: write
+  #   permissions:
+  #     # Give the default GITHUB_TOKEN write permission to commit and push the
+  #     # added or changed files to the repository.
+  #     contents: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: true
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: true
 
-      - name: Check for images
-        id: check-images
-        run: |
-          count=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.gitkeep' | wc -l)
-          echo "count=$count" >> $GITHUB_OUTPUT
+  #     - name: Check for images
+  #       id: check-images
+  #       run: |
+  #         count=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.gitkeep' | wc -l)
+  #         echo "count=$count" >> $GITHUB_OUTPUT
 
-      - name: Install ImageMagick
-        if: steps.check-images.outputs.count != '0'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick webp
+  #     - name: Install ImageMagick
+  #       if: steps.check-images.outputs.count != '0'
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y imagemagick webp
 
-      - name: Convert images to WebP
-        if: steps.check-images.outputs.count != '0'
-        run: |
-          for img in "$INBOX_DIR"/*; do
-            [ -f "$img" ] || continue
-            if [ "$(basename "${img}")" = ".gitkeep" ]; then continue; fi
-            filename="$(basename "${img}")"
-            basename_no_ext="${filename%.*}"
-            output="events_listing/assets/images/${basename_no_ext}.webp"
-            convert "$img" -resize 900x900\> -quality 80 "$output"
-            rm "$img"
-          done
+  #     - name: Convert images to WebP
+  #       if: steps.check-images.outputs.count != '0'
+  #       run: |
+  #         for img in "$INBOX_DIR"/*; do
+  #           [ -f "$img" ] || continue
+  #           if [ "$(basename "${img}")" = ".gitkeep" ]; then continue; fi
+  #           filename="$(basename "${img}")"
+  #           basename_no_ext="${filename%.*}"
+  #           output="events_listing/assets/images/${basename_no_ext}.webp"
+  #           convert "$img" -resize 900x900\> -quality 80 "$output"
+  #           rm "$img"
+  #         done
 
-      - name: Auto-commit converted images
-        if: steps.check-images.outputs.count != '0'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Convert images to WebP"
-          file_pattern: "events_listing/assets/images/*.webp ${{ env.INBOX_DIR }}/*"
+  #     - name: Auto-commit converted images
+  #       if: steps.check-images.outputs.count != '0'
+  #       run: |
+  #         git pull origin main
+
+  #     - name: Commit converted images
+  #       if: steps.check-images.outputs.count != '0'
+  #       uses: stefanzweifel/git-auto-commit-action@v5
+  #       with:
+  #         commit_message: "Convert images to WebP"
+  #         file_pattern: "events_listing/assets/images/*.webp ${{ env.INBOX_DIR }}/*"
 
   regenerate:
     runs-on: ubuntu-latest
-    needs: convert
 
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the
@@ -94,6 +102,10 @@ jobs:
       #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
       #   env:
       #     COMPOSE_FILE: docker-compose.ci.yml
+
+      - name: Pull latest changes before commit
+        run: |
+          git pull origin main
 
       - name: Auto-commit updated events files
         uses: stefanzweifel/git-auto-commit-action@v5
