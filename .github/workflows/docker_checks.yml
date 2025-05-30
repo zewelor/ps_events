@@ -66,8 +66,8 @@ jobs:
 
       - name: Run Rubocop
         run: |
-          docker compose run app rubocop
+          docker compose run --rm app rubocop
 
       - name: Run Tests
         run: |
-          docker compose run app rake test
+          docker compose run --rm app rake test
