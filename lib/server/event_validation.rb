@@ -31,9 +31,15 @@ class EventValidation < Dry::Validation::Contract
   end
 
   rule(:start_date) do
-    Date.parse(value)
-  rescue ArgumentError
-    key.failure("must be a valid date format (YYYY-MM-DD)")
+    if /\A\d{4}-\d{2}-\d{2}\z/.match?(value)
+      begin
+        Date.strptime(value, "%Y-%m-%d")
+      rescue ArgumentError
+        key.failure("must be a valid date (e.g., month between 01-12, day between 01-31)")
+      end
+    else
+      key.failure("must be a valid date format (YYYY-MM-DD)")
+    end
   end
 
   rule(:start_time) do
@@ -47,14 +53,28 @@ class EventValidation < Dry::Validation::Contract
   end
 
   rule(:end_date) do
-    end_date = Date.parse(value)
-    start_date = Date.parse(values[:start_date]) if values[:start_date]
+    if /\A\d{4}-\d{2}-\d{2}\z/.match?(value)
+      begin
+        end_date = Date.strptime(value, "%Y-%m-%d")
+        start_val = values[:start_date]
+        start_date = nil
+        if start_val && /\A\d{4}-\d{2}-\d{2}\z/.match?(start_val) # Ensure start_val is also in correct format before parsing
+          begin
+            start_date = Date.strptime(start_val, "%Y-%m-%d")
+          rescue ArgumentError
+            # This should ideally not happen if start_date rule passed
+          end
+        end
 
-    if start_date && end_date < start_date
-      key.failure("must be on or after start date")
+        if start_date && end_date < start_date
+          key.failure("must be on or after start date")
+        end
+      rescue ArgumentError
+        key.failure("must be a valid date (e.g., month between 01-12, day between 01-31)")
+      end
+    else
+      key.failure("must be a valid date format (YYYY-MM-DD)")
     end
-  rescue ArgumentError
-    key.failure("must be a valid date format (YYYY-MM-DD)")
   end
 
   rule(:end_time) do
@@ -70,11 +90,10 @@ class EventValidation < Dry::Validation::Contract
   rule(:start_date, :start_time, :end_date, :end_time) do
     if values[:start_date] && values[:end_date]
       begin
-        start_date = Date.parse(values[:start_date])
-        end_date = Date.parse(values[:end_date])
+        start_date_obj = Date.strptime(values[:start_date], "%Y-%m-%d")
+        end_date_obj = Date.strptime(values[:end_date], "%Y-%m-%d")
 
-        # If dates are the same and both times are provided, check time order
-        if start_date == end_date && values[:start_time] && values[:end_time] &&
+        if start_date_obj == end_date_obj && values[:start_time] && values[:end_time] &&
             !values[:start_time].empty? && !values[:end_time].empty?
           start_time = Time.parse(values[:start_time])
           end_time = Time.parse(values[:end_time])
@@ -84,7 +103,6 @@ class EventValidation < Dry::Validation::Contract
           end
         end
       rescue ArgumentError
-        # Individual field validations will catch parsing errors
       end
     end
   end
@@ -144,7 +162,6 @@ class EventValidation < Dry::Validation::Contract
 
   rule(:contact_tel) do
     if key? && value && !value.empty?
-      # Basic phone number validation - allows digits, spaces, hyphens, parentheses, and plus sign
       unless /\A[\d\s\-\(\)\+]+\z/.match?(value)
         key.failure("must contain only numbers, spaces, hyphens, parentheses, and plus sign")
       end

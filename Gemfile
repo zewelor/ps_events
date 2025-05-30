@@ -3,13 +3,13 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "zeitwerk"
 gem "sinatra"
-gem "dotenv"
 gem "dry-validation", "~> 1.11"
 
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]
   gem "irb"
   gem "rack-test", "~> 2.2"
+  gem "minitest", "~> 5.25"
 end
 
 group :development do
