@@ -9,6 +9,8 @@ on:
       - '.github/workflows/jekyll_site.yml'
       - 'events_listing/**'
   workflow_dispatch:
+  schedule:
+    - cron: '0 5 */1 * *'
   workflow_run:
     workflows: ["Regenerate events"]
     branches: [main]
