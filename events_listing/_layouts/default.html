@@ -20,6 +20,24 @@
     <main class="container mx-auto p-4 sm:p-6 flex-grow">
       {{ content }}
     </main>
+    {% unless page.url == '/about_us/' %}
+    <!-- About Us Call to Action -->
+    <div class="container mx-auto px-4 sm:px-6 mb-12 text-center">
+      <p class="text-gray-600 mb-4">
+        Quer saber mais sobre nós e a nossa missão?
+      </p>
+      <div class="flex justify-center">
+        <a href="/about_us/" class="navigation-button">
+          Conhece-nos Melhor
+        </a>
+      </div>
+    </div>
+    {% endunless %}
+    <div class="container mx-auto px-4 sm:px-6 mb-6">
+      <p>
+        <strong>Aviso:</strong> As informações sobre os eventos são fornecidas segundo o nosso melhor conhecimento. As datas e os detalhes podem mudar ou os eventos podem ser cancelados. Confirma sempre com o organizador antes de participar.
+      </p>
+    </div>
     {% include footer.html %}
   </body>
 </html>
