@@ -12,6 +12,12 @@
     <meta name="msapplication-config" content="/assets/browserconfig.xml">
     <meta name="theme-color" content="#75c8e2">
 
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="PXO Pulse">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{{ site.time | date: '%s' }}">
     {% seo %}
   </head>
@@ -21,5 +27,32 @@
       {{ content }}
     </main>
     {% include footer.html %}
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.error('SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // Basic PWA event handling - prevent auto install prompts
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt available');
+        // Prevent Chrome from automatically showing the prompt
+        e.preventDefault();
+      });
+
+      // Log when app is installed
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('PWA was installed');
+      });
+    </script>
   </body>
 </html>
