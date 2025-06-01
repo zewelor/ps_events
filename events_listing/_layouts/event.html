@@ -4,7 +4,7 @@ title: "{{ page.Name | escape_once }}"
 ---
 
 <article class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-  <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">{{ page.Name }}</h1>
+  <h1 class="page-title text-center">{{ page.Name }}</h1>
   <div class="text-center mb-6">
     {% if page.Image and page.Image != "" %}
       {% assign img_path = 'assets/images/' | append: page.Image | append: '.webp' %}
@@ -18,9 +18,9 @@ title: "{{ page.Name | escape_once }}"
       <span class="text-3xl mr-3">📅</span>
       Info do Evento
     </h2>
-    <p class="mb-2"><strong class="text-gray-700">Quando:</strong> <span class="text-gray-600">{{ page | format_event_datetime }}</span></p>
-    <p class="mb-2"><strong class="text-gray-700">Onde:</strong> <span class="text-gray-600">{{ page.Location }}</span></p>
-    <p class="mb-2"><strong class="text-gray-700">Organizador:</strong> <span class="text-gray-600">{{ page.Organizer }}
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Quando:</strong> <span class="text-[var(--color-text-muted)]">{{ page | format_event_datetime }}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ page.Location }}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Organizador:</strong> <span class="text-[var(--color-text-muted)]">{{ page.Organizer }}
       {% if page.Email or page.Phone %}
         (
         {% if page.Email %}
@@ -31,14 +31,14 @@ title: "{{ page.Name | escape_once }}"
         )
       {% endif %}
     </span></p>
-    <p class="mb-2"><strong class="text-gray-700">Preço:</strong> <span class="text-gray-600">{% if page.Price == "" or page.Price == nil %}Sem informação disponível{% else %}{{ page.Price }}{% endif %}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Preço:</strong> <span class="text-[var(--color-text-muted)]">{% if page.Price == "" or page.Price == nil %}Sem informação disponível{% else %}{{ page.Price }}{% endif %}</span></p>
   </div>
   <div class="bg-green-50 p-6 rounded-lg shadow-sm">
     <h2 class="event-details-section-title">
       <span class="text-3xl mr-3">🎉</span>
        O que vai rolar?
     </h2>
-    <p class="text-gray-700 leading-relaxed">{{ page.Description }}</p>
+    <p class="body-text">{{ page.Description }}</p>
   </div>
 
   {% comment %} Display links if any are available {% endcomment %}

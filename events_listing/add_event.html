@@ -37,13 +37,13 @@ permalink: /add_event/
 {% endif %}
 
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
-  <h1 class="text-2xl md:text-3xl font-semibold mb-6">Adicionar um Novo Evento</h1>
+  <h1 class="page-title">Adicionar um Novo Evento</h1>
 
   <!-- Google Sign-In Section - Top of page -->
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
-      <h3 class="text-lg font-medium mb-3 text-gray-700">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
-      <p class="text-sm text-gray-500 mb-4">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
+      <h3 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
+      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -54,14 +54,14 @@ permalink: /add_event/
           </svg>
         </div>
         <div>
-          <p class="text-sm font-medium text-gray-700">Verificado com o Google</p>
-          <p id="user-email" class="text-sm text-gray-500"></p>
+          <p class="form-label">Verificado com o Google</p>
+          <p id="user-email" class="muted-text"></p>
         </div>
       </div>
     </div>
   </div>
 
-  <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" enctype="multipart/form-data" class="form-card">
+  <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" enctype="multipart/form-data" class="space-y-6">
 
     <!-- Hidden field for Google token -->
     <input type="hidden" name="google_token" id="google_token" value="">
@@ -335,8 +335,8 @@ permalink: /add_event/
 
     <!-- Responsibility Declaration -->
     <div class="our-section">
-      <h3 class="text-lg font-medium mb-3 text-gray-700">Declaração de responsabilidade</h3>
-      <p class="text-sm text-gray-600 mb-4">
+      <h3 class="section-subtitle">Declaração de responsabilidade</h3>
+      <p class="muted-text">
         Confirmo que as informações fornecidas são verdadeiras e corretas, segundo o meu melhor conhecimento. Comprometo-me a mantê-las atualizadas e a solicitar quaisquer correções ou alterações, se necessário, através do e-mail pxopulse@gmail.com.
       </p>
       <div class="flex items-start space-x-3">
@@ -348,7 +348,7 @@ permalink: /add_event/
           {% if jekyll.environment == 'development' %}checked{% endif %}
           class="mt-1 w-4 h-4 text-selected-filter bg-white border-gray-300 rounded focus:ring-selected-filter focus:ring-2"
         />
-        <label for="responsibility_agreement" class="text-sm text-gray-700">
+        <label for="responsibility_agreement" class="form-label">
           Li e concordo com os termos acima. <span class="text-red-500">*</span>
         </label>
       </div>
