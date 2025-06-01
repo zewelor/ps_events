@@ -66,10 +66,15 @@ self.addEventListener('fetch', (event) => {
         // Optional: Cache new successful GET requests if needed (not for MVP)
         return networkResponse;
       });
-    }).catch(() => {
+    }).catch((error) => { // Catch the error object
+      if (DEBUG) console.error('Fetch failed for:', request.url, 'Error:', error);
       if (request.mode === 'navigate') {
+        if (DEBUG) console.log('Returning offline.html for navigation request.');
         return caches.match('/offline.html');
       }
+      // For non-navigation requests, rethrow the error to let the browser handle it.
+      // This ensures that the browser behaves as if the service worker wasn't there for this failed asset.
+      throw error;
     })
   );
 });
