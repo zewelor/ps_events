@@ -1,5 +1,5 @@
 <footer class="bg-selected-filter text-center text-white p-6 mt-12">
-  <p>&copy; <span id="current-year"></span> {{ site.title }}. All rights reserved.
+  <p>&copy; <span id="current-year">{{ "now" | date: "%Y" }}</span> {{ site.title }}. All rights reserved.
     <span class="inline-block align-middle"> <!-- Wrapper for icons -->
       <span role="img" aria-label="love" class="inline-block align-middle mx-1">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" class="w-5 h-5 text-red-500 inline">
@@ -23,7 +23,4 @@
       </a>
     </span> <!-- End of wrapper for icons -->
   </p>
-  <script>
-    document.getElementById('current-year').textContent = new Date().getFullYear();
-  </script>
 </footer>
