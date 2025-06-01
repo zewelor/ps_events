@@ -86,3 +86,28 @@
 .event-details-section-title {
   @apply text-xl font-bold mb-4 text-[var(--color-text-primary)] border-b pb-2;
 }
+
+/* Scroll to Top Button */
+.scroll-to-top-btn {
+  @apply fixed bottom-20 right-6 z-50 w-12 h-12 rounded-full shadow-lg transition-all duration-300 ease-in-out flex items-center justify-center;
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+  @apply opacity-0 pointer-events-none translate-y-4;
+  @apply md:bottom-24 md:right-8 md:w-14 md:h-14;
+}
+
+.scroll-to-top-btn.visible {
+  @apply opacity-100 pointer-events-auto translate-y-0;
+}
+
+.scroll-to-top-btn:hover {
+  @apply scale-110 shadow-xl;
+}
+
+.scroll-to-top-btn:active {
+  @apply scale-95;
+}
+
+/* Adjust button position when near footer */
+.scroll-to-top-btn.near-footer {
+  @apply bottom-32 md:bottom-36;
+}
