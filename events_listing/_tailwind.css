@@ -5,53 +5,84 @@
   --color-buttons-hover: oklch(0.595 0.0688 205.39);
   --color-selected-filter: oklch(0.3 0.0045 325.69);
   --color-selected-filter-hover: oklch(0.1588 0.0045 325.69);
+  --color-text-primary: #1f2937; /* gray-800 */
+  --color-text-secondary: #374151; /* gray-700 */
+  --color-text-muted: #4b5563; /* gray-600 */
+  --color-text-subtle: #6b7280; /* gray-500 */
+}
+
+@utility card {
+  @apply bg-white rounded-lg shadow-lg;
+}
+
+@utility section-card {
+  @apply card p-6;
+}
+
+@utility btn {
+  @apply rounded-lg text-sm font-medium transition-colors;
+}
+
+@utility page-title {
+  @apply text-2xl md:text-3xl font-semibold mb-6;
+}
+
+@utility section-subtitle {
+  @apply font-semibold text-[var(--color-text-primary)] mb-2;
+}
+
+@utility body-text {
+  @apply text-[var(--color-text-secondary)] leading-relaxed;
+}
+
+@utility muted-text {
+  @apply text-[var(--color-text-muted)] text-sm;
 }
 
 .navigation-button {
-  @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors;
+  @apply btn inline-block bg-[var(--color-buttons)] text-zinc-800 px-5 py-2 hover:bg-[var(--color-buttons-hover)];
 }
 
 .file-input-button {
-  @apply file:mr-4 file:px-5 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-buttons file:text-zinc-800 hover:file:bg-buttons-hover file:transition-colors file:cursor-pointer;
+  @apply btn file:btn file:mr-4 file:px-5 file:py-2 file:border-0 file:bg-[var(--color-buttons)] file:text-zinc-800 hover:file:bg-[var(--color-buttons-hover)] file:cursor-pointer;
 }
 
 .event-card {
-  @apply bg-white rounded-lg shadow-lg overflow-hidden flex flex-col;
+  @apply card overflow-hidden flex flex-col;
+}
+
+.our-section {
+  @apply section-card border-[var(--color-buttons)] border-b-4 mb-6;
 }
 
 /* Filter button styles */
 .filter-btn {
-  @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors mr-2 mb-2;
+  @apply btn px-4 py-2 mr-2 mb-2;
 }
 
 .filter-btn--inactive {
-  @apply bg-buttons text-gray-700 hover:bg-buttons-hover
+  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
 }
 
 .filter-btn--active {
-  @apply bg-selected-filter text-white hover:bg-selected-filter-hover
-}
-
-/* Form wrapper combining card styling and padding */
-.form-card {
-  @apply p-6 space-y-6;
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
 }
 
 /* Form input fields common styling */
 .form-input {
-  @apply mt-1 block w-full border-b-4 border-buttons focus:ring-buttons-hover focus:border-buttons-hover focus:border-b-4 bg-white rounded-lg shadow-lg py-3 px-3;
+  @apply card mt-1 block w-full border-b-4 border-[var(--color-buttons)] focus:ring-[var(--color-buttons-hover)] focus:border-[var(--color-buttons-hover)] focus:border-b-4 py-3 px-3;
 }
 
 /* Form label common styling */
 .form-label {
-  @apply block text-sm font-medium text-gray-700;
+  @apply block text-sm font-medium text-[var(--color-text-muted)];
 }
 
 /* Form field description/help text styling */
 .form-help {
-  @apply mt-1 text-xs text-gray-500;
+  @apply mt-1 text-xs text-[var(--color-text-subtle)];
 }
 
 .event-details-section-title {
-  @apply text-xl font-bold mb-4 text-gray-800 border-b pb-2
+  @apply text-xl font-bold mb-4 text-[var(--color-text-primary)] border-b pb-2;
 }
