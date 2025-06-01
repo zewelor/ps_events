@@ -1,6 +1,5 @@
 // PWA Install functionality
 let deferredPrompt;
-let installButton;
 
 // Listen for beforeinstallprompt event
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -11,11 +10,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
   // Stash the event so it can be triggered later
   deferredPrompt = e;
-
-  // Show install button
-  if (installButton) {
-    installButton.style.display = 'inline-flex';
-  }
 });
 
 // Install PWA when button is clicked
@@ -39,9 +33,6 @@ function installPWA() {
 // Hide install button after app is installed
 window.addEventListener('appinstalled', (evt) => {
   console.log('PWA was installed');
-  if (installButton) {
-    installButton.style.display = 'none';
-  }
 });
 
 // Check if app is already installed (running in standalone mode)
