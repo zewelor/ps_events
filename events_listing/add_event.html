@@ -522,8 +522,18 @@ permalink: /add_event/
       btnSpinner.classList.remove('hidden');
       btnText.textContent = 'A submeter...';
       const data = new FormData(form);
+
+      // Create AbortController for timeout (90 seconds to handle Render wake-up)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
+
       try {
-        const response = await fetch(form.action, { method: 'POST', body: data });
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           let errorMsg = `HTTP ${response.status}`;
@@ -559,7 +569,7 @@ permalink: /add_event/
         } else if (error.name === 'SyntaxError') {
           errorMsg += ' - Resposta inválida do servidor';
         } else if (error.name === 'AbortError') {
-          errorMsg += ' - Timeout (demorou muito tempo)';
+          errorMsg += ' - O servidor demorou muito tempo a responder (timeout após 90 segundos)';
         } else if (error.message) {
           errorMsg += ` - ${error.name}: ${error.message}`;
         }
