@@ -8,6 +8,7 @@ class EventValidation < Dry::Validation::Contract
   ].freeze
 
   VALID_PRICE_TYPES = ["Free", "Paid", "Unknown"].freeze
+
   params do
     required(:name).filled(:string)
     required(:start_date).filled(:string)
