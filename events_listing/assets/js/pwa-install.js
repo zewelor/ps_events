@@ -2,15 +2,6 @@
 let deferredPrompt;
 let installButton;
 
-document.addEventListener('DOMContentLoaded', function() {
-  installButton = document.getElementById('install-pwa-btn');
-
-  // Hide install button initially
-  if (installButton) {
-    installButton.style.display = 'none';
-  }
-});
-
 // Listen for beforeinstallprompt event
 window.addEventListener('beforeinstallprompt', (e) => {
   console.log('PWA install prompt available');
@@ -57,9 +48,4 @@ window.addEventListener('appinstalled', (evt) => {
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches ||
          window.navigator.standalone === true;
-}
-
-// Hide install button if already in standalone mode
-if (isStandalone() && installButton) {
-  installButton.style.display = 'none';
 }

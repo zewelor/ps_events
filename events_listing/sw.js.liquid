@@ -1,7 +1,13 @@
+---
+permalink: /sw.js
+# Jekyll will process this file
+---
+const CACHE_NAME = 'pxo-pulse-v1.1'; // Incremented version for cache update
+const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
+
 // Service Worker for PXO Pulse PWA
 // Version 1.0.0
 
-const CACHE_NAME = 'pxo-pulse-v1.1'; // Incremented version for cache update
 const urlsToCache = [
   // Core PWA & Navigation
   '/',
@@ -28,11 +34,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache and caching urls:', urlsToCache);
+        if (DEBUG) console.log('Opened cache and caching urls:', urlsToCache);
         return cache.addAll(urlsToCache);
       })
       .catch(err => {
-        console.error('Failed to cache urls during install:', err, urlsToCache);
+        if (DEBUG) console.error('Failed to cache urls during install:', err, urlsToCache);
       })
   );
 });
@@ -78,7 +84,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
+            if (DEBUG) console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
