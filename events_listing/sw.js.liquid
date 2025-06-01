@@ -2,6 +2,9 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
+// Service Worker for PXO Pulse PWA
+// Version 1.2.0
+
 const CACHE_NAME = 'pxo-pulse-v1.2'; // Incremented version for cache update
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
@@ -14,16 +17,18 @@ const urlsToCache = [
   // Styles & Scripts
   '/assets/css/styles.css',
   '/assets/js/event-filter.js',
-  '/assets/js/pwa-install.js',
 
   // Key Icons (ensure all manifest icons + apple-touch are here)
   '/assets/logo180.webp', // Main logo
   '/assets/logo120.webp', // Smaller logo
+  '/assets/favicon-16x16.png',
+  '/assets/favicon-32x32.png',
+  '/assets/icon-48x48.png',
   '/assets/android-chrome-192x192.png',
   '/assets/android-chrome-512x512.png',
-  '/assets/apple-touch-icon.png',
-  '/assets/favicon-32x32.png',
-  '/assets/favicon-16x16.png'
+  '/assets/android-chrome-192x192-maskable.png',
+  '/assets/android-chrome-512x512-maskable.png',
+  '/assets/apple-touch-icon.png'
 ];
 
 // Install Service Worker
@@ -71,10 +76,9 @@ self.addEventListener('fetch', (event) => {
       if (request.mode === 'navigate') {
         if (DEBUG) console.log('Returning offline.html for navigation request.');
         return caches.match('/offline.html');
+      } else {
+        return new Response('Service Unavailable', { status: 503 });
       }
-      // For non-navigation requests, rethrow the error to let the browser handle it.
-      // This ensures that the browser behaves as if the service worker wasn't there for this failed asset.
-      throw error;
     })
   );
 });

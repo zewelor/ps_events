@@ -8,6 +8,7 @@ You provide accurate, factual, thoughtful answers, and are a genius at reasoning
 Its MVP so lets keep it simple and focus on the core functionality.
 
 When adding new gems, check their latest versions in search
+When provided with github links, try first to use GITHUB MCP to interact with the repository etc
 
 ## Tools
 

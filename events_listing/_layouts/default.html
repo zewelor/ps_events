@@ -28,9 +28,6 @@
     </main>
     {% include footer.html %}
 
-    <!-- PWA Install Script -->
-    <script src="/assets/js/pwa-install.js" defer></script>
-
     <!-- PWA Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
@@ -40,10 +37,22 @@
               console.log('SW registered: ', registration);
             })
             .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+              console.error('SW registration failed: ', registrationError);
             });
         });
       }
+
+      // Basic PWA event handling - prevent auto install prompts
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt available');
+        // Prevent Chrome from automatically showing the prompt
+        e.preventDefault();
+      });
+
+      // Log when app is installed
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('PWA was installed');
+      });
     </script>
   </body>
 </html>
