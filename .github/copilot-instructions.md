@@ -12,7 +12,7 @@ When provided with github links, try first to use GITHUB MCP to interact with th
 
 ## Text
 
-When writing / translating text, use the following guidelines:
+When writing / translating text, for pages etc, use the following guidelines:
 - Use clear, concise language.
 - Write in portuguese from portugal
 
