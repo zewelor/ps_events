@@ -1,19 +1,80 @@
 {
-    "name": "Porto Santo Events",
-    "short_name": "PS Events",
+    "name": "PXO Pulse - Porto Santo Events",
+    "short_name": "PXO Pulse",
+    "description": "Discover events happening at Porto Santo golden island",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#75c8e2",
+    "background_color": "#ffffff",
+    "categories": ["lifestyle", "travel", "entertainment"],
     "icons": [
         {
             "src": "/assets/android-chrome-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "/assets/android-chrome-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/assets/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/android-chrome-192x192.png",
+            "sizes": "256x256",
+            "type": "image/png",
+            "purpose": "any"
         }
-    ],
-    "theme_color": "#75c8e2",
-    "background_color": "#ffffff",
-    "display": "standalone"
+    ]
 }
