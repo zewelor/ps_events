@@ -2,10 +2,7 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
-// Service Worker for PXO Pulse PWA
-// Version 1.2.0
-
-const CACHE_NAME = 'pxo-pulse-v1.2'; // Incremented version for cache update
+const CACHE_NAME = 'pxo-pulse-v1.2.1'; // Incremented version for cache update
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
 const urlsToCache = [
@@ -37,10 +34,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         if (DEBUG) console.log('Opened cache and caching urls:', urlsToCache);
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache); // This returns a promise
+      })
+      .then(() => {
+        if (DEBUG) console.log('All URLs cached successfully during install.');
       })
       .catch(err => {
-        if (DEBUG) console.error('Failed to cache urls during install:', err, urlsToCache);
+        if (DEBUG) console.error('Failed to cache one or more URLs during install:', err, urlsToCache);
+        // Re-throw the error to ensure the SW install fails and retries if caching is incomplete
+        throw err;
       })
   );
 });
