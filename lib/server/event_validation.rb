@@ -2,6 +2,12 @@ require "dry/validation"
 
 # Event validation contract using dry-validation
 class EventValidation < Dry::Validation::Contract
+  VALID_CATEGORIES = [
+    "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
+    "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
+  ].freeze
+
+  VALID_PRICE_TYPES = ["Free", "Paid", "Unknown"].freeze
   params do
     required(:name).filled(:string)
     required(:start_date).filled(:string)
@@ -140,13 +146,8 @@ class EventValidation < Dry::Validation::Contract
   end
 
   rule(:category) do
-    valid_categories = [
-      "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
-      "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
-    ]
-
-    unless valid_categories.include?(value)
-      key.failure("must be one of: #{valid_categories.join(", ")}")
+    unless VALID_CATEGORIES.include?(value)
+      key.failure("must be one of: #{VALID_CATEGORIES.join(", ")}")
     end
   end
 
@@ -174,9 +175,8 @@ class EventValidation < Dry::Validation::Contract
 
   rule(:price_type) do
     if key? && value && !value.empty?
-      valid_price_types = ["Free", "Paid", "Unknown"]
-      unless valid_price_types.include?(value)
-        key.failure("must be one of: #{valid_price_types.join(", ")}")
+      unless VALID_PRICE_TYPES.include?(value)
+        key.failure("must be one of: #{VALID_PRICE_TYPES.join(", ")}")
       end
     end
   end
