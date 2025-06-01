@@ -7,6 +7,10 @@
   --color-selected-filter-hover: oklch(0.1588 0.0045 325.69);
 }
 
+@utility card {
+  @apply bg-white rounded-lg shadow-lg;
+}
+
 .navigation-button {
   @apply inline-block bg-buttons text-zinc-800 px-5 py-2 rounded-lg text-sm font-medium hover:bg-buttons-hover transition-colors;
 }
@@ -16,7 +20,11 @@
 }
 
 .event-card {
-  @apply bg-white rounded-lg shadow-lg overflow-hidden flex flex-col;
+  @apply card overflow-hidden flex flex-col;
+}
+
+.our-section {
+  @apply card border-buttons border-b-4 mb-6 p-6
 }
 
 /* Filter button styles */
