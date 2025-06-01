@@ -17,15 +17,15 @@ title: Events Listing
       Todas as Categorias ({{ future_events | size }})
     </button>
     {% for group in sorted_groups %}
-      <button data-filter-category="{{ group.name | default: 'Event' }}" class="filter-btn filter-btn--inactive">
-        {{ group.name | default: 'Event' }} ({{ group.items | size }})
+      <button data-filter-category="{{ group.name | default: 'Evento' }}" class="filter-btn filter-btn--inactive">
+        {{ group.name | default: 'Evento' }} ({{ group.items | size }})
       </button>
     {% endfor %}
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
-    <div class="event-card" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Event' }}">
+    <div class="event-card" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Evento' }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
           <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['Name'] | escape_once }}">
@@ -57,7 +57,7 @@ title: Events Listing
   </p>
   <div class="flex justify-center">
     <a href="/about_us/" class="navigation-button">
-      Conhece-nos Melhor
+      Conheça-nos Melhor
     </a>
   </div>
 </div>

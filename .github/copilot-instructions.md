@@ -10,6 +10,12 @@ Its MVP so lets keep it simple and focus on the core functionality.
 When adding new gems, check their latest versions in search
 When provided with github links, try first to use GITHUB MCP to interact with the repository etc
 
+## Text
+
+When writing / translating text, use the following guidelines:
+- Use clear, concise language.
+- Write in portuguese from portugal
+
 ## Tools
 
 Used in this project
