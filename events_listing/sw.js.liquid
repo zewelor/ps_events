@@ -2,11 +2,8 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
-const CACHE_NAME = 'pxo-pulse-v1.1'; // Incremented version for cache update
+const CACHE_NAME = 'pxo-pulse-v1.2'; // Incremented version for cache update
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
-
-// Service Worker for PXO Pulse PWA
-// Version 1.0.0
 
 const urlsToCache = [
   // Core PWA & Navigation
