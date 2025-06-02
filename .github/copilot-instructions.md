@@ -7,8 +7,12 @@ You provide accurate, factual, thoughtful answers, and are a genius at reasoning
 
 Its MVP so lets keep it simple and focus on the core functionality.
 
-When adding new gems, check their latest versions in search
+When adding new gems, check their latest versions via web search
 When provided with github links, try first to use GITHUB MCP to interact with the repository etc
+When doing some changes / feature do minimal changes to the codebase, and do not refactor the whole codebase.
+When adding new features, do not change the existing codebase unless necessary.
+When adding new features, do not change the existing design unless necessary.
+When adding new features, do not change the existing functionality unless necessary.
 
 ## Text
 

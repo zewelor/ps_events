@@ -2,31 +2,101 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
-const CACHE_NAME = 'pxo-pulse-v1.2.2'; // Incremented version for cache update
+const CACHE_NAME = 'pxo-pulse-{{ site.time | date: "%Y%m%d%H%M%S" }}'; // Incremented version for cache update
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
 const urlsToCache = [
-  // Core PWA & Navigation
-  '/',
-  '/offline.html',
-  '/assets/site.webmanifest',
-
-  // Styles & Scripts
-  '/assets/css/styles.css',
-  '/assets/js/event-filter.js',
-
-  // Key Icons (ensure all manifest icons + apple-touch are here)
-  '/assets/logo180.webp', // Main logo
-  '/assets/logo120.webp', // Smaller logo
-  '/assets/favicon-16x16.png',
-  '/assets/favicon-32x32.png',
-  '/assets/icon-48x48.png',
-  '/assets/android-chrome-192x192.png',
-  '/assets/android-chrome-512x512.png',
-  '/assets/android-chrome-192x192-maskable.png',
-  '/assets/android-chrome-512x512-maskable.png',
-  '/assets/apple-touch-icon.png'
+  '/', // Main entry point
+  '/offline.html', // Essential for offline fallback
+  '/assets/site.webmanifest', // Essential for PWA behavior
+  '/assets/css/styles.css', // Main stylesheet, often needed for offline.html
+  // Other assets like JS, images, and icons will be cached dynamically on first use.
 ];
+
+// Helper function for Cache-First strategy (for assets and offline.html)
+const handleCacheFirstStrategy = (request, requestUrl) => {
+  return caches.match(request, { ignoreSearch: requestUrl.pathname === '/assets/css/styles.css' })
+    .then((cachedResponse) => {
+      if (cachedResponse) {
+        if (DEBUG) console.log('Serving from cache (cache-first):', request.url);
+        return cachedResponse;
+      }
+      if (DEBUG) console.log('Not in cache, fetching from network (cache-first):', request.url);
+      return fetch(request).then((networkResponse) => {
+        // Cache the new asset if fetched successfully
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          // Chain the caching operation
+          return caches.open(CACHE_NAME).then((cache) => {
+            return cache.put(request, responseToCache)
+              .then(() => {
+                if (DEBUG) console.log('Cached new asset (cache-first):', request.url);
+                return networkResponse; // Return response AFTER caching attempt
+              })
+              .catch(cacheError => {
+                // Log caching error but still return the network response
+                if (DEBUG) console.error('Failed to cache asset (cache-first):', request.url, cacheError);
+                return networkResponse;
+              });
+          });
+        }
+        return networkResponse; // Return non-200 responses or if networkResponse is null
+      });
+    })
+    .catch((error) => {
+      if (DEBUG) console.error('Cache-first fetch failed for:', request.url, 'Error:', error);
+      // For navigation requests or if offline.html itself fails, fall back to cached offline.html
+      if (request.mode === 'navigate' || requestUrl.pathname === '/offline.html') {
+        if (DEBUG) console.log('Returning offline.html for navigation/offline page request (cache-first error).');
+        return caches.match('/offline.html');
+      }
+      // For other asset requests, return a generic error
+      return new Response('Asset not available', { status: 404, statusText: 'Not Found' });
+    });
+};
+
+// Helper function for Network-First strategy (for other requests)
+const handleNetworkFirstStrategy = (request, requestUrl) => {
+  return fetch(request)
+    .then((networkResponse) => {
+      if (DEBUG) console.log('Serving from network (network-first):', request.url);
+      // Cache the new page if fetched successfully (request.method is already confirmed to be GET)
+      if (networkResponse && networkResponse.status === 200) {
+        const responseToCache = networkResponse.clone();
+        // Chain the caching operation
+        return caches.open(CACHE_NAME).then((cache) => {
+          return cache.put(request, responseToCache)
+            .then(() => {
+              if (DEBUG) console.log('Cached new page (network-first):', request.url);
+              return networkResponse; // Return response AFTER caching attempt
+            })
+            .catch(cacheError => {
+              // Log caching error but still return the network response
+              if (DEBUG) console.error('Failed to cache page (network-first):', request.url, cacheError);
+              return networkResponse;
+            });
+        });
+      }
+      return networkResponse; // Return non-200 responses or if networkResponse is null
+    })
+    .catch((error) => {
+      if (DEBUG) console.warn('Network request failed, trying cache (network-first):', request.url, 'Error:', error);
+      return caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          if (DEBUG) console.log('Serving from cache (network-first fallback):', request.url);
+          return cachedResponse;
+        }
+        // If not in cache and network failed, for navigation, show offline page
+        if (request.mode === 'navigate') {
+          if (DEBUG) console.log('Returning offline.html for navigation request (network-first error and no cache).');
+          return caches.match('/offline.html');
+        }
+        // For other requests, return a generic error
+        if (DEBUG) console.error('Failed to fetch from network and not in cache (network-first):', request.url);
+        return new Response('Service Unavailable. Please check your internet connection.', { status: 503, statusText: 'Service Unavailable' });
+      });
+    });
+};
 
 // Install Service Worker
 self.addEventListener('install', (event) => {
@@ -52,37 +122,20 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const requestUrl = new URL(request.url);
 
-  // Strategy: Cache first, falling back to network.
-  // For specific assets (like main CSS), ignore query params when matching in cache.
-  let cacheMatchPromise;
-
-  if (requestUrl.pathname === '/assets/css/styles.css') {
-    cacheMatchPromise = caches.match(request, { ignoreSearch: true });
-  } else {
-    cacheMatchPromise = caches.match(request);
+  // Skip non-GET requests and chrome-extension:// requests
+  if (request.method !== 'GET' || requestUrl.protocol === 'chrome-extension:') {
+    if (DEBUG) console.log('Skipping fetch event for non-GET or chrome-extension request:', request.url);
+    return;
   }
 
-  event.respondWith(
-    cacheMatchPromise.then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse; // Serve from cache
-      }
-
-      // Not in cache, fetch from network
-      return fetch(request).then((networkResponse) => {
-        // Optional: Cache new successful GET requests if needed (not for MVP)
-        return networkResponse;
-      });
-    }).catch((error) => { // Catch the error object
-      if (DEBUG) console.error('Fetch failed for:', request.url, 'Error:', error);
-      if (request.mode === 'navigate') {
-        if (DEBUG) console.log('Returning offline.html for navigation request.');
-        return caches.match('/offline.html');
-      } else {
-        return new Response('Service Unavailable', { status: 503 });
-      }
-    })
-  );
+  // Strategy:
+  // - Cache first for /assets/* and /offline.html
+  // - Network first for everything else
+  if (requestUrl.pathname.startsWith('/assets/') || requestUrl.pathname === '/offline.html') {
+    event.respondWith(handleCacheFirstStrategy(request, requestUrl));
+  } else {
+    event.respondWith(handleNetworkFirstStrategy(request, requestUrl));
+  }
 });
 
 // Activate Service Worker and clean up old caches
