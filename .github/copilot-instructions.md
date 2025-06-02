@@ -18,7 +18,7 @@ When adding new features, do not change the existing functionality unless necess
 
 When writing / translating text, for pages etc, use the following guidelines:
 - Use clear, concise language.
-- Write in portuguese from portugal
+- Write text visibile in the html etc in portuguese from portugal
 
 ## Tools
 
