@@ -4,7 +4,7 @@ title: Events Listing
 image: /assets/index_image.png
 ---
 
-<h1 class="page-title text-zinc-800 text-center">Próximos eventos no Porto Santo</h1>
+<h1 class="page-title text-[var(--color-text-primary)] text-center">Próximos eventos no Porto Santo</h1>
 <section id="event-list" class="mb-8">
   {% comment %} Filter events to only include current and future events (events that haven't ended yet) {% endcomment %}
   {% assign future_events = site.data.events | filter_current_and_future_events %}
