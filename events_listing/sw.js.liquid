@@ -2,7 +2,7 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
-const CACHE_NAME = 'pxo-pulse-{{ site.env.COMMIT_SHA | default: site.time }}'; // Versioned by Git SHA or build time
+const CACHE_NAME = 'pxo-pulse-{% cache_bust_param %}'; // Versioned by Git SHA or build time
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
 const urlsToCache = [

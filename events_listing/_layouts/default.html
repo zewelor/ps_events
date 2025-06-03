@@ -18,7 +18,7 @@
     <meta name="apple-mobile-web-app-title" content="PXO Pulse">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{{ site.time | date: '%s' }}">
+    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{% cache_bust_param %}">
     {% capture seoWithProperTwitterMetaTags %}
     {% seo %}
     {% endcapture %}
