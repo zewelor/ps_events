@@ -19,12 +19,8 @@
     <meta name="mobile-web-app-capable" content="yes">
 
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{% cache_bust_param %}">
-    {% capture seoWithProperTwitterMetaTags %}
-    {% seo %}
-    {% endcapture %}
 
-    <!-- because of https://stackoverflow.com/a/71063178/505996 -->
-    {{ seoWithProperTwitterMetaTags | replace: 'property="twitter:image"', 'name="twitter:image"' | replace: 'property="twitter:title"', 'name="twitter:title"' }}
+    {% seo %}
   </head>
   <body class="bg-neutral-100 font-sans flex flex-col min-h-screen">
     {% include header.html %}
