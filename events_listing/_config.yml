@@ -1,7 +1,7 @@
 title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
 logo: /assets/logo180.webp
-description: "PXO Pulse is a website listing events happening at Porto Santo golden island."
+description: "PXO Pulse é um website que lista eventos que acontecem na ilha dourada do Porto Santo."
 data_dir: _data
 
 page_gen:
@@ -16,4 +16,3 @@ tailwindcss:
 
 twitter:
   username: pxopulse87799
-  card: summary_large_image

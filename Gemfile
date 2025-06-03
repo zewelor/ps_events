@@ -39,7 +39,7 @@ group :jekyll_plugins do
   gem "jekyll-sitemap", "~> 1.4"
   gem "jekyll-tailwindcss"
   gem "jekyll-environment-variables"
-  gem "jekyll-seo-tag"
+  gem "jekyll-seo-tag", github: "jekyll/jekyll-seo-tag"
 end
 
 gem "rackup", "~> 2.2"
