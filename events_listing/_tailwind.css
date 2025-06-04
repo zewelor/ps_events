@@ -20,7 +20,7 @@
 }
 
 @utility btn {
-  @apply rounded-lg text-sm font-medium transition-colors;
+  @apply rounded-lg text-sm font-medium transition-colors duration-200;
 }
 
 @utility page-title {
@@ -40,7 +40,7 @@
 }
 
 .navigation-button {
-  @apply btn inline-block bg-[var(--color-buttons)] text-[var(--color-text-primary)] px-5 py-2 hover:bg-[var(--color-buttons-hover)];
+  @apply btn bg-[var(--color-buttons)] text-[var(--color-text-primary)] px-5 py-2 hover:bg-[var(--color-buttons-hover)];
 }
 
 .file-input-button {
