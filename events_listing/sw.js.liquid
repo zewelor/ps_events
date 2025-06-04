@@ -5,7 +5,9 @@ permalink: /sw.js
 const CACHE_NAME = 'pxo-pulse-{% cache_bust_param %}'; // Versioned by Git SHA or build time
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
-const urlsToCache = [
+const urlsToCache = DEBUG ? [
+  '/offline.html', // Essential for offline fallback only in debug
+] : [
   '/', // Main entry point
   '/offline.html', // Essential for offline fallback
   '/assets/site.webmanifest', // Essential for PWA behavior
@@ -15,6 +17,30 @@ const urlsToCache = [
 
 // Helper function for Cache-First strategy (for assets and offline.html)
 const handleCacheFirstStrategy = (request, requestUrl) => {
+  // In debug mode, always fetch from network first
+  if (DEBUG) {
+    if (DEBUG) console.log('Debug mode: Fetching from network first (bypassing cache-first):', request.url);
+    return fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          return networkResponse;
+        }
+        return networkResponse;
+      })
+      .catch((error) => {
+        if (DEBUG) console.error('Debug mode network fetch failed, trying cache:', request.url, 'Error:', error);
+        return caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (request.mode === 'navigate' || requestUrl.pathname === '/offline.html') {
+            return caches.match('/offline.html');
+          }
+          return new Response('Asset not available', { status: 404, statusText: 'Not Found' });
+        });
+      });
+  }
+
   return caches.match(request, { ignoreSearch: requestUrl.pathname === '/assets/css/styles.css' })
     .then((cachedResponse) => {
       if (cachedResponse) {
@@ -60,8 +86,8 @@ const handleNetworkFirstStrategy = (request, requestUrl) => {
   return fetch(request)
     .then((networkResponse) => {
       if (DEBUG) console.log('Serving from network (network-first):', request.url);
-      // Cache the new page if fetched successfully (request.method is already confirmed to be GET)
-      if (networkResponse && networkResponse.status === 200) {
+      // Cache the new page if fetched successfully and not in debug mode
+      if (networkResponse && networkResponse.status === 200 && !DEBUG) {
         const responseToCache = networkResponse.clone();
         // Chain the caching operation
         return caches.open(CACHE_NAME).then((cache) => {
@@ -77,7 +103,7 @@ const handleNetworkFirstStrategy = (request, requestUrl) => {
             });
         });
       }
-      return networkResponse; // Return non-200 responses or if networkResponse is null
+      return networkResponse; // Return response without caching in debug mode
     })
     .catch((error) => {
       if (DEBUG) console.warn('Network request failed, trying cache (network-first):', request.url, 'Error:', error);
@@ -129,9 +155,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Strategy:
-  // - Cache first for /assets/* and /offline.html
-  // - Network first for everything else
-  if (requestUrl.pathname.startsWith('/assets/') || requestUrl.pathname === '/offline.html') {
+  // - In debug mode: Network first for all requests (minimal caching)
+  // - In production: Cache first for /assets/* and /offline.html, Network first for everything else
+  if (DEBUG) {
+    // In debug mode, use network-first for everything
+    event.respondWith(handleNetworkFirstStrategy(request, requestUrl));
+  } else if (requestUrl.pathname.startsWith('/assets/') || requestUrl.pathname === '/offline.html') {
     event.respondWith(handleCacheFirstStrategy(request, requestUrl));
   } else {
     event.respondWith(handleNetworkFirstStrategy(request, requestUrl));
