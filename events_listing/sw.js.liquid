@@ -167,22 +167,6 @@ if (workbox) {
     return Response.error();
   });
 
-  // Enable background sync for form submissions (if needed)
-  // Uncomment if you have forms that should work offline
-  /*
-  const bgSync = new workbox.backgroundSync.BackgroundSync('form-queue', {
-    maxRetentionTime: 24 * 60 // Retry for max of 24 Hours (specified in minutes)
-  });
-
-  workbox.routing.registerRoute(
-    /\/api\/.*\/(post|put|patch)/,
-    new workbox.strategies.NetworkOnly({
-      plugins: [bgSync]
-    }),
-    'POST'
-  );
-  */
-
   // Claim clients immediately and skip waiting
   workbox.core.clientsClaim();
   self.skipWaiting();
