@@ -165,7 +165,7 @@ class TestEventValidation < Minitest::Test
     }
     result = @validator.call(data)
     assert result.failure?, "Validation should fail for invalid price_type"
-    assert_includes result.errors.to_h[:price_type], "must be one of: Free, Paid, Unknown"
+    assert_includes result.errors.to_h[:price_type], "must be one of: Gratuito, Pago, Desconhecido"
   end
 
   def test_invalid_event_link
@@ -214,7 +214,7 @@ class TestEventValidation < Minitest::Test
       organizer: "The Main Organizer",
       contact_email: "test@example.com",
       contact_tel: "+1 (555) 123-4567",
-      price_type: "Paid",
+      price_type: "Pago",
       event_link1: "http://example.com/event1",
       event_link2: "https://example.com/event2",
       event_link3: "http://example.com/event3",

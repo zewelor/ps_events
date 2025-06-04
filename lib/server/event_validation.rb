@@ -7,7 +7,7 @@ class EventValidation < Dry::Validation::Contract
     "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
   ].freeze
 
-  VALID_PRICE_TYPES = ["Free", "Paid", "Unknown"].freeze
+  VALID_PRICE_TYPES = ["Gratuito", "Pago", "Desconhecido"].freeze
 
   params do
     required(:name).filled(:string)
