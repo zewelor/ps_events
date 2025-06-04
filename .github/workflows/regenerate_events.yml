@@ -104,15 +104,7 @@ jobs:
       #     COMPOSE_FILE: docker-compose.ci.yml
 
       - name: Pull latest changes before commit
-        run: |
-          # Only stash if there are changes to stash
-          if ! git diff-index --quiet HEAD --; then
-            git stash push -m "Auto-stash before pull"
-            git pull
-            git stash pop
-          else
-            git pull
-          fi
+        run: git pull --rebase --autostash
 
       - name: Auto-commit updated events files
         uses: stefanzweifel/git-auto-commit-action@v5
