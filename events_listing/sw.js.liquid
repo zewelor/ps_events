@@ -2,184 +2,216 @@
 permalink: /sw.js
 # Jekyll will process this file
 ---
-const CACHE_NAME = 'pxo-pulse-{% cache_bust_param %}'; // Versioned by Git SHA or build time
+
+// Import Workbox
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js');
+
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
-const urlsToCache = DEBUG ? [
-  '/offline.html', // Essential for offline fallback only in debug
-] : [
-  '/', // Main entry point
-  '/offline.html', // Essential for offline fallback
-  '/assets/site.webmanifest', // Essential for PWA behavior
-  '/assets/css/styles.css', // Main stylesheet, often needed for offline.html
-  // Other assets like JS, images, and icons will be cached dynamically on first use.
-];
+if (workbox) {
+  if (DEBUG) console.log('Workbox loaded successfully');
 
-// Helper function for Cache-First strategy (for assets and offline.html)
-const handleCacheFirstStrategy = (request, requestUrl) => {
-  // In debug mode, always fetch from network first
+  // Configure Workbox with modern settings
+  workbox.setConfig({
+    debug: DEBUG,
+    modulePathPrefix: 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/'
+  });
+
+  // Set up custom cache name with versioning
+  workbox.core.setCacheNameDetails({
+    prefix: 'pxo-pulse',
+    suffix: '{% cache_bust_param %}',
+    precache: 'precache-v1',
+    runtime: 'runtime-v1'
+  });
+
+  // Precache essential files with proper revision handling
+  const precacheManifest = DEBUG ? [
+    { url: '/offline.html', revision: '{% cache_bust_param %}' }
+  ] : [
+    { url: '/', revision: '{% cache_bust_param %}' },
+    { url: '/offline.html', revision: '{% cache_bust_param %}' },
+    { url: '/assets/site.webmanifest', revision: '{% cache_bust_param %}' },
+    { url: '/assets/css/styles.css', revision: '{% cache_bust_param %}' }
+  ];
+
+  // Enable navigation preload for better performance
+  workbox.navigationPreload.enable();
+
+  workbox.precaching.precacheAndRoute(precacheManifest);
+
+  // Set up offline fallback page reference
+  const FALLBACK_HTML_URL = '/offline.html';
+
+  // Simplified debug mode strategy
   if (DEBUG) {
-    if (DEBUG) console.log('Debug mode: Fetching from network first (bypassing cache-first):', request.url);
-    return fetch(request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          return networkResponse;
-        }
-        return networkResponse;
-      })
-      .catch((error) => {
-        if (DEBUG) console.error('Debug mode network fetch failed, trying cache:', request.url, 'Error:', error);
-        return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
+    // In debug mode, use NetworkOnly to always get fresh content
+    workbox.routing.setDefaultHandler(
+      new workbox.strategies.NetworkOnly({
+        plugins: [
+          {
+            handlerDidError: async () => {
+              return caches.match(FALLBACK_HTML_URL);
+            }
           }
-          if (request.mode === 'navigate' || requestUrl.pathname === '/offline.html') {
-            return caches.match('/offline.html');
-          }
-          return new Response('Asset not available', { status: 404, statusText: 'Not Found' });
-        });
-      });
-  }
-
-  return caches.match(request, { ignoreSearch: requestUrl.pathname === '/assets/css/styles.css' })
-    .then((cachedResponse) => {
-      if (cachedResponse) {
-        if (DEBUG) console.log('Serving from cache (cache-first):', request.url);
-        return cachedResponse;
-      }
-      if (DEBUG) console.log('Not in cache, fetching from network (cache-first):', request.url);
-      return fetch(request).then((networkResponse) => {
-        // Cache the new asset if fetched successfully
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          // Chain the caching operation
-          return caches.open(CACHE_NAME).then((cache) => {
-            return cache.put(request, responseToCache)
-              .then(() => {
-                if (DEBUG) console.log('Cached new asset (cache-first):', request.url);
-                return networkResponse; // Return response AFTER caching attempt
-              })
-              .catch(cacheError => {
-                // Log caching error but still return the network response
-                if (DEBUG) console.error('Failed to cache asset (cache-first):', request.url, cacheError);
-                return networkResponse;
-              });
-          });
-        }
-        return networkResponse; // Return non-200 responses or if networkResponse is null
-      });
-    })
-    .catch((error) => {
-      if (DEBUG) console.error('Cache-first fetch failed for:', request.url, 'Error:', error);
-      // For navigation requests or if offline.html itself fails, fall back to cached offline.html
-      if (request.mode === 'navigate' || requestUrl.pathname === '/offline.html') {
-        if (DEBUG) console.log('Returning offline.html for navigation/offline page request (cache-first error).');
-        return caches.match('/offline.html');
-      }
-      // For other asset requests, return a generic error
-      return new Response('Asset not available', { status: 404, statusText: 'Not Found' });
-    });
-};
-
-// Helper function for Network-First strategy (for other requests)
-const handleNetworkFirstStrategy = (request, requestUrl) => {
-  return fetch(request)
-    .then((networkResponse) => {
-      if (DEBUG) console.log('Serving from network (network-first):', request.url);
-      // Cache the new page if fetched successfully and not in debug mode
-      if (networkResponse && networkResponse.status === 200 && !DEBUG) {
-        const responseToCache = networkResponse.clone();
-        // Chain the caching operation
-        return caches.open(CACHE_NAME).then((cache) => {
-          return cache.put(request, responseToCache)
-            .then(() => {
-              if (DEBUG) console.log('Cached new page (network-first):', request.url);
-              return networkResponse; // Return response AFTER caching attempt
-            })
-            .catch(cacheError => {
-              // Log caching error but still return the network response
-              if (DEBUG) console.error('Failed to cache page (network-first):', request.url, cacheError);
-              return networkResponse;
-            });
-        });
-      }
-      return networkResponse; // Return response without caching in debug mode
-    })
-    .catch((error) => {
-      if (DEBUG) console.warn('Network request failed, trying cache (network-first):', request.url, 'Error:', error);
-      return caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          if (DEBUG) console.log('Serving from cache (network-first fallback):', request.url);
-          return cachedResponse;
-        }
-        // If not in cache and network failed, for navigation, show offline page
-        if (request.mode === 'navigate') {
-          if (DEBUG) console.log('Returning offline.html for navigation request (network-first error and no cache).');
-          return caches.match('/offline.html');
-        }
-        // For other requests, return a generic error
-        if (DEBUG) console.error('Failed to fetch from network and not in cache (network-first):', request.url);
-        return new Response('Service Unavailable. Please check your internet connection.', { status: 503, statusText: 'Service Unavailable' });
-      });
-    });
-};
-
-// Install Service Worker
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        if (DEBUG) console.log('Opened cache and caching urls:', urlsToCache);
-        return cache.addAll(urlsToCache); // This returns a promise
+        ]
       })
-      .then(() => {
-        if (DEBUG) console.log('All URLs cached successfully during install.');
-      })
-      .catch(err => {
-        if (DEBUG) console.error('Failed to cache one or more URLs during install:', err, urlsToCache);
-        // Re-throw the error to ensure the SW install fails and retries if caching is incomplete
-        throw err;
-      })
-  );
-});
-
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  const requestUrl = new URL(request.url);
-
-  // Skip non-GET requests and chrome-extension:// requests
-  if (request.method !== 'GET' || requestUrl.protocol === 'chrome-extension:') {
-    if (DEBUG) console.log('Skipping fetch event for non-GET or chrome-extension request:', request.url);
-    return;
-  }
-
-  // Strategy:
-  // - In debug mode: Network first for all requests (minimal caching)
-  // - In production: Cache first for /assets/* and /offline.html, Network first for everything else
-  if (DEBUG) {
-    // In debug mode, use network-first for everything
-    event.respondWith(handleNetworkFirstStrategy(request, requestUrl));
-  } else if (requestUrl.pathname.startsWith('/assets/') || requestUrl.pathname === '/offline.html') {
-    event.respondWith(handleCacheFirstStrategy(request, requestUrl));
+    );
   } else {
-    event.respondWith(handleNetworkFirstStrategy(request, requestUrl));
-  }
-});
+    // Production strategies with modern best practices
 
-// Activate Service Worker and clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            if (DEBUG) console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
+    // Stale While Revalidate for HTML pages (better UX than NetworkFirst)
+    workbox.routing.registerRoute(
+      ({ request }) => request.mode === 'navigate',
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'pages-cache-v1',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+            purgeOnQuotaError: true
+          })
+        ]
+      })
+    );
+
+    // Cache First for static assets with longer expiration
+    workbox.routing.registerRoute(
+      ({ request, url }) => {
+        return url.pathname.startsWith('/assets/') ||
+               request.destination === 'style' ||
+               request.destination === 'script' ||
+               request.destination === 'font' ||
+               request.destination === 'manifest';
+      },
+      new workbox.strategies.CacheFirst({
+        cacheName: 'static-assets-v1',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+            purgeOnQuotaError: true
+          })
+        ]
+      })
+    );
+
+    // Cache First for images with compression awareness
+    workbox.routing.registerRoute(
+      ({ request }) => request.destination === 'image',
+      new workbox.strategies.CacheFirst({
+        cacheName: 'images-cache-v1',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 60,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+            purgeOnQuotaError: true
+          })
+        ]
+      })
+    );
+
+    // Network First for API calls and other dynamic content
+    workbox.routing.setDefaultHandler(
+      new workbox.strategies.NetworkFirst({
+        cacheName: 'api-cache-v1',
+        networkTimeoutSeconds: 3,
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 5 * 60, // 5 minutes
+            purgeOnQuotaError: true
+          })
+        ]
+      })
+    );
+  }
+
+  // Enhanced offline fallback with better error handling
+  workbox.routing.setCatchHandler(({ event }) => {
+    const { request } = event;
+
+    // Return offline page for navigation requests
+    if (request.mode === 'navigate') {
+      return caches.match(FALLBACK_HTML_URL);
+    }
+
+    // Return offline image for image requests
+    if (request.destination === 'image') {
+      return new Response(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f3f4f6"/><text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9ca3af" font-family="sans-serif" font-size="14">Imagem não disponível</text></svg>',
+        {
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            'Content-Type': 'image/svg+xml',
+            'Cache-Control': 'no-cache'
           }
+        }
+      );
+    }
+
+    // Return generic error for other requests
+    return Response.error();
+  });
+
+  // Enable background sync for form submissions (if needed)
+  // Uncomment if you have forms that should work offline
+  /*
+  const bgSync = new workbox.backgroundSync.BackgroundSync('form-queue', {
+    maxRetentionTime: 24 * 60 // Retry for max of 24 Hours (specified in minutes)
+  });
+
+  workbox.routing.registerRoute(
+    /\/api\/.*\/(post|put|patch)/,
+    new workbox.strategies.NetworkOnly({
+      plugins: [bgSync]
+    }),
+    'POST'
+  );
+  */
+
+  // Claim clients immediately and skip waiting
+  workbox.core.clientsClaim();
+  self.skipWaiting();
+
+} else {
+  console.error('Workbox could not be loaded. Falling back to basic implementation.');
+
+  // Basic fallback implementation if Workbox fails to load
+  const CACHE_NAME = 'pxo-pulse-{% cache_bust_param %}-fallback';
+
+  self.addEventListener('install', (event) => {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(['/offline.html']);
+      })
+    );
+  });
+
+  self.addEventListener('fetch', (event) => {
+    if (event.request.mode === 'navigate') {
+      event.respondWith(
+        fetch(event.request).catch(() => {
+          return caches.match('/offline.html');
         })
       );
-    })
-  );
-  return self.clients.claim(); // Ensure new SW takes control immediately
-});
+    }
+  });
+
+  self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+  });
+}
