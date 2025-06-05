@@ -76,6 +76,21 @@ title: "{{ page.Name | escape_once }}"
   </div>
   {% endif %}
 
+  <div class="bg-purple-50 p-6 rounded-xl shadow-md mb-6">
+    <h2 class="event-details-section-title">
+      <span class="text-3xl mr-3">📅</span>
+      Adicionar ao Calendário
+    </h2>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a href="{{ page | google_calendar_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center flex-1 navigation-button">
+        Google Calendar
+      </a>
+      <a href="data:text/calendar;charset=utf-8,{{ page | event_to_ics | url_encode }}" download="{{ page.Name | slugify }}.ics" class="flex items-center justify-center flex-1 navigation-button">
+        Apple Calendar
+      </a>
+    </div>
+  </div>
+
   <!-- Sharing Section -->
   <div class="bg-gradient-to-r from-red-50 to-rose-50 p-6 rounded-xl shadow-md mb-6">
     <h2 class="event-details-section-title">
