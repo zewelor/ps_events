@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Jekyll
   module CalendarHelpers
-    require 'time'
-    require 'uri'
-    require 'icalendar'
+    require "time"
+    require "uri"
+    require "icalendar"
 
     # Generate a Google Calendar URL for an event hash
     def google_calendar_url(event, timezone = 'Europe/Lisbon')
