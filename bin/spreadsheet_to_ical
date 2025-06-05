@@ -27,9 +27,9 @@ class SpreadsheetToIcalGenerator
     CSV.read(CSV_FILE, headers: true).each do |row|
       ev = Icalendar::Event.new
       # parse and validate start/end times
-      start_time = Time.parse(row.fetch("Start time"))
-      end_time = Time.parse(row.fetch("End time"))
-      event_name = row.fetch("Name").to_s.strip
+      start_time = Time.parse(row.fetch("start_time"))
+      end_time = Time.parse(row.fetch("end_time"))
+      event_name = row.fetch("name").to_s.strip
 
       if end_time < start_time
         warn "Skipping event '#{event_name}' because end time #{end_time} is before start time #{start_time}"
@@ -39,9 +39,9 @@ class SpreadsheetToIcalGenerator
       ev.dtstart = Icalendar::Values::DateTime.new(start_time, "tzid" => tzid)
       ev.dtend = Icalendar::Values::DateTime.new(end_time, "tzid" => tzid)
       ev.summary = event_name
-      ev.location = row["Location"].to_s.strip unless row["Location"].to_s.strip.empty?
-      ev.description = row["Description"].to_s.strip unless row["Description"].to_s.strip.empty?
-      ev.organizer = row["Organizer"].to_s.strip unless row["Organizer"].to_s.strip.empty?
+      ev.location = row["location"].to_s.strip unless row["location"].to_s.strip.empty?
+      ev.description = row["description"].to_s.strip unless row["description"].to_s.strip.empty?
+      ev.organizer = row["organizer"].to_s.strip unless row["organizer"].to_s.strip.empty?
 
       calendar.add_event(ev)
     end

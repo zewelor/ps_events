@@ -8,15 +8,15 @@ module Jekyll
 
     # Generate a Google Calendar URL for an event hash
     def google_calendar_url(event, timezone = "Europe/Lisbon")
-      start_time = parse_time(event["Start date"], event["Start time"])
-      end_time = parse_time(event["End date"], event["End time"])
+      start_time = parse_time(event["start_date"], event["start_time"])
+      end_time = parse_time(event["end_date"], event["end_time"])
 
       # Handle full-day events (when both times are empty)
       is_full_day = is_full_day_event?(event)
 
       if is_full_day
-        start_date = parse_date_only(event["Start date"])
-        end_date = parse_date_only(event["End date"]) || start_date
+        start_date = parse_date_only(event["start_date"])
+        end_date = parse_date_only(event["end_date"]) || start_date
         return "" unless start_date
 
         # For full-day events, use date format YYYYMMDD
@@ -32,10 +32,10 @@ module Jekyll
 
       params = {
         action: "TEMPLATE",
-        text: event["Name"].to_s.strip,
+        text: event["name"].to_s.strip,
         dates: dates_param,
-        details: event["Description"].to_s.strip,
-        location: event["Location"].to_s.strip,
+        details: event["description"].to_s.strip,
+        location: event["location"].to_s.strip,
         ctz: timezone
       }
       "https://www.google.com/calendar/render?" + URI.encode_www_form(params)
@@ -43,8 +43,8 @@ module Jekyll
 
     # Generate an ICS string for an event hash
     def event_to_ics(event)
-      start_time = parse_time(event["Start date"], event["Start time"])
-      end_time = parse_time(event["End date"], event["End time"])
+      start_time = parse_time(event["start_date"], event["start_time"])
+      end_time = parse_time(event["end_date"], event["end_time"])
 
       # Handle full-day events (when both times are empty)
       is_full_day = is_full_day_event?(event)
@@ -54,8 +54,8 @@ module Jekyll
       ev = Icalendar::Event.new
 
       if is_full_day
-        start_date = parse_date_only(event["Start date"])
-        end_date = parse_date_only(event["End date"]) || start_date
+        start_date = parse_date_only(event["start_date"])
+        end_date = parse_date_only(event["end_date"]) || start_date
         if start_date
           ev.dtstart = Icalendar::Values::Date.new(start_date)
           ev.dtend = Icalendar::Values::Date.new(end_date + 1) if end_date
@@ -67,9 +67,9 @@ module Jekyll
         ev.dtend = end_time
       end
 
-      ev.summary = event["Name"].to_s.strip
-      ev.location = event["Location"].to_s.strip
-      ev.description = event["Description"].to_s.strip
+      ev.summary = event["name"].to_s.strip
+      ev.location = event["location"].to_s.strip
+      ev.description = event["description"].to_s.strip
       cal.add_event(ev)
       cal.publish
       cal.to_ical
@@ -78,8 +78,8 @@ module Jekyll
     private
 
     def is_full_day_event?(event)
-      start_time = event["Start time"]
-      end_time = event["End time"]
+      start_time = event["start_time"]
+      end_time = event["end_time"]
       (start_time.nil? || start_time.to_s.strip.empty?) &&
         (end_time.nil? || end_time.to_s.strip.empty?)
     end
