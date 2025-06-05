@@ -5,7 +5,7 @@ description: "PXO Pulse é um website que lista eventos que acontecem na ilha do
 data_dir: _data
 
 page_gen:
-  - name: "name"
+  - name: page_slug
     template: event
     dir: events
     data: events

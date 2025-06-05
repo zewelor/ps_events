@@ -43,7 +43,7 @@ image: /assets/index_image.png
             <span>{{ event["location"] }}</span>
           </div>
         </div>
-        <a href="{{ event['name'] | datapage_url: 'events' }}" class="navigation-button">Saiba mais</a>
+        <a href="events/{{ event.page_slug }}" class="navigation-button">Saiba mais</a>
       </div>
       {% assign meta = event.category | category_metadata %}
       <div style="background-color: {{ meta.color }};" class="h-2"></div>

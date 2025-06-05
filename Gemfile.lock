@@ -1,4 +1,10 @@
 GIT
+  remote: https://github.com/avillafiorita/jekyll-datapage_gen.git
+  revision: fab12f0b886d32446332bc47a26d25ea534db47c
+  specs:
+    jekyll-datapage-generator (1.4.0)
+
+GIT
   remote: https://github.com/jekyll/jekyll-seo-tag.git
   revision: d61a2a84b885ea2e406e2d4c84fbcd37243bd0e7
   specs:
@@ -131,7 +137,6 @@ GEM
       safe_yaml (~> 1.0)
       terminal-table (>= 1.8, < 4.0)
       webrick (~> 1.7)
-    jekyll-datapage-generator (1.4.0)
     jekyll-environment-variables (1.0.1)
       jekyll (>= 3.0, < 5.x)
     jekyll-sass-converter (3.1.0)
@@ -310,7 +315,7 @@ DEPENDENCIES
   icalendar
   irb
   jekyll (~> 4.4)
-  jekyll-datapage-generator
+  jekyll-datapage-generator!
   jekyll-environment-variables
   jekyll-seo-tag!
   jekyll-sitemap (~> 1.4)
