@@ -18,7 +18,7 @@
     <meta name="apple-mobile-web-app-title" content="PXO Pulse">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css?{% cache_bust_param %}">
+    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
 
     {% seo %}
   </head>
@@ -56,11 +56,6 @@
       } else {
         console.warn('Service Workers are not supported in this browser');
       }
-
-      // Log when app is installed
-      window.addEventListener('appinstalled', (evt) => {
-        console.log('PWA was installed');
-      });
     </script>
 
     <!-- Scroll to Top Button Script -->
