@@ -2,6 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const calendarEl = document.getElementById('calendar');
   const titleEl = document.getElementById('calendar-title');
   const resetBtn = document.getElementById('reset-date');
+  const prevBtn = document.getElementById('prev-month');
+  const nextBtn = document.getElementById('next-month');
+  const yearSelect = document.getElementById('year-select');
+  const todayBtn = document.getElementById('filter-today');
+  const weekBtn = document.getElementById('filter-week');
+  const monthBtn = document.getElementById('filter-month');
   if (!calendarEl) return;
 
   const eventCards = document.querySelectorAll('.event-card');
@@ -12,7 +18,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
 
   const today = new Date();
-  buildCalendar(today.getFullYear(), today.getMonth());
+  let currentYear = today.getFullYear();
+  let currentMonth = today.getMonth();
+
+  populateYears(currentYear);
+  buildCalendar(currentYear, currentMonth);
+
+  prevBtn.addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
+  });
+
+  yearSelect.addEventListener('change', () => {
+    currentYear = parseInt(yearSelect.value, 10);
+    buildCalendar(currentYear, currentMonth);
+  });
+
+  todayBtn.addEventListener('click', () => {
+    const iso = today.toISOString().slice(0,10);
+    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
+    resetBtn.classList.remove('hidden');
+  });
+
+  weekBtn.addEventListener('click', () => {
+    const start = startOfWeek(today);
+    const end = endOfWeek(today);
+    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
+    resetBtn.classList.remove('hidden');
+  });
+
+  monthBtn.addEventListener('click', () => {
+    const start = formatISO(new Date(today.getFullYear(), today.getMonth(), 1));
+    const end = formatISO(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
+    resetBtn.classList.remove('hidden');
+  });
 
   resetBtn.addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('calendar:clearDate'));
@@ -41,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstDay = new Date(year, month, 1);
     const offset = (firstDay.getDay() + 6) % 7; // monday start
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const currentWeek = getWeekNumber(today) === getWeekNumber(firstDay) ? getWeekNumber(today) : null;
 
     for (let i = 0; i < offset; i++) {
       const empty = document.createElement('div');
@@ -68,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cell.appendChild(dots);
 
       if (getWeekNumber(date) === getWeekNumber(today)) {
-        cell.classList.add('bg-black', 'text-white');
+        cell.classList.add('bg-[var(--color-buttons)]', 'text-[var(--color-text-secondary)]');
       }
 
       cell.addEventListener('click', () => {
@@ -93,5 +147,35 @@ document.addEventListener('DOMContentLoaded', () => {
     d.setUTCDate(d.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
     return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  }
+
+  function populateYears(center) {
+    for (let y = center - 1; y <= center + 1; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      yearSelect.appendChild(opt);
+    }
+    yearSelect.value = center;
+  }
+
+  function startOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    d.setDate(d.getDate() + diff);
+    return formatISO(d);
+  }
+
+  function endOfWeek(date) {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = (day === 0 ? -6 : 1) - day + 6;
+    start.setDate(start.getDate() + diff);
+    return formatISO(start);
+  }
+
+  function formatISO(d) {
+    return d.toISOString().slice(0,10);
   }
 });
