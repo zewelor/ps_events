@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const gridEl = document.getElementById('calendar-grid');
   const prevBtn = document.getElementById('prev-month');
   const nextBtn = document.getElementById('next-month');
+  const todayBtn = document.getElementById('today-month');
   let current = new Date();
   current.setDate(1);
 
@@ -47,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderCalendar() {
     monthEl.textContent = current.toLocaleString('pt-PT', {month: 'long', year: 'numeric'});
     gridEl.innerHTML = '';
+
+    const today = new Date();
+    const todayStr = formatDate(today.getFullYear(), today.getMonth()+1, today.getDate());
 
     const firstDay = new Date(current.getFullYear(), current.getMonth(), 1).getDay();
     const daysInMonth = new Date(current.getFullYear(), current.getMonth()+1, 0).getDate();
@@ -61,10 +65,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const dateStr = formatDate(current.getFullYear(), current.getMonth()+1, d);
       const cell = document.createElement('button');
       cell.dataset.date = dateStr;
-      cell.className = 'border-b border-r h-16 p-1 text-left hover:bg-gray-100';
+      cell.className = 'h-20 p-1 text-left hover:bg-gray-100 relative';
       const number = document.createElement('span');
       number.textContent = d;
       number.className = 'text-xs font-semibold';
+      if (dateStr === todayStr) {
+        number.classList.add('text-blue-600');
+      }
       cell.appendChild(number);
 
       if (eventsByDate[dateStr]) {
@@ -79,8 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
       cell.addEventListener('click', () => {
         selectedDate = dateStr;
         clearDateBtn.classList.remove('hidden');
+        renderCalendar();
         filterEvents();
       });
+
+      if (selectedDate === dateStr) {
+        cell.classList.add('bg-blue-50');
+      }
 
       gridEl.appendChild(cell);
     }
@@ -93,6 +105,14 @@ document.addEventListener('DOMContentLoaded', function() {
   nextBtn.addEventListener('click', () => {
     current.setMonth(current.getMonth() + 1);
     renderCalendar();
+  });
+  todayBtn.addEventListener('click', () => {
+    current = new Date();
+    current.setDate(1);
+    selectedDate = null;
+    clearDateBtn.classList.add('hidden');
+    renderCalendar();
+    filterEvents();
   });
 
   clearDateBtn.addEventListener('click', () => {
