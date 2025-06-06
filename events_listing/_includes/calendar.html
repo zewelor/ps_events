@@ -1,18 +1,39 @@
-<div id="calendar" class="mb-8">
-  <div class="flex items-center justify-between mb-2">
-    <button id="prev-month" class="p-2 text-sm rounded hover:bg-gray-200">&lt;</button>
-    <h2 id="calendar-month" class="font-semibold"></h2>
-    <button id="next-month" class="p-2 text-sm rounded hover:bg-gray-200">&gt;</button>
+<section class="relative py-8 sm:p-8">
+  <div class="w-full max-w-7xl mx-auto px-4 lg:px-8 xl:px-14">
+    <div class="flex items-center justify-between gap-3 mb-5">
+      <div class="flex items-center gap-4">
+        <h5 id="calendar-month" class="text-xl leading-8 font-semibold text-gray-900">Janeiro 2024</h5>
+        <div class="flex items-center gap-2">
+          <button class="hidden md:flex py-2 pl-1.5 pr-3 rounded-md bg-gray-50 border border-gray-300 items-center gap-1.5 text-xs font-medium text-gray-900 transition-all duration-500 hover:bg-gray-100">
+            <svg class="pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.3333 3L11.3333 3.65L11.3333 3ZM4.66666 3.00002L4.66666 2.35002L4.66666 3.00002ZM5.36719 9.98333C5.72617 9.98333 6.01719 9.69232 6.01719 9.33333C6.01719 8.97435 5.72617 8.68333 5.36719 8.68333C5.0082 8.68333 4.71719 8.97435 4.71719 9.33333C4.71719 9.69232 5.0082 9.98333 5.36719 9.98333ZM10.6333 9.98333C10.9923 9.98333 11.2833 9.69232 11.2833 9.33333C11.2833 8.97435 10.9923 8.68333 10.6333 8.68333C10.2743 8.68333 9.98333 8.97435 9.98333 9.33333C9.98333 9.69232 10.2743 9.98333 10.6333 9.98333ZM3.5 13.3333H12.5V6.5H3.5V13.3333ZM3.5 5.83333H12.5V4.5H3.5V5.83333Z" fill="#6B7280"/>
+            </svg>Today
+          </button>
+          <button id="prev-month" class="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10.0002 11.9999L6 7.99971L10.0025 3.99719" stroke="currentcolor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button id="next-month" class="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6.00236 3.99707L10.0025 7.99723L6 11.9998" stroke="currentcolor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="border border-gray-200">
+      <div class="grid grid-cols-7 text-center text-sm font-semibold mb-1">
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-7 border-t border-l text-sm"></div>
+    </div>
+    <button id="clear-date" class="hidden mt-2 px-3 py-1 navigation-button text-white"></button>
   </div>
-  <div class="grid grid-cols-7 text-center text-sm font-semibold mb-1">
-    <div>Dom</div>
-    <div>Seg</div>
-    <div>Ter</div>
-    <div>Qua</div>
-    <div>Qui</div>
-    <div>Sex</div>
-    <div>Sáb</div>
-  </div>
-  <div id="calendar-grid" class="grid grid-cols-7 border-t border-l text-sm"></div>
-  <button id="clear-date" class="hidden mt-2 px-3 py-1 navigation-button text-white"></button>
-</div>
+</section>
