@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const eventCards = document.querySelectorAll('.event-card');
   const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
   const resetAllBtn = document.getElementById('reset-filters');
+  const logoLink = document.getElementById('logo-link');
   let selectedCategory = 'all';
   let selectedRange = null; // {start, end}
 
@@ -13,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
   document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
   resetAllBtn.addEventListener('click', resetFilters);
+  document.addEventListener('filters:reset', resetFilters);
+  if (logoLink) logoLink.addEventListener('click', e => { e.preventDefault(); document.dispatchEvent(new CustomEvent('filters:reset')); });
 
   function handleCategoryClick(event) {
     selectedCategory = event.target.dataset.filterCategory;

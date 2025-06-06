@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     activateRangeButton(todayBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
     resetBtn.classList.remove('hidden');
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
   });
 
   weekBtn.addEventListener('click', () => {
@@ -63,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     activateRangeButton(weekBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
     resetBtn.classList.remove('hidden');
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
   });
 
   monthBtn.addEventListener('click', () => {
@@ -71,6 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
     activateRangeButton(monthBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
     resetBtn.classList.remove('hidden');
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
   });
 
   resetBtn.addEventListener('click', () => {
@@ -88,13 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('range-btn--inactive');
     });
     resetBtn.classList.add('hidden');
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    yearSelect.value = currentYear;
+    buildCalendar(currentYear, currentMonth);
   }
 
   function buildCalendar(year, month) {
     titleEl.textContent = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
     calendarEl.innerHTML = '';
 
-    const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    const daysOfWeek = ['Sem', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
     for (const dayName of daysOfWeek) {
       const header = document.createElement('div');
       header.className = 'py-2 font-semibold border-b border-gray-200';
@@ -104,50 +120,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const firstDay = new Date(year, month, 1);
     const offset = (firstDay.getDay() + 6) % 7; // monday start
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startDate = new Date(year, month, 1 - offset);
 
-    for (let i = 0; i < offset; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'h-16 border-r-2 border-gray-200';
-      calendarEl.appendChild(empty);
-    }
+    for (let week = 0; week < 6; week++) {
+      const weekStart = new Date(startDate);
+      weekStart.setDate(startDate.getDate() + week * 7);
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().slice(0,10);
-      const cell = document.createElement('button');
-      cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
-      cell.dataset.date = dateStr;
-      cell.innerHTML = `<span>${day}</span>`;
-
-      const dots = document.createElement('div');
-      dots.className = 'flex space-x-1 mb-1';
-      events.filter(e => e.date === dateStr).forEach(e => {
-        const dot = document.createElement('span');
-        dot.className = 'w-4 h-4 rounded-full border-2 border-[var(--color-text-primary)]';
-        dot.style.backgroundColor = e.color;
-        dots.appendChild(dot);
+      const weekBtn = document.createElement('button');
+      weekBtn.className = 'week-btn';
+      weekBtn.innerHTML = '&raquo;';
+      weekBtn.addEventListener('click', () => {
+        const startISO = formatISO(weekStart);
+        const endISO = formatISO(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6));
+        activateRangeButton(null);
+        calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+        document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
+        resetBtn.classList.remove('hidden');
       });
-      cell.appendChild(dots);
+      calendarEl.appendChild(weekBtn);
 
-      if (getWeekNumber(date) === getWeekNumber(today)) {
-        cell.classList.add('bg-[var(--color-buttons)]', 'text-[var(--color-text-secondary)]');
-      }
-
-      cell.addEventListener('click', () => {
-        if (cell.classList.contains('selected')) {
-          cell.classList.remove('selected');
-          document.dispatchEvent(new CustomEvent('calendar:clearDate'));
-        } else {
-          calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-          cell.classList.add('selected');
-          activateRangeButton(null);
-          document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
-          resetBtn.classList.remove('hidden');
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + i);
+        const dateStr = formatISO(date);
+        const cell = document.createElement('button');
+        cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
+        cell.dataset.date = dateStr;
+        cell.innerHTML = `<span>${date.getDate()}</span>`;
+        if (date.getMonth() !== month) {
+          cell.querySelector('span').classList.add('text-gray-300');
         }
-      });
 
-      calendarEl.appendChild(cell);
+        const dots = document.createElement('div');
+        dots.className = 'flex space-x-1 mb-1';
+        events.filter(e => e.date === dateStr).forEach(e => {
+          const dot = document.createElement('span');
+          dot.className = 'w-4 h-4 rounded-full border-2 border-[var(--color-text-primary)]';
+          dot.style.backgroundColor = e.color;
+          dots.appendChild(dot);
+        });
+        cell.appendChild(dots);
+
+        if (getWeekNumber(date) === getWeekNumber(today)) {
+          cell.classList.add('bg-[var(--color-buttons)]', 'text-[var(--color-text-secondary)]');
+        }
+
+        cell.addEventListener('click', () => {
+          if (cell.classList.contains('selected')) {
+            cell.classList.remove('selected');
+            document.dispatchEvent(new CustomEvent('calendar:clearDate'));
+          } else {
+            calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            cell.classList.add('selected');
+            activateRangeButton(null);
+            document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
+            resetBtn.classList.remove('hidden');
+          }
+        });
+
+        calendarEl.appendChild(cell);
+      }
     }
   }
 
