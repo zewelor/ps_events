@@ -6,11 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
   const resetAllBtn = document.getElementById('reset-filters');
   let selectedCategory = 'all';
-  let selectedDate = null;
+  let selectedRange = null; // {start, end}
 
   filterButtons.forEach(btn => btn.addEventListener('click', handleCategoryClick));
-  document.addEventListener('calendar:dateSelected', e => { selectedDate = e.detail.date; filterEvents(); });
-  document.addEventListener('calendar:clearDate', () => { selectedDate = null; filterEvents(); });
+  document.addEventListener('calendar:dateSelected', e => { selectedRange = {start: e.detail.date, end: e.detail.date}; filterEvents(); });
+  document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
+  document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
   resetAllBtn.addEventListener('click', resetFilters);
 
   function handleCategoryClick(event) {
@@ -29,14 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardCategory = card.dataset.category;
       const cardDate = card.dataset.date;
       const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
-      const matchDate = !selectedDate || cardDate === selectedDate;
+      const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
 
   function resetFilters() {
     selectedCategory = 'all';
-    selectedDate = null;
+    selectedRange = null;
     document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
       if (btn.dataset.filterCategory === 'all') {
         btn.classList.add('filter-btn--active');
