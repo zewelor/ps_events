@@ -32,7 +32,7 @@ module Jekyll
 
       params = {
         action: "TEMPLATE",
-        text: event["name"].to_s.strip,
+        text: event["_name"].to_s.strip,
         dates: dates_param,
         details: event["description"].to_s.strip,
         location: event["location"].to_s.strip,
@@ -67,7 +67,7 @@ module Jekyll
         ev.dtend = end_time
       end
 
-      ev.summary = event["name"].to_s.strip
+      ev.summary = event["_name"].to_s.strip
       ev.location = event["location"].to_s.strip
       ev.description = event["description"].to_s.strip
       cal.add_event(ev)
