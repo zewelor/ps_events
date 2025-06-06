@@ -129,3 +129,8 @@
 .scroll-to-top-btn.near-footer {
   @apply bottom-32 md:bottom-36;
 }
+
+/* Week selection button */
+.week-btn {
+  @apply h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-100;
+}
