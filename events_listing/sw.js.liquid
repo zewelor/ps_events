@@ -3,8 +3,8 @@ permalink: /sw.js
 # Jekyll will process this file
 ---
 
-// Import Workbox
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js');
+// Import Workbox from local assets
+importScripts('/assets/js/workbox/workbox-sw.js');
 
 const DEBUG = {% if jekyll.environment == "development" %}true{% else %}false{% endif %};
 
@@ -14,7 +14,7 @@ if (workbox) {
   // Configure Workbox with modern settings
   workbox.setConfig({
     debug: DEBUG,
-    modulePathPrefix: 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/'
+    modulePathPrefix: '/assets/js/workbox/'
   });
 
   // Set up custom cache name with versioning
