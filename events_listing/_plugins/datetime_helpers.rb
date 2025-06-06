@@ -18,10 +18,10 @@ module Jekyll
     def format_event_datetime(event)
       return "" if event.nil?
 
-      start_date = event["Start date"]
-      start_time = event["Start time"]
-      end_date = event["End date"]
-      end_time = event["End time"]
+      start_date = event["start_date"]
+      start_time = event["start_time"]
+      end_date = event["end_date"]
+      end_time = event["end_time"]
 
       # Check if start_date is nil or empty/whitespace-only
       raise NotImplementedError if start_date.nil? || start_date.to_s.strip.empty?
