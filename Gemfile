@@ -35,7 +35,7 @@ group :test do
 end
 
 group :jekyll_plugins do
-  gem "jekyll-datapage-generator"
+  gem "jekyll-datapage-generator", github: "avillafiorita/jekyll-datapage_gen"
   gem "jekyll-sitemap", "~> 1.4"
   gem "jekyll-tailwindcss"
   gem "jekyll-environment-variables"

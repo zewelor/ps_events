@@ -25,7 +25,7 @@ module Jekyll
       current_date = Date.today
 
       filtered_events = events.select do |event|
-        end_date_string = event.fetch("End date")
+        end_date_string = event.fetch("end_date")
 
         if end_date_string && !end_date_string.empty?
           # Use End Date field for date comparison
@@ -33,7 +33,7 @@ module Jekyll
             event_end_date = Date.parse(end_date_string)
             event_end_date >= current_date
           rescue => e
-            Jekyll.logger.warn "End date parsing error for event '#{event["Name"]}': #{e.message}"
+            Jekyll.logger.warn "End date parsing error for event '#{event["name"]}': #{e.message}"
             false
           end
         end
@@ -41,11 +41,11 @@ module Jekyll
 
       # Sort by start time (chronological order)
       filtered_events.sort_by do |event|
-        start_time_string = event["Start date"]
+        start_time_string = event["start_date"]
         start_time_with_offset = "#{start_time_string} +01:00"
         Time.parse(start_time_with_offset)
       rescue => e
-        Jekyll.logger.warn "Start time parsing error for event '#{event["Name"]}': #{e.message}"
+        Jekyll.logger.warn "Start time parsing error for event '#{event["name"]}': #{e.message}"
         Time.at(0) # Sort parsing errors to the beginning
       end
     end

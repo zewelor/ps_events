@@ -10,7 +10,7 @@ image: /assets/index_image.png
   {% assign future_events = site.data.events | filter_current_and_future_events %}
 
   {% comment %} group and sort categories using only future events {% endcomment %}
-  {% assign grouped = future_events | group_by: "Category" %}
+  {% assign grouped = future_events | group_by: "category" %}
   {% assign sorted_groups = grouped | sort: "name" %}
 
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
@@ -26,12 +26,12 @@ image: /assets/index_image.png
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
-    <div class="event-card" data-date="{{ event['Start time'] }}" data-category="{{ event.Category | default: 'Evento' }}">
+    <div class="event-card" data-date="{{ event['start_time'] }}" data-category="{{ event.category | default: 'Evento' }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
-          <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['Name'] | escape_once }}">
-            <a href="{{ event['Name'] | datapage_url: 'events' }}" class="hover:text-gray-600 line-clamp-2">
-              {{ event["Name"] }}
+          <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape_once }}">
+            <a href="{{ event['name'] | datapage_url: 'events' }}" class="hover:text-gray-600 line-clamp-2">
+              {{ event["name"] }}
             </a>
           </h2>
           <div class="flex items-center text-sm text-[var(--color-text-muted)] mb-1">
@@ -40,12 +40,12 @@ image: /assets/index_image.png
           </div>
           <div class="flex items-center text-sm text-[var(--color-text-muted)] mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
-            <span>{{ event["Location"] }}</span>
+            <span>{{ event["location"] }}</span>
           </div>
         </div>
-        <a href="{{ event['Name'] | datapage_url: 'events' }}" class="navigation-button">Saiba mais</a>
+        <a href="{{ event.page_slug | datapage_url: 'events' }}" class="navigation-button">Saiba mais</a>
       </div>
-      {% assign meta = event.Category | category_metadata %}
+      {% assign meta = event.category | category_metadata %}
       <div style="background-color: {{ meta.color }};" class="h-2"></div>
     </div>
     {% endfor %}
