@@ -7,10 +7,10 @@
       <select id="year-select" class="ml-2 border rounded px-2 py-1 text-sm"></select>
     </div>
     <div class="flex items-center gap-2">
-      <button id="filter-today" class="btn px-3 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">Hoje</button>
-      <button id="filter-week" class="btn px-3 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">Esta semana</button>
-      <button id="filter-month" class="btn px-3 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">Este mês</button>
-      <button id="reset-date" class="btn px-3 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)] hidden">Limpar data</button>
+      <button id="filter-today" class="range-btn range-btn--inactive">Hoje</button>
+      <button id="filter-week" class="range-btn range-btn--inactive">Esta semana</button>
+      <button id="filter-month" class="range-btn range-btn--inactive">Este mês</button>
+      <button id="reset-date" class="range-btn range-btn--inactive hidden">Limpar data</button>
     </div>
   </div>
   <div id="calendar" class="grid grid-cols-7 text-center text-sm rounded-lg overflow-hidden border-2 border-gray-200 bg-white"></div>

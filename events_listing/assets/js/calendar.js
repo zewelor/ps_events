@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
   const monthBtn = document.getElementById('filter-month');
+  const rangeButtons = [todayBtn, weekBtn, monthBtn];
   if (!calendarEl) return;
 
   const eventCards = document.querySelectorAll('.event-card');
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   todayBtn.addEventListener('click', () => {
     const iso = today.toISOString().slice(0,10);
+    activateRangeButton(todayBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
     resetBtn.classList.remove('hidden');
   });
@@ -58,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   weekBtn.addEventListener('click', () => {
     const start = startOfWeek(today);
     const end = endOfWeek(today);
+    activateRangeButton(weekBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
     resetBtn.classList.remove('hidden');
   });
@@ -65,12 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
   monthBtn.addEventListener('click', () => {
     const start = formatISO(new Date(today.getFullYear(), today.getMonth(), 1));
     const end = formatISO(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+    activateRangeButton(monthBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
     resetBtn.classList.remove('hidden');
   });
 
   resetBtn.addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('calendar:clearDate'));
+    activateRangeButton(null);
     clearSelection();
   });
 
@@ -78,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearSelection() {
     calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+    rangeButtons.forEach(btn => {
+      btn.classList.remove('range-btn--active');
+      btn.classList.add('range-btn--inactive');
+    });
     resetBtn.classList.add('hidden');
   }
 
@@ -99,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (let i = 0; i < offset; i++) {
       const empty = document.createElement('div');
-      empty.className = 'h-16 border-r border-gray-200';
+      empty.className = 'h-16 border-r-2 border-gray-200';
       calendarEl.appendChild(empty);
     }
 
@@ -107,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const date = new Date(year, month, day);
       const dateStr = date.toISOString().slice(0,10);
       const cell = document.createElement('button');
-      cell.className = 'h-16 border-r border-b border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
+      cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
       cell.dataset.date = dateStr;
       cell.innerHTML = `<span>${day}</span>`;
 
@@ -115,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dots.className = 'flex space-x-1 mb-1';
       events.filter(e => e.date === dateStr).forEach(e => {
         const dot = document.createElement('span');
-        dot.className = 'w-3 h-3 rounded-full';
+        dot.className = 'w-4 h-4 rounded-full border-2 border-[var(--color-text-primary)]';
         dot.style.backgroundColor = e.color;
         dots.appendChild(dot);
       });
@@ -132,12 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
           cell.classList.add('selected');
+          activateRangeButton(null);
           document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
           resetBtn.classList.remove('hidden');
         }
       });
 
       calendarEl.appendChild(cell);
+    }
+  }
+
+  function activateRangeButton(btn) {
+    rangeButtons.forEach(b => {
+      b.classList.remove('range-btn--active');
+      b.classList.add('range-btn--inactive');
+    });
+    if (btn) {
+      btn.classList.remove('range-btn--inactive');
+      btn.classList.add('range-btn--active');
     }
   }
 

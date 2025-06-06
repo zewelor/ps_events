@@ -68,6 +68,24 @@
   @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
 }
 
+/* Calendar range button styles */
+.range-btn {
+  @apply btn px-3 py-1;
+}
+
+.range-btn--inactive {
+  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+}
+
+.range-btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+}
+
+/* Selected calendar day */
+.cal-day.selected {
+  @apply bg-[var(--color-selected-filter)] text-white;
+}
+
 /* Form input fields common styling */
 .form-input {
   @apply card mt-1 block w-full border-b-4 border-[var(--color-buttons)] focus:ring-[var(--color-buttons-hover)] focus:border-[var(--color-buttons-hover)] focus:border-b-4 py-3 px-3;
