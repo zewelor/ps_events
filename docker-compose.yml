@@ -12,6 +12,14 @@ x-app: &x-app
 services:
   app:
     <<: *x-app
+    env_file:
+      - .env
+    command:
+      - sh
+      - -c
+      - sleep infinity
+  jekyll:
+    <<: *x-app
     ports:
       - "127.0.0.1:4000:4000"
       - "127.0.0.1:35729:35729"
