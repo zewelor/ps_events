@@ -49,3 +49,5 @@ gem "google-apis-sheets_v4", "~> 0.44.0"
 
 # Image processing gem
 gem "mini_magick", "~> 5.2"
+
+gem "ruby_llm", "~> 1.3"
