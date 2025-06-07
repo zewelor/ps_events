@@ -68,13 +68,18 @@ GEM
     em-websocket (0.5.3)
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0)
+    event_stream_parser (1.0.0)
     eventmachine (1.2.7)
     faraday (2.13.1)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
+    faraday-multipart (1.1.0)
+      multipart-post (~> 2.0)
     faraday-net_http (3.4.0)
       net-http (>= 0.5.0)
+    faraday-retry (2.3.1)
+      faraday (~> 2.0)
     ffi (1.17.2-x86_64-linux-gnu)
     forwardable-extended (2.6.0)
     google-apis-core (0.18.0)
@@ -162,6 +167,7 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
+    marcel (1.0.4)
     mercenary (0.4.0)
     mini_magick (5.2.0)
       benchmark
@@ -169,6 +175,7 @@ GEM
     mini_mime (1.1.5)
     minitest (5.25.5)
     multi_json (1.15.0)
+    multipart-post (2.4.1)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
     mutex_m (0.3.0)
@@ -252,6 +259,15 @@ GEM
       sorbet-runtime (>= 0.5.10782)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
+    ruby_llm (1.3.0)
+      base64
+      event_stream_parser (~> 1)
+      faraday (>= 1.10.0)
+      faraday-multipart (>= 1)
+      faraday-net_http (>= 1)
+      faraday-retry (>= 1)
+      marcel (~> 1.0)
+      zeitwerk (~> 2)
     safe_yaml (1.0.5)
     sass-embedded (1.89.0-x86_64-linux-gnu)
       google-protobuf (~> 4.31)
@@ -328,6 +344,7 @@ DEPENDENCIES
   rackup (~> 2.2)
   rerun
   ruby-lsp
+  ruby_llm (~> 1.3)
   simplecov
   sinatra
   standard

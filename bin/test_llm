@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filepath: /home/omen/personal/ps_events/bin/test_llm
+
+require "bundler/setup"
+require "ruby_llm"
+require "pathname"
+
+# Configuration
+RubyLLM.configure do |config|
+  config.gemini_api_key = ENV.fetch("GEMINI_API_KEY", nil)
+  # config.log_level = :debug  # Log level (:debug, :info, :warn)
+end
+
+# CLI argument validation
+if ARGV.length != 1
+  puts "Usage: #{$0} <image_path>"
+  puts "Example: #{$0} ./my_image.jpg"
+  exit 1
+end
+
+image_path = ARGV[0]
+
+# Validate image file exists
+unless File.exist?(image_path)
+  puts "Error: Image file '#{image_path}' does not exist."
+  exit 1
+end
+
+begin
+  puts "Analyzing image: #{image_path}"
+  puts "Using Gemini 2.5 Flash Preview model..."
+  puts
+
+  # Create chat instance with the specified model
+  chat = RubyLLM.chat(model: "gemini-2.5-flash-preview-05-20")
+
+  # Ask about text in the image
+  prompt = "Please analyze this image and extract all the text you can read. " \
+           "If there's no text in the image, describe what you see. " \
+           "Respond in English."
+
+  response = chat.ask(prompt, with: image_path)
+
+  puts "Analysis result:"
+  puts "=" * 50
+  puts response.content
+  puts "=" * 50
+  puts
+  puts "Model used: #{response.model_id}"
+  puts "Input tokens: #{response.input_tokens}" if response.input_tokens
+  puts "Output tokens: #{response.output_tokens}" if response.output_tokens
+rescue => e
+  puts "Error processing image: #{e.message}"
+  puts "Error details: #{e.class}"
+
+  if e.message.include?("API_KEY")
+    puts
+    puts "Make sure the GEMINI_API_KEY environment variable is set."
+    puts "Export GEMINI_API_KEY=<your_api_key>"
+  end
+
+  exit 1
+end
