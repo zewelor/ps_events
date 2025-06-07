@@ -1,14 +1,6 @@
 require "minitest/autorun"
 
-# Mock Liquid to avoid dependency issues in tests
-module Liquid
-  class Template
-    def self.register_filter(filter_module)
-      # Do nothing in tests
-    end
-  end
-end
-
+require_relative "plugins_helpers"
 require_relative "../../events_listing/_plugins/datetime_helpers"
 
 class TestDatetimeHelpers < Minitest::Test
