@@ -3,3 +3,5 @@ pre-commit:
     rubocop:
       exclude: "application.rb|routes.rb"
       run: rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}
+    tests:
+      run: rake test
