@@ -39,6 +39,13 @@
   @apply text-[var(--color-text-muted)] text-sm;
 }
 
+@utility btn--inactive {
+  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+}
+
+@utility btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+}
 .navigation-button {
   @apply btn bg-[var(--color-buttons)] text-[var(--color-text-primary)] px-5 py-2 hover:bg-[var(--color-buttons-hover)];
 }
@@ -55,14 +62,6 @@
   @apply section-card border-[var(--color-buttons)] border-b-4 mb-6;
 }
 
-/* Button state styles (shared) */
-.btn--inactive {
-  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
-}
-
-.btn--active {
-  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
-}
 
 /* Filter button styles */
 .filter-btn {
@@ -125,7 +124,7 @@
 
 /* Week selection button */
 .week-btn {
-  @apply h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-100;
+  @apply btn--inactive h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center;
 }
 
 /* Calendar grid with narrow week column */

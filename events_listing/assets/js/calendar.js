@@ -4,9 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetBtn = document.getElementById('reset-date');
   const prevBtn = document.getElementById('prev-month');
   const nextBtn = document.getElementById('next-month');
-  const yearDisplay = document.getElementById('year-display');
-  const prevYearBtn = document.getElementById('prev-year');
-  const nextYearBtn = document.getElementById('next-year');
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
   const monthBtn = document.getElementById('filter-month');
@@ -42,16 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentMonth = 0;
       currentYear++;
     }
-    buildCalendar(currentYear, currentMonth);
-  });
-
-  prevYearBtn.addEventListener('click', () => {
-    currentYear--;
-    buildCalendar(currentYear, currentMonth);
-  });
-
-  nextYearBtn.addEventListener('click', () => {
-    currentYear++;
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -113,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildCalendar(year, month) {
-    titleEl.textContent = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
+    const monthName = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
+    titleEl.textContent = `${monthName}`;
     calendarEl.innerHTML = '';
 
     const daysOfWeek = ['Sem', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -217,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function highlightSelection() {
-    yearDisplay.textContent = currentYear;
     calendarEl.querySelectorAll('.week-btn').forEach(btn => {
       btn.classList.remove('week-btn--active');
       if (selectedRange && btn.dataset.start === selectedRange.start && btn.dataset.end === selectedRange.end) {
