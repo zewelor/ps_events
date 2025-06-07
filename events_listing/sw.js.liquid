@@ -204,14 +204,8 @@ if (workbox) {
       (async () => {
         const expectedSuffix = '{% cache_bust_param %}';
         const keys = await caches.keys();
-        await Promise.all(
-          keys.map((cacheName) => {
-            if (!cacheName.includes(expectedSuffix)) {
-              return caches.delete(cacheName);
-            }
-            return Promise.resolve();
-          })
-        );
+        const cachesToDelete = keys.filter((cacheName) => !cacheName.includes(expectedSuffix));
+        await Promise.all(cachesToDelete.map((cacheName) => caches.delete(cacheName)));
         await self.clients.claim();
       })()
     );
