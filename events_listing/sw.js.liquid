@@ -39,6 +39,7 @@ if (workbox) {
   workbox.navigationPreload.enable();
 
   workbox.precaching.precacheAndRoute(precacheManifest);
+  workbox.precaching.cleanupOutdatedCaches();
 
   // Set up offline fallback page reference
   const FALLBACK_HTML_URL = '/offline.html';
@@ -59,6 +60,12 @@ if (workbox) {
     );
   } else {
     // Production strategies with modern best practices
+
+    // Ensure the service worker script is always fetched from the network
+    workbox.routing.registerRoute(
+      ({ url }) => url.pathname === '/sw.js',
+      new workbox.strategies.NetworkOnly()
+    );
 
     // Stale While Revalidate for HTML pages (better UX than NetworkFirst)
     workbox.routing.registerRoute(
@@ -81,6 +88,7 @@ if (workbox) {
     // Cache First for static assets with longer expiration
     workbox.routing.registerRoute(
       ({ request, url }) => {
+        if (url.pathname === '/sw.js') return false;
         return url.pathname.startsWith('/assets/') ||
                request.destination === 'style' ||
                request.destination === 'script' ||
