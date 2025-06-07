@@ -145,7 +145,7 @@ if (workbox) {
 
     // Return offline page for navigation requests
     if (request.mode === 'navigate') {
-      return caches.match(FALLBACK_HTML_URL);
+      return workbox.precaching.matchPrecache(FALLBACK_HTML_URL);
     }
 
     // Return offline image for image requests
