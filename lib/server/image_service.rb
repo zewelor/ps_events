@@ -72,13 +72,14 @@ class ImageService
     end
 
     # Check MIME type
-    allowed_types = %w[
-      image/jpeg image/jpg image/png image/gif
-      image/webp image/bmp image/tiff image/tif
-    ]
+      allowed_types = %w[
+        image/jpeg image/jpg image/png image/gif
+        image/webp image/bmp image/tiff image/tif
+        image/heic image/heif
+      ]
 
-    unless allowed_types.include?(uploaded_file[:type])
-      return "Invalid file type. Please upload an image file (JPEG, PNG, GIF, WebP, BMP, or TIFF)."
+      unless allowed_types.include?(uploaded_file[:type])
+        return "Invalid file type. Please upload an image file (JPEG, PNG, GIF, WebP, BMP, TIFF ou HEIC)."
     end
 
     nil # No errors

@@ -266,7 +266,7 @@ sitemap: false
         accept="image/*"
         class="form-input file-input-button"
       />
-      <p class="form-help">Carregue uma imagem para o seu evento (opcional). Formatos suportados: JPEG, PNG, GIF, WebP, BMP, TIFF. Tamanho máximo: 10MB.</p>
+      <p class="form-help">Carregue uma imagem para o seu evento (opcional). Formatos suportados: JPEG, PNG, GIF, WebP, BMP, TIFF, HEIC. Tamanho máximo: 10MB.</p>
       <div id="image-preview" class="mt-3 hidden">
         <img id="preview-img" src="" alt="Pré-visualização da imagem" class="max-w-xs max-h-48 rounded-lg border border-gray-200" />
         <button type="button" id="remove-image" class="mt-2 text-sm text-red-600 hover:text-red-800">Remover imagem</button>
@@ -471,7 +471,7 @@ sitemap: false
         }
 
         // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/heic', 'image/heif'];
         if (!allowedTypes.includes(file.type)) {
           showToast('Tipo de ficheiro inválido. Por favor, carregue um ficheiro de imagem.', 'error');
           imageInput.value = '';
