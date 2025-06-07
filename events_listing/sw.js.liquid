@@ -44,20 +44,31 @@ if (workbox) {
   // Set up offline fallback page reference
   const FALLBACK_HTML_URL = '/offline.html';
 
+  // Ensure POST requests bypass caching entirely
+  workbox.routing.registerRoute(
+    ({ request }) => request.method === 'POST',
+    new workbox.strategies.NetworkOnly()
+  );
+
   // Simplified debug mode strategy
   if (DEBUG) {
     // In debug mode, use NetworkOnly to always get fresh content
-    workbox.routing.setDefaultHandler(
-      new workbox.strategies.NetworkOnly({
-        plugins: [
-          {
-            handlerDidError: async () => {
-              return caches.match(FALLBACK_HTML_URL);
-            }
+    const debugNetworkOnly = new workbox.strategies.NetworkOnly({
+      plugins: [
+        {
+          handlerDidError: async () => {
+            return caches.match(FALLBACK_HTML_URL);
           }
-        ]
-      })
-    );
+        }
+      ]
+    });
+
+    workbox.routing.setDefaultHandler((args) => {
+      if (args.request.method === 'GET') {
+        return debugNetworkOnly.handle(args);
+      }
+      return fetch(args.request);
+    });
   } else {
     // Production strategies with modern best practices
 
@@ -129,22 +140,27 @@ if (workbox) {
     );
 
     // Network First for API calls and other dynamic content
-    workbox.routing.setDefaultHandler(
-      new workbox.strategies.NetworkFirst({
-        cacheName: 'api-cache-v1',
-        networkTimeoutSeconds: 3,
-        plugins: [
-          new workbox.cacheableResponse.CacheableResponsePlugin({
-            statuses: [0, 200]
-          }),
-          new workbox.expiration.ExpirationPlugin({
-            maxEntries: 50,
-            maxAgeSeconds: 5 * 60, // 5 minutes
-            purgeOnQuotaError: true
-          })
-        ]
-      })
-    );
+    const apiNetworkFirst = new workbox.strategies.NetworkFirst({
+      cacheName: 'api-cache-v1',
+      networkTimeoutSeconds: 3,
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [0, 200]
+        }),
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 5 * 60, // 5 minutes
+          purgeOnQuotaError: true
+        })
+      ]
+    });
+
+    workbox.routing.setDefaultHandler((args) => {
+      if (args.request.method === 'GET') {
+        return apiNetworkFirst.handle(args);
+      }
+      return fetch(args.request);
+    });
   }
 
   // Enhanced offline fallback with better error handling
