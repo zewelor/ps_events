@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCategory = 'all';
   let selectedRange = null; // {start, end}
 
+  // store button labels for easy count updates
+  filterButtons.forEach(btn => {
+    const label = btn.dataset.label || btn.textContent.replace(/\s*\(.+\)$/, '');
+    btn.dataset.label = label.trim();
+  });
+
+  updateCategoryCounts();
+
   filterButtons.forEach(btn => btn.addEventListener('click', handleCategoryClick));
   document.addEventListener('calendar:dateSelected', e => { selectedRange = {start: e.detail.date, end: e.detail.date}; filterEvents(); });
   document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
@@ -29,12 +37,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function filterEvents() {
+    updateCategoryCounts();
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
       const cardDate = card.dataset.date;
       const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
       const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
+    });
+  }
+
+  function updateCategoryCounts() {
+    const counts = {};
+    let total = 0;
+    eventCards.forEach(card => {
+      const date = card.dataset.date;
+      const category = card.dataset.category;
+      const matchDate = !selectedRange || (date >= selectedRange.start && date <= selectedRange.end);
+      if (matchDate) {
+        counts[category] = (counts[category] || 0) + 1;
+        total++;
+      }
+    });
+
+    filterButtons.forEach(btn => {
+      const label = btn.dataset.label;
+      const category = btn.dataset.filterCategory;
+      const count = category === 'all' ? total : (counts[category] || 0);
+      btn.textContent = `${label} (${count})`;
+      if (category !== 'all') {
+        btn.style.display = count ? '' : 'none';
+      }
     });
   }
 
