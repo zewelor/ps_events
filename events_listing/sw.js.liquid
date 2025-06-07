@@ -192,12 +192,23 @@ if (workbox) {
   });
 
   // Handle install and activate lifecycle events
+  // During activation we iterate over existing caches and
+  // remove any that don't contain the current {% cache_bust_param %}.
   self.addEventListener('install', () => {
     self.skipWaiting();
   });
 
   self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    // Remove caches that don't include the current commit-based suffix
+    event.waitUntil(
+      (async () => {
+        const expectedSuffix = '{% cache_bust_param %}';
+        const keys = await caches.keys();
+        const cachesToDelete = keys.filter((cacheName) => !cacheName.includes(expectedSuffix));
+        await Promise.all(cachesToDelete.map((cacheName) => caches.delete(cacheName)));
+        await self.clients.claim();
+      })()
+    );
   });
 
 } else {
@@ -225,7 +236,24 @@ if (workbox) {
     }
   });
 
+  // During activation we remove any caches that don't include the
+  // current {% cache_bust_param %}.
   self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    // Remove caches that don't include the current commit-based suffix
+    event.waitUntil(
+      (async () => {
+        const expectedSuffix = '{% cache_bust_param %}';
+        const keys = await caches.keys();
+        await Promise.all(
+          keys.map((cacheName) => {
+            if (!cacheName.includes(expectedSuffix)) {
+              return caches.delete(cacheName);
+            }
+            return Promise.resolve();
+          })
+        );
+        await self.clients.claim();
+      })()
+    );
   });
 }
