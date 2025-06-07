@@ -4,9 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetBtn = document.getElementById('reset-date');
   const prevBtn = document.getElementById('prev-month');
   const nextBtn = document.getElementById('next-month');
-  const yearDisplay = document.getElementById('year-display');
-  const prevYearBtn = document.getElementById('prev-year');
-  const nextYearBtn = document.getElementById('next-year');
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
   const monthBtn = document.getElementById('filter-month');
@@ -42,16 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentMonth = 0;
       currentYear++;
     }
-    buildCalendar(currentYear, currentMonth);
-  });
-
-  prevYearBtn.addEventListener('click', () => {
-    currentYear--;
-    buildCalendar(currentYear, currentMonth);
-  });
-
-  nextYearBtn.addEventListener('click', () => {
-    currentYear++;
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -113,10 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildCalendar(year, month) {
-    titleEl.textContent = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
+    const monthName = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
+    titleEl.textContent = `${monthName}`;
     calendarEl.innerHTML = '';
 
-    const daysOfWeek = ['Sem', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    const daysOfWeek = ['Sem', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     daysOfWeek.forEach(dayName => {
       const header = document.createElement('div');
       header.className = 'py-2 font-semibold border-b border-gray-200';
@@ -125,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const firstDay = new Date(year, month, 1);
-    const offset = (firstDay.getDay() + 6) % 7; // monday start
+    const offset = firstDay.getDay(); // domingo start
     const startDate = new Date(year, month, 1 - offset);
 
     for (let week = 0; week < 6; week++) {
@@ -217,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function highlightSelection() {
-    yearDisplay.textContent = currentYear;
     calendarEl.querySelectorAll('.week-btn').forEach(btn => {
       btn.classList.remove('week-btn--active');
       if (selectedRange && btn.dataset.start === selectedRange.start && btn.dataset.end === selectedRange.end) {
@@ -237,16 +224,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function startOfWeek(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = (day === 0 ? -6 : 1) - day;
-    d.setDate(d.getDate() + diff);
+    d.setDate(d.getDate() - day); // domingo start
     return formatISO(d);
   }
 
   function endOfWeek(date) {
     const start = new Date(date);
     const day = start.getDay();
-    const diff = (day === 0 ? -6 : 1) - day + 6;
-    start.setDate(start.getDate() + diff);
+    start.setDate(start.getDate() + (6 - day)); // domingo start
     return formatISO(start);
   }
 
