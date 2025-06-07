@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetBtn = document.getElementById('reset-date');
   const prevBtn = document.getElementById('prev-month');
   const nextBtn = document.getElementById('next-month');
-  const yearSelect = document.getElementById('year-select');
+  const yearDisplay = document.getElementById('year-display');
+  const prevYearBtn = document.getElementById('prev-year');
+  const nextYearBtn = document.getElementById('next-year');
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
   const monthBtn = document.getElementById('filter-month');
@@ -21,8 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const today = new Date();
   let currentYear = today.getFullYear();
   let currentMonth = today.getMonth();
+  let selectedRange = null; // {start, end}
 
-  populateYears(currentYear);
   buildCalendar(currentYear, currentMonth);
 
   prevBtn.addEventListener('click', () => {
@@ -31,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentMonth = 11;
       currentYear--;
     }
-    yearSelect.value = currentYear;
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -41,14 +42,19 @@ document.addEventListener('DOMContentLoaded', () => {
       currentMonth = 0;
       currentYear++;
     }
-    yearSelect.value = currentYear;
     buildCalendar(currentYear, currentMonth);
   });
 
-  yearSelect.addEventListener('change', () => {
-    currentYear = parseInt(yearSelect.value, 10);
+  prevYearBtn.addEventListener('click', () => {
+    currentYear--;
     buildCalendar(currentYear, currentMonth);
   });
+
+  nextYearBtn.addEventListener('click', () => {
+    currentYear++;
+    buildCalendar(currentYear, currentMonth);
+  });
+
 
   todayBtn.addEventListener('click', () => {
     const iso = today.toISOString().slice(0,10);
@@ -57,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
-    yearSelect.value = currentYear;
+    selectRange(iso, iso);
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -69,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
-    yearSelect.value = currentYear;
+    selectRange(start, end);
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -81,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
-    yearSelect.value = currentYear;
+    selectRange(start, end);
     buildCalendar(currentYear, currentMonth);
   });
 
@@ -102,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.classList.add('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
-    yearSelect.value = currentYear;
+    selectedRange = null;
     buildCalendar(currentYear, currentMonth);
   }
 
@@ -111,12 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarEl.innerHTML = '';
 
     const daysOfWeek = ['Sem', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    for (const dayName of daysOfWeek) {
+    daysOfWeek.forEach((dayName, idx) => {
       const header = document.createElement('div');
       header.className = 'py-2 font-semibold border-b border-gray-200';
+      if (idx === 6) header.classList.add('weekend-start');
       header.textContent = dayName;
       calendarEl.appendChild(header);
-    }
+    });
 
     const firstDay = new Date(year, month, 1);
     const offset = (firstDay.getDay() + 6) % 7; // monday start
@@ -136,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
         document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
         resetBtn.classList.remove('hidden');
+        selectRange(startISO, endISO);
       });
       calendarEl.appendChild(weekBtn);
 
@@ -145,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateStr = formatISO(date);
         const cell = document.createElement('button');
         cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
+        if (i === 5) cell.classList.add('weekend-start');
         cell.dataset.date = dateStr;
         cell.innerHTML = `<span>${date.getDate()}</span>`;
         if (date.getMonth() !== month) {
@@ -161,18 +170,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         cell.appendChild(dots);
 
-        if (getWeekNumber(date) === getWeekNumber(today)) {
-          cell.classList.add('bg-[var(--color-buttons)]', 'text-[var(--color-text-secondary)]');
+        if (selectedRange && dateStr >= selectedRange.start && dateStr <= selectedRange.end) {
+          cell.classList.add('selected');
         }
 
         cell.addEventListener('click', () => {
           if (cell.classList.contains('selected')) {
             cell.classList.remove('selected');
+            selectedRange = null;
             document.dispatchEvent(new CustomEvent('calendar:clearDate'));
           } else {
             calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
             cell.classList.add('selected');
             activateRangeButton(null);
+            selectRange(dateStr, dateStr);
             document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
             resetBtn.classList.remove('hidden');
           }
@@ -181,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calendarEl.appendChild(cell);
       }
     }
+    highlightSelection();
   }
 
   function activateRangeButton(btn) {
@@ -194,23 +206,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  function selectRange(start, end) {
+    selectedRange = {start, end};
   }
 
-  function populateYears(center) {
-    for (let y = center - 1; y <= center + 1; y++) {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      yearSelect.appendChild(opt);
-    }
-    yearSelect.value = center;
+  function highlightSelection() {
+    yearDisplay.textContent = currentYear;
+    if (!selectedRange) return;
+    calendarEl.querySelectorAll('.cal-day').forEach(cell => {
+      const d = cell.dataset.date;
+      if (d >= selectedRange.start && d <= selectedRange.end) {
+        cell.classList.add('selected');
+      }
+    });
   }
+
 
   function startOfWeek(date) {
     const d = new Date(date);

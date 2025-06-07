@@ -4,7 +4,11 @@
       <button id="prev-month" class="btn px-2 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">&#60;</button>
       <h2 id="calendar-title" class="section-subtitle"></h2>
       <button id="next-month" class="btn px-2 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">&#62;</button>
-      <select id="year-select" class="ml-2 border rounded px-2 py-1 text-sm"></select>
+      <div id="year-controls" class="flex items-center gap-1 ml-2">
+        <button id="prev-year" class="btn px-1 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">&#60;&#60;</button>
+        <span id="year-display" class="font-semibold"></span>
+        <button id="next-year" class="btn px-1 py-1 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">&#62;&#62;</button>
+      </div>
     </div>
     <div class="flex items-center gap-2">
       <button id="filter-today" class="range-btn range-btn--inactive">Hoje</button>
@@ -13,6 +17,6 @@
       <button id="reset-date" class="range-btn range-btn--inactive hidden">Limpar data</button>
     </div>
   </div>
-  <div id="calendar" class="grid grid-cols-8 text-center text-sm rounded-lg overflow-hidden border-2 border-gray-200 bg-white"></div>
+  <div id="calendar" class="calendar-grid"></div>
 </div>
 <script src="{{ '/assets/js/calendar.js' | relative_url }}" defer></script>

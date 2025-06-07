@@ -134,3 +134,14 @@
 .week-btn {
   @apply h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-100;
 }
+
+/* Calendar grid with narrow week column */
+.calendar-grid {
+  @apply grid text-center text-sm rounded-lg overflow-hidden border-2 border-gray-200 bg-white;
+  grid-template-columns: 2rem repeat(7,minmax(0,1fr));
+}
+
+/* Weekend separator */
+.weekend-start {
+  @apply border-l-2 border-gray-400;
+}
