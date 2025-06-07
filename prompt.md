@@ -1,1 +1,0 @@
-Please return yaml formatted content from this event leaflet. For dates field use array with 2 items, start date and stop in iso8601 format. Translate to english. Name field organizer_or_place and only provide original text value there. Return only array with events. If leaflet is for single event still return array but only with 1 item
