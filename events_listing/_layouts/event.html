@@ -96,17 +96,6 @@ layout: default
       Partilhar Evento
     </h2>
     <div class="flex flex-col sm:flex-row gap-3">
-      <!-- Copy Link Button -->
-      <button
-        onclick="copyEventLink()"
-        class="flex items-center cursor-pointer justify-center flex-1 navigation-button"
-      >
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-        </svg>
-        Copiar Link
-      </button>
-
       <!-- Facebook Share Button -->
       <a
         href="https://www.facebook.com/sharer/sharer.php?u={{ page.url | absolute_url | url_encode }}"
@@ -119,6 +108,17 @@ layout: default
         </svg>
         Partilhar no Facebook
       </a>
+
+      <!-- Copy Link Button -->
+      <button
+        onclick="copyEventLink()"
+        class="flex items-center cursor-pointer justify-center flex-1 navigation-button"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+        Copiar Link
+      </button>
     </div>
 
     <!-- Success Message (hidden by default) -->
