@@ -82,9 +82,16 @@ end
 
 # Initialize Google Sheets service
 configure do
-  set :google_sheets, GoogleSheetsService.new
-  set :spreadsheet_id, ENV.fetch("GOOGLE_SPREADSHEET_ID")
-  set :events_range, ENV.fetch("EVENTS_SHEET_RANGE")
+  if ENV["APP_ENV"] == "test"
+    # Avoid external dependencies when running tests
+    set :google_sheets, nil
+    set :spreadsheet_id, "test"
+    set :events_range, "A:Z"
+  else
+    set :google_sheets, GoogleSheetsService.new
+    set :spreadsheet_id, ENV.fetch("GOOGLE_SPREADSHEET_ID")
+    set :events_range, ENV.fetch("EVENTS_SHEET_RANGE")
+  end
 end
 
 configure :production do
