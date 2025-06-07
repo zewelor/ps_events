@@ -167,9 +167,14 @@ if (workbox) {
     return Response.error();
   });
 
-  // Claim clients immediately and skip waiting
-  workbox.core.clientsClaim();
-  self.skipWaiting();
+  // Handle install and activate lifecycle events
+  self.addEventListener('install', () => {
+    self.skipWaiting();
+  });
+
+  self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+  });
 
 } else {
   console.error('Workbox could not be loaded. Falling back to basic implementation.');
@@ -178,6 +183,7 @@ if (workbox) {
   const CACHE_NAME = 'pxo-pulse-{% cache_bust_param %}-fallback';
 
   self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
       caches.open(CACHE_NAME).then((cache) => {
         return cache.addAll(['/offline.html']);
