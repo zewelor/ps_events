@@ -96,7 +96,7 @@ jobs:
 
       - name: Download CSV with events
         run: |
-          curl -Lo events.csv "${{ secrets.CSV_ENDPOINT}}
+          curl -Lo events.csv "${{ secrets.CSV_ENDPOINT}}"
 
       # - name: Generate events.ics
       #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
