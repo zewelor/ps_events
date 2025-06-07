@@ -20,6 +20,10 @@ When writing / translating text, for pages etc, use the following guidelines:
 - Use clear, concise language.
 - Write text visibile in the html etc in portuguese from portugal
 
+## Testing
+
+run `rake test` to run the tests.
+
 ## Tools
 
 Used in this project
