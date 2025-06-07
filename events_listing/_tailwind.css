@@ -55,30 +55,23 @@
   @apply section-card border-[var(--color-buttons)] border-b-4 mb-6;
 }
 
+/* Button state styles (shared) */
+.btn--inactive {
+  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+}
+
+.btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+}
+
 /* Filter button styles */
 .filter-btn {
   @apply btn px-4 py-2 mr-2 mb-2;
 }
 
-.filter-btn--inactive {
-  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
-}
-
-.filter-btn--active {
-  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
-}
-
 /* Calendar range button styles */
 .range-btn {
   @apply btn px-3 py-1;
-}
-
-.range-btn--inactive {
-  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
-}
-
-.range-btn--active {
-  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
 }
 
 /* Selected calendar day */

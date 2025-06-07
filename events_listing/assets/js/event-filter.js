@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleCategoryClick(event) {
     selectedCategory = event.target.dataset.filterCategory;
     document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
-      btn.classList.remove('filter-btn--active');
-      btn.classList.add('filter-btn--inactive');
+      btn.classList.remove('btn--active');
+      btn.classList.add('btn--inactive');
     });
-    event.target.classList.remove('filter-btn--inactive');
-    event.target.classList.add('filter-btn--active');
+    event.target.classList.remove('btn--inactive');
+    event.target.classList.add('btn--active');
     filterEvents();
   }
 
@@ -43,11 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedRange = null;
     document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
       if (btn.dataset.filterCategory === 'all') {
-        btn.classList.add('filter-btn--active');
-        btn.classList.remove('filter-btn--inactive');
+        btn.classList.add('btn--active');
+        btn.classList.remove('btn--inactive');
       } else {
-        btn.classList.remove('filter-btn--active');
-        btn.classList.add('filter-btn--inactive');
+        btn.classList.remove('btn--active');
+        btn.classList.add('btn--inactive');
       }
     });
     document.dispatchEvent(new CustomEvent('calendar:reset'));

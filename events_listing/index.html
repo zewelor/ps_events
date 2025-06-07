@@ -14,11 +14,11 @@ image: /assets/index_image.png
   {% assign sorted_groups = grouped | sort: "name" %}
 
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
-    <button data-filter-category="all" class="filter-btn filter-btn--active">
+    <button data-filter-category="all" class="filter-btn btn--active">
       Todas as Categorias ({{ future_events | size }})
     </button>
     {% for group in sorted_groups %}
-      <button data-filter-category="{{ group.name | default: 'Evento' }}" class="filter-btn filter-btn--inactive">
+      <button data-filter-category="{{ group.name | default: 'Evento' }}" class="filter-btn btn--inactive">
         {{ group.name | default: 'Evento' }} ({{ group.items | size }})
       </button>
     {% endfor %}

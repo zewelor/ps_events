@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   todayBtn.addEventListener('click', () => {
-    const iso = today.toISOString().slice(0,10);
+    const iso = formatISO(today);
     activateRangeButton(todayBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
     resetBtn.classList.remove('hidden');
@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearSelection() {
     calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
     rangeButtons.forEach(btn => {
-      btn.classList.remove('range-btn--active');
-      btn.classList.add('range-btn--inactive');
+      btn.classList.remove('btn--active');
+      btn.classList.add('btn--inactive');
     });
     resetBtn.classList.add('hidden');
     currentYear = today.getFullYear();
@@ -203,12 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function activateRangeButton(btn) {
     rangeButtons.forEach(b => {
-      b.classList.remove('range-btn--active');
-      b.classList.add('range-btn--inactive');
+      b.classList.remove('btn--active');
+      b.classList.add('btn--inactive');
     });
     if (btn) {
-      btn.classList.remove('range-btn--inactive');
-      btn.classList.add('range-btn--active');
+      btn.classList.remove('btn--inactive');
+      btn.classList.add('btn--active');
     }
   }
 
@@ -251,6 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatISO(d) {
-    return d.toISOString().slice(0,10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 });
