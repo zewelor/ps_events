@@ -117,10 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarEl.innerHTML = '';
 
     const daysOfWeek = ['Sem', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    daysOfWeek.forEach((dayName, idx) => {
+    daysOfWeek.forEach(dayName => {
       const header = document.createElement('div');
       header.className = 'py-2 font-semibold border-b border-gray-200';
-      if (idx === 6) header.classList.add('weekend-start');
       header.textContent = dayName;
       calendarEl.appendChild(header);
     });
@@ -136,14 +135,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const weekBtn = document.createElement('button');
       weekBtn.className = 'week-btn';
       weekBtn.innerHTML = '&raquo;';
+      const startISO = formatISO(weekStart);
+      const endISO = formatISO(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6));
+      weekBtn.dataset.start = startISO;
+      weekBtn.dataset.end = endISO;
+      if (selectedRange && selectedRange.start === startISO && selectedRange.end === endISO) {
+        weekBtn.classList.add('week-btn--active');
+      }
       weekBtn.addEventListener('click', () => {
-        const startISO = formatISO(weekStart);
-        const endISO = formatISO(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6));
         activateRangeButton(null);
         calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+        calendarEl.querySelectorAll('.week-btn').forEach(b => b.classList.remove('week-btn--active'));
         document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
         resetBtn.classList.remove('hidden');
         selectRange(startISO, endISO);
+        weekBtn.classList.add('week-btn--active');
+        highlightSelection();
       });
       calendarEl.appendChild(weekBtn);
 
@@ -153,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateStr = formatISO(date);
         const cell = document.createElement('button');
         cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
-        if (i === 5) cell.classList.add('weekend-start');
         cell.dataset.date = dateStr;
         cell.innerHTML = `<span>${date.getDate()}</span>`;
         if (date.getMonth() !== month) {
@@ -164,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dots.className = 'flex space-x-1 mb-1';
         events.filter(e => e.date === dateStr).forEach(e => {
           const dot = document.createElement('span');
-          dot.className = 'w-4 h-4 rounded-full border-2 border-[var(--color-text-primary)]';
+          dot.className = 'w-5 h-5 rounded-full';
           dot.style.backgroundColor = e.color;
           dots.appendChild(dot);
         });
@@ -212,6 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function highlightSelection() {
     yearDisplay.textContent = currentYear;
+    calendarEl.querySelectorAll('.week-btn').forEach(btn => {
+      btn.classList.remove('week-btn--active');
+      if (selectedRange && btn.dataset.start === selectedRange.start && btn.dataset.end === selectedRange.end) {
+        btn.classList.add('week-btn--active');
+      }
+    });
     if (!selectedRange) return;
     calendarEl.querySelectorAll('.cal-day').forEach(cell => {
       const d = cell.dataset.date;

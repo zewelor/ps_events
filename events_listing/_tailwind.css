@@ -141,7 +141,8 @@
   grid-template-columns: 2rem repeat(7,minmax(0,1fr));
 }
 
-/* Weekend separator */
-.weekend-start {
-  @apply border-l-2 border-gray-400;
+
+/* Active week selector */
+.week-btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white;
 }
