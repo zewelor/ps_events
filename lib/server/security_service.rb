@@ -1,7 +1,6 @@
 class SecurityService
   WHITELISTED_EMAILS = [
-    "admin@example.com",
-    "moderator@example.com"
+    "pxopulse@gmail.com"
   ].freeze
 
   def self.is_valid?(email)
