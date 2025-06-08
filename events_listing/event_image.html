@@ -24,6 +24,15 @@ sitemap: false
     <button type="submit" id="submit-btn" class="btn-primary">Enviar</button>
   </form>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
+
+  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-md">
+      <p class="font-semibold">Imagem carregada</p>
+      <input type="text" id="image-url" readonly class="form-input" />
+      <button id="close-modal" class="navigation-button w-full">Fechar</button>
+    </div>
+  </div>
 </section>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -55,14 +64,43 @@ sitemap: false
   document.addEventListener('DOMContentLoaded', initGoogle);
 {% endunless %}
 
-  document.querySelector('#image-upload form').addEventListener('submit', async (e) => {
+  const form = document.querySelector('#image-upload form');
+  const modal = document.getElementById('result-modal');
+  const imageUrlInput = document.getElementById('image-url');
+  const closeModalBtn = document.getElementById('close-modal');
+
+  closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 {% unless jekyll.environment == 'development' %}
     if (!googleCredential || !document.getElementById('google_token').value) {
-      e.preventDefault();
       showToast('É necessário iniciar sessão com o Google.', 'error');
       return;
     }
 {% endunless %}
+
+    const data = new FormData(form);
+    try {
+      const response = await fetch(form.action, { method: 'POST', body: data });
+      if (!response.ok) {
+        let msg = `Erro ${response.status}`;
+        try { const r = await response.json(); msg = r.message || msg; } catch (_) {}
+        showToast(msg, 'error');
+        return;
+      }
+      const result = await response.json();
+      if (result.status === 'ok') {
+        const path = `/assets/images/${result.filename}`;
+        imageUrlInput.value = path;
+        modal.classList.remove('hidden');
+        form.reset();
+      } else {
+        showToast(result.message || 'Erro desconhecido', 'error');
+      }
+    } catch (err) {
+      showToast('Erro ao enviar imagem', 'error');
+    }
   });
 
   function showToast(message, type = 'success') {
