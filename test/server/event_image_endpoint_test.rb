@@ -33,10 +33,12 @@ class EventImageEndpointTest < Minitest::Test
   end
 
   def test_successful_upload
-    GoogleAuthService.stub :validate_token, {success: true, email: "admin@example.com"} do
-      ImageService.stub :validate_upload, nil do
-        ImageService.stub :process_upload, "/tmp/test.webp" do
-          post "/event_image", {google_token: "token", event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+    out, _err = capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: "admin@example.com"} do
+        ImageService.stub :validate_upload, nil do
+          ImageService.stub :process_upload, "/tmp/test.webp" do
+            post "/event_image", {google_token: "token", event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+          end
         end
       end
     end
@@ -44,5 +46,6 @@ class EventImageEndpointTest < Minitest::Test
     body = JSON.parse(last_response.body)
     assert_equal "ok", body["status"]
     assert_equal "test", body["filename"]
+    assert_includes out, "Image processed successfully"
   end
 end
