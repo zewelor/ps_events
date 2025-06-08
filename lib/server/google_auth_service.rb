@@ -48,12 +48,13 @@ module GoogleAuthService
 
       payload = decoded_token[0]
 
+      raise "Email not verified" unless payload["email_verified"]
+
       # Return user info from the validated token
       {
         success: true,
         email: payload["email"],
-        name: payload["name"],
-        verified_email: payload["email_verified"] == true
+        name: payload["name"]
       }
     rescue JWT::DecodeError => e
       {error: "Invalid token: #{e.message}"}
