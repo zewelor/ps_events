@@ -34,7 +34,7 @@ class EventImageEndpointTest < Minitest::Test
 
   def test_successful_upload
     out, _err = capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "admin@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         ImageService.stub :validate_upload, nil do
           ImageService.stub :process_upload, "/tmp/test.webp" do
             post "/event_image", {google_token: "token", event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
