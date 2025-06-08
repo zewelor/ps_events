@@ -43,6 +43,6 @@ class EventImageEndpointTest < Minitest::Test
     assert last_response.ok?
     body = JSON.parse(last_response.body)
     assert_equal "ok", body["status"]
-    assert_equal "test.webp", body["filename"]
+    assert_equal "test", body["filename"]
   end
 end
