@@ -61,5 +61,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./src/_site --project-name=pxopulse # Directory of output assets
+          command: pages deploy ./_site --project-name=pxopulse # Directory of output assets
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
