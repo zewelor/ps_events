@@ -6,6 +6,7 @@
 require "bundler/setup"
 require "ruby_llm"
 require "pathname"
+require_relative "../lib/server/event_validation"
 
 # Configuration
 RubyLLM.configure do |config|
@@ -30,16 +31,32 @@ end
 
 begin
   puts "Analyzing image: #{image_path}"
-  puts "Using Gemini 2.5 Flash Preview model..."
   puts
 
   # Create chat instance with the specified model
   chat = RubyLLM.chat(model: "gemini-2.5-flash-preview-05-20")
+  chat.with_instructions("You are an expert in analyzing images and extracting information. Your task is to analyze the provided image and extract relevant text information in a structured format. You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it. Current year is #{Time.now.year}. Return JSON with requested informations")
 
   # Ask about text in the image
-  prompt = "Please analyze this image and extract all the text you can read. " \
-           "If there's no text in the image, describe what you see. " \
-           "Respond in English."
+  prompt = "Based on the photos, write concise information in European Portuguese (Portugal) about 4 events, in order. For each event, include:
+
+- Event name
+- Description
+- Location
+- Organizer
+- Start date and time (assume current year)
+  - use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
+  - If the time is not mentioned, use '00:00:00'
+  - assume event time zosne is Europe/Lisbon
+- End date and time (assume current year)
+  - use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
+  - If the time is not mentioned, use '00:00:00'
+  - assume event time zosne is Europe/Lisbon
+- Category (#{EventValidation::VALID_CATEGORIES.join(", ")})
+- Price type (#{EventValidation::VALID_PRICE_TYPES.join(", ")})
+  - If the price is not mentioned, use 'Desconhecido'
+  - If its more comples, like free till some hour, use 'Pago' and add a note in the description
+"
 
   response = chat.ask(prompt, with: image_path)
 
@@ -47,10 +64,6 @@ begin
   puts "=" * 50
   puts response.content
   puts "=" * 50
-  puts
-  puts "Model used: #{response.model_id}"
-  puts "Input tokens: #{response.input_tokens}" if response.input_tokens
-  puts "Output tokens: #{response.output_tokens}" if response.output_tokens
 rescue => e
   puts "Error processing image: #{e.message}"
   puts "Error details: #{e.class}"
