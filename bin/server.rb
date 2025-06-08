@@ -81,30 +81,6 @@ helpers do
   end
 end
 
-post "/event_image" do
-  unless settings.environment == :development
-    unless params[:google_token] && !params[:google_token].strip.empty?
-      return json_error("Google authentication required", 401)
-    end
-
-    auth = GoogleAuthService.validate_token(params[:google_token])
-    unless auth[:success]
-      return json_error("Google authentication failed: #{auth[:error]}", 401)
-    end
-
-    unless SecurityService.is_valid?(auth[:email])
-      return json_error("Email not authorized", 403)
-    end
-  end
-
-  begin
-    image_path = process_event_image(params[:event_image])
-    json_success("Image uploaded", {filename: File.basename(image_path)})
-  rescue => e
-    json_error(e.message)
-  end
-end
-
 # Initialize Google Sheets service
 configure do
   if ENV["APP_ENV"] == "test"
@@ -143,6 +119,30 @@ get "/health" do
     timestamp: Time.now.iso8601,
     google_sheets_connected: !settings.google_sheets.nil?
   })
+end
+
+post "/event_image" do
+  unless settings.environment == :development
+    unless params[:google_token] && !params[:google_token].strip.empty?
+      return json_error("Google authentication required", 401)
+    end
+
+    auth = GoogleAuthService.validate_token(params[:google_token])
+    unless auth[:success]
+      return json_error("Google authentication failed: #{auth[:error]}", 401)
+    end
+
+    unless SecurityService.is_valid?(auth[:email])
+      return json_error("Email not authorized", 403)
+    end
+  end
+
+  begin
+    image_path = process_event_image(params[:event_image])
+    json_success("Image uploaded", {filename: File.basename(image_path, ".*")})
+  rescue => e
+    json_error(e.message)
+  end
 end
 
 # Handle form submissions to add new event
