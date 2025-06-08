@@ -29,7 +29,12 @@ sitemap: false
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-md">
       <p class="font-semibold">Imagem carregada</p>
-      <input type="text" id="image-url" readonly class="form-input" />
+      <div class="relative">
+        <input type="text" id="image-url" readonly class="form-input cursor-pointer pr-10" title="Clique para copiar" />
+        <svg id="copy-icon" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 cursor-pointer hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Clique para copiar">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+      </div>
       <button id="close-modal" class="navigation-button w-full">Fechar</button>
     </div>
   </div>
@@ -68,8 +73,26 @@ sitemap: false
   const modal = document.getElementById('result-modal');
   const imageUrlInput = document.getElementById('image-url');
   const closeModalBtn = document.getElementById('close-modal');
+  const copyIcon = document.getElementById('copy-icon');
 
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+  // Function to copy the URL to clipboard
+  async function copyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(imageUrlInput.value);
+      showToast('URL copiado para a área de transferência!', 'success');
+    } catch (err) {
+      // Fallback for older browsers
+      imageUrlInput.select();
+      document.execCommand('copy');
+      showToast('URL copiado para a área de transferência!', 'success');
+    }
+  }
+
+  // Add copy functionality to both the input and the icon
+  imageUrlInput.addEventListener('click', copyToClipboard);
+  copyIcon.addEventListener('click', copyToClipboard);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -91,8 +114,7 @@ sitemap: false
       }
       const result = await response.json();
       if (result.status === 'ok') {
-        const path = `/assets/images/${result.filename}`;
-        imageUrlInput.value = path;
+        imageUrlInput.value = result.filename;
         modal.classList.remove('hidden');
         form.reset();
       } else {
