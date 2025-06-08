@@ -62,7 +62,7 @@ sitemap: false
     </div>
   </div>
 
-  <form action="{{ site.env.FORM_ADD_EVENT_POST_ENDPOINT }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+  <form action="{{ site.env.BACKEND_HOST }}/add_event" method="POST" enctype="multipart/form-data" class="space-y-6">
 
     <!-- Hidden field for Google token -->
     <input type="hidden" name="google_token" id="google_token" value="">
