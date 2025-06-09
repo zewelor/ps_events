@@ -69,6 +69,7 @@ jobs:
           docker compose run --rm app rubocop
 
       - name: Start Selenium
+        # "docker compose run" won't start dependency services, so start Selenium manually
         run: docker compose up -d selenium
 
       - name: Run Tests
