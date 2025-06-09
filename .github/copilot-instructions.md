@@ -14,6 +14,8 @@ When adding new features, do not change the existing codebase unless necessary.
 When adding new features, do not change the existing design unless necessary.
 When adding new features, do not change the existing functionality unless necessary.
 
+After making changes, run `rubocop -a` to auto-correct any style issues. Run the tests to ensure everything works as expected.
+
 ## Text
 
 When writing / translating text, for pages etc, use the following guidelines:
