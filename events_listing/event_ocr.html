@@ -5,7 +5,7 @@ permalink: /event_ocr/
 sitemap: false
 ---
 
-<section id="ocr-upload" class="max-w-xl mx-auto py-8">
+<section id="ocr-upload" class="max-w-3xl mx-auto py-8">
   <h1 class="page-title">Reconhecimento de Texto de Evento</h1>
   {% unless jekyll.environment == 'development' %}
   <div id="google-area" class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
@@ -21,25 +21,27 @@ sitemap: false
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
       <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
     </div>
-    <button type="submit" id="submit-btn" class="navigation-button flex items-center justify-center relative group">
-      <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">Enviar</span>
-      <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
-        <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        A enviar...
-      </span>
-    </button>
+    <div>
+      <button type="submit" id="submit-btn" class="navigation-button w-full sm:w-auto min-w-[10rem] flex items-center justify-center relative group" aria-live="polite">
+        <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">Enviar</span>
+        <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
+          <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          A enviar...
+        </span>
+      </button>
+    </div>
   </form>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
 
-  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
+  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/50"></div>
-    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-2xl">
+    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-4/5 max-w-5xl">
       <p class="font-semibold">Resultado do OCR</p>
       <textarea id="ocr-text" class="form-input w-full h-64" readonly></textarea>
-      <button id="close-modal" class="navigation-button w-full">Fechar</button>
+      <button id="close-modal" class="navigation-button w-full py-3 text-lg">Fechar</button>
     </div>
   </div>
 </section>
