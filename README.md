@@ -35,7 +35,10 @@ docker compose up -d selenium
 Run the tests with the remote driver:
 
 ```bash
+APP_HOST=host.docker.internal \
 SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub rake test
 ```
 
-You can also set `SELENIUM_REMOTE_URL` in your `.env` file for Docker Compose.
+`APP_HOST` should point to the hostname that Selenium can use to reach the test
+server. On Docker Desktop, `host.docker.internal` works by default. You can also
+set `SELENIUM_REMOTE_URL` and `APP_HOST` in your `.env` file for Docker Compose.

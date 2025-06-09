@@ -17,7 +17,7 @@ Capybara.register_driver :headless_chrome do |app|
     Capybara::Selenium::Driver.new(app,
       browser: :remote,
       url: ENV.fetch("SELENIUM_REMOTE_URL", "http://localhost:4444/wd/hub"),
-      capabilities: options)
+      options: options)
   else
     Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
   end
@@ -25,6 +25,11 @@ end
 
 Capybara.default_driver = :headless_chrome
 Capybara.server = :puma, {Silent: true}
+
+if ENV["SELENIUM_REMOTE_URL"]
+  Capybara.server_host = "0.0.0.0"
+  Capybara.app_host = "http://#{ENV.fetch("APP_HOST", "host.docker.internal")}:#{Capybara.server_port}"
+end
 
 class AddEventBrowserTest < Minitest::Test
   include Capybara::DSL
