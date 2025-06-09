@@ -37,6 +37,7 @@ class EventsOcrEndpointTest < Minitest::Test
     def mock.analyze(_path)
       "csv"
     end
+
     EventOcrService.stub :new, mock do
       GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         ImageService.stub :validate_upload, nil do
