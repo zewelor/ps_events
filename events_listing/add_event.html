@@ -383,6 +383,7 @@ sitemap: false
 
 <!-- Google Sign-In Library -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/assets/js/upload_form.js"></script>
 
 <!-- AJAX form submission and toast logic -->
 <script>
@@ -390,7 +391,6 @@ sitemap: false
 
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#add-event form');
-    const toastContainer = document.getElementById('toast-container');
     const submitBtn = document.getElementById('submit-btn');
     const imageInput = document.getElementById('event_image');
     const imagePreview = document.getElementById('image-preview');
@@ -449,10 +449,10 @@ sitemap: false
         contactEmailInput.value = payload.email;
         contactEmailInput.removeAttribute('readonly');
 
-        showToast(`Verificado com o Google como ${payload.email}`);
+        PXOForms.showToast(`Verificado com o Google como ${payload.email}`);
       } catch (error) {
         console.error('Error processing Google sign-in:', error);
-        showToast('Erro ao processar o início de sessão', 'error');
+        PXOForms.showToast('Erro ao processar o início de sessão', 'error');
       }
     }
 
@@ -465,7 +465,7 @@ sitemap: false
       if (file) {
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          showToast('Tamanho do ficheiro muito grande. Tamanho máximo é 10MB.', 'error');
+          PXOForms.showToast('Tamanho do ficheiro muito grande. Tamanho máximo é 10MB.', 'error');
           imageInput.value = '';
           return;
         }
@@ -473,7 +473,7 @@ sitemap: false
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
         if (!allowedTypes.includes(file.type)) {
-          showToast('Tipo de ficheiro inválido. Por favor, carregue um ficheiro de imagem.', 'error');
+          PXOForms.showToast('Tipo de ficheiro inválido. Por favor, carregue um ficheiro de imagem.', 'error');
           imageInput.value = '';
           return;
         }
@@ -496,91 +496,23 @@ sitemap: false
       imagePreview.classList.add('hidden');
     });
 
-    function showToast(message, type = 'success') {
-      const bg = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-      const toast = document.createElement('div');
-      toast.setAttribute('role', 'alert');
-      toast.className = `${bg} text-white px-4 py-2 rounded shadow transition-opacity duration-500`;
-      toast.textContent = message;
-      toastContainer.appendChild(toast);
-      // Auto-hide after 3s
-      setTimeout(() => {
-        toast.classList.add('opacity-0');
-        toast.addEventListener('transitionend', () => toast.remove());
-      }, 3000);
-    }
-
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // Check if user is authenticated with Google
       if (!googleCredential || !googleTokenInput.value) {
-        showToast('É obrigatório iniciar sessão com o Google antes de submeter um evento.', 'error');
+        PXOForms.showToast('É obrigatório iniciar sessão com o Google antes de submeter um evento.', 'error');
         return;
       }
 
-      // disable and show spinner
-      submitBtn.disabled = true;
-      submitBtn.classList.add('is-loading');
-      const data = new FormData(form);
-
-      // Create AbortController for timeout (90 seconds to handle Render wake-up)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
-
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: data,
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          let errorMsg = `HTTP ${response.status}`;
-          try {
-            const result = await response.json();
-            errorMsg = result.message || errorMsg;
-          } catch (parseError) {
-            errorMsg += ` - ${response.statusText}`;
-          }
-          showToast(`Erro do servidor: ${errorMsg}`, 'error');
-          return;
-        }
-
-        const result = await response.json();
-        if (result.status === 'ok') {
-          showToast(`Evento "${result.event_name}" adicionado com sucesso!`);
+      PXOForms.submitUploadForm({
+        form,
+        submitBtn,
+        onSuccess: (result) => {
+          PXOForms.showToast(`Evento \"${result.event_name}\" adicionado com sucesso!`);
           form.reset();
-          imagePreview.classList.add('hidden'); // Hide image preview after reset
-        } else {
-          const errorMsg = result.message || 'Ocorreu um erro desconhecido';
-          showToast(`Erro: ${errorMsg}`, 'error');
+          imagePreview.classList.add('hidden');
         }
-      } catch (error) {
-        console.error('Submission error:', error);
-        let errorMsg = 'Erro de rede';
-
-        // Add file info if image is attached
-        const imageFile = imageInput.files[0];
-        const fileInfo = imageFile ? ` (Com imagem: ${imageFile.name}, ${(imageFile.size/1024/1024).toFixed(1)}MB)` : '';
-
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          errorMsg += ' - Não foi possível ligar ao servidor';
-        } else if (error.name === 'SyntaxError') {
-          errorMsg += ' - Resposta inválida do servidor';
-        } else if (error.name === 'AbortError') {
-          errorMsg += ' - O servidor demorou muito tempo a responder (timeout após 90 segundos)';
-        } else if (error.message) {
-          errorMsg += ` - ${error.name}: ${error.message}`;
-        }
-
-        showToast(`${errorMsg}${fileInfo}. Verifique a ligação e tente novamente.`, 'error');
-      } finally {
-        // re-enable and hide spinner
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('is-loading');
-      }
+      });
     });
   });
 </script>
