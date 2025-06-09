@@ -100,14 +100,27 @@ configure :production do
   set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
 end
 
-# Enable CORS for all routes
+# Configure allowed CORS origin
+configure do
+  set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", "https://pxopulse.com")
+end
+
+# Enable CORS for all routes, but only from the allowed origin
 before do
-  headers "Access-Control-Allow-Origin" => "*"
+  origin = request.env["HTTP_ORIGIN"]
+  if origin && origin != settings.allowed_origin
+    halt 403, json_error("Forbidden origin", 403)
+  end
+  headers "Access-Control-Allow-Origin" => settings.allowed_origin
 end
 
 # Preflight OPTIONS handler
 options "*" do
-  response.headers["Access-Control-Allow-Origin"] = "*"
+  origin = request.env["HTTP_ORIGIN"]
+  if origin && origin != settings.allowed_origin
+    halt 403, json_error("Forbidden origin", 403)
+  end
+  response.headers["Access-Control-Allow-Origin"] = settings.allowed_origin
   response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
   response.headers["Access-Control-Allow-Headers"] = "Content-Type,Accept,Origin"
   200
