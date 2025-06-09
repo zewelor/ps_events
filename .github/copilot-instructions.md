@@ -32,7 +32,6 @@ run `rake test` to run the tests.
 Used in this project
 
 - Jekyll for static site generation.
-  - Do not start jekyll build / server. I've already done that in other shell. Its launched with docker-compose
 - Tailwind CSS for styling. We are using version 4
 - Sinatra for the backend.
   - Dont start the Sinatra server. I've already done that in other shell. Its launched via bin/server
