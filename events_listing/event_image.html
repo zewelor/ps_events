@@ -50,6 +50,8 @@ sitemap: false
 </section>
 
 <script src="/assets/js/upload_form.js"></script>
+<script>
+{% unless jekyll.environment == 'development' %}
   const submitBtn = document.getElementById('submit-btn');
       PXOForms.showToast('URL copiado para a área de transferência!', 'success');
       PXOForms.showToast('URL copiado para a área de transferência!', 'success');
