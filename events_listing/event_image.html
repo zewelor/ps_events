@@ -19,8 +19,6 @@ sitemap: false
     <input type="hidden" name="google_token" id="google_token" value="">
     <div>
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
-      <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
-    </div>
     <button type="submit" id="submit-btn" class="navigation-button flex items-center justify-center relative group">
       <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">Enviar</span>
       <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
@@ -31,29 +29,18 @@ sitemap: false
         A enviar...
       </span>
     </button>
-  </form>
-  <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
-
-  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-md">
-      <p class="font-semibold">Imagem carregada</p>
-      <div class="relative">
-        <input type="text" id="image-url" readonly class="form-input cursor-pointer pr-10" title="Clique para copiar" />
-        <svg id="copy-icon" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 cursor-pointer hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Clique para copiar">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-        </svg>
-      </div>
-      <button id="close-modal" class="navigation-button w-full">Fechar</button>
     </div>
-  </div>
-</section>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/assets/js/upload_form.js"></script>
-<script>
-{% unless jekyll.environment == 'development' %}
-  let googleCredential = null;
+  const submitBtn = document.getElementById('submit-btn');
+      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
+      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
+  form.addEventListener('submit', (e) => {
+      PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
+    PXOForms.submitUploadForm({
+      form,
+      submitBtn,
+      onSuccess: (result) => {
+    });
   function initGoogle() {
     if (typeof google !== 'undefined') {
       google.accounts.id.initialize({

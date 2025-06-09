@@ -31,27 +31,15 @@ sitemap: false
         A enviar...
       </span>
     </button>
-  </form>
-  <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
-
-  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-2xl">
-      <p class="font-semibold">Resultado do OCR</p>
-      <textarea id="ocr-text" class="form-input w-full h-64" readonly></textarea>
-      <button id="close-modal" class="navigation-button w-full">Fechar</button>
-    </div>
-  </div>
-</section>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/assets/js/upload_form.js"></script>
-<script>
-{% unless jekyll.environment == 'development' %}
-  let googleCredential = null;
-  function initGoogle() {
-    if (typeof google !== 'undefined') {
-      google.accounts.id.initialize({
+  const submitBtn = document.getElementById('submit-btn');
+  form.addEventListener('submit', (e) => {
+      PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
+    PXOForms.submitUploadForm({
+      form,
+      submitBtn,
+      onSuccess: (result) => {
+    });
         client_id: '730968670456-4kvre8am1isuqe3dbmdqs8845ntog6cq.apps.googleusercontent.com',
         callback: handleGoogle
       });
