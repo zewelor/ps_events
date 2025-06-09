@@ -15,20 +15,22 @@ class EventOcrService
     INSTR
 
     prompt = <<~PROMPT
-      Based on the photos, write concise information in European Portuguese (Portugal) about 4 events, in order. For each event, include:
+      Based on the photo / image, write concise information in European Portuguese (Portugal) about 4 events, in order. For each event, include:
 
-      - Event name
-      - Description
-      - Location
-      - Organizer
+      - Event name ( field 'name' )
+      - Description (field 'description')
+      - Location (field 'location')
+      - Organizer (field 'organizer')
       - Start date and time (assume current year)
-        - use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
-        - If the time is not mentioned, use '00:00:00'
-        - assume event time zosne is Europe/Lisbon
+        - Date in field 'start_date' in format "%d/%m/%Y"
+        - Time in field 'start_time' in format "%H:%M"
+        - If the time is not mentioned, leave it empty
+        - assume event time zone is Europe/Lisbon
       - End date and time (assume current year)
-        - use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
-        - If the time is not mentioned, use '00:00:00'
-        - assume event time zosne is Europe/Lisbon
+        - Date in field 'end_date' in format "%d/%m/%Y"
+        - Time in field 'end_time' in format "%H:%M"
+        - If the time is not mentioned, leave it empty
+        - assume event time zone is Europe/Lisbon
       - Category (#{EventValidation::VALID_CATEGORIES.join(", ")})
       - Price type (#{EventValidation::VALID_PRICE_TYPES.join(", ")})
         - If the price is not mentioned, use 'Desconhecido'

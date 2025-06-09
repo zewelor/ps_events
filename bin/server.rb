@@ -163,7 +163,7 @@ post "/events_ocr" do
   end
 
   begin
-    image_path = process_event_image(params[:event_image])
+    image_path = ImageService.process_upload(params[:event_image])
     ocr = EventOcrService.new
     text = ocr.analyze(image_path)
     json_success("OCR completed", {text: text})
