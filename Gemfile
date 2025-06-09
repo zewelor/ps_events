@@ -3,6 +3,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "zeitwerk"
 gem "sinatra"
+gem "csv"
 gem "dry-validation", "~> 1.11"
 
 group :development, :test do
@@ -19,7 +20,6 @@ group :development do
   gem "amazing_print"
 
   gem "icalendar"
-  gem "csv"
 
   gem "tzinfo", "~> 2.0"
   gem "tzinfo-data", "~> 1.2025"
