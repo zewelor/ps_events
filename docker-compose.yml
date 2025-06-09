@@ -52,6 +52,10 @@ services:
       - --
       - ruby
       - bin/server.rb
+  selenium:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "127.0.0.1:4444:4444"
 
 
 volumes:

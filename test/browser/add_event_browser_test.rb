@@ -12,7 +12,15 @@ Capybara.register_driver :headless_chrome do |app|
   options.add_argument("--disable-gpu")
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-dev-shm-usage")
-  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+
+  if ENV["SELENIUM_REMOTE_URL"]
+    Capybara::Selenium::Driver.new(app,
+      browser: :remote,
+      url: ENV.fetch("SELENIUM_REMOTE_URL", "http://localhost:4444/wd/hub"),
+      capabilities: options)
+  else
+    Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+  end
 end
 
 Capybara.default_driver = :headless_chrome

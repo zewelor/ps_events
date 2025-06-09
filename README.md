@@ -23,3 +23,17 @@ Use the CLI for options:
 ```bash
 ./bin/cli -u "https://example.com/events.csv" -o events.ics
 ```
+
+## Browser Tests
+
+The browser test suite uses Capybara with Selenium. Start the Selenium container:
+
+```bash
+docker compose up -d selenium
+```
+
+Run the tests with the remote driver:
+
+```bash
+SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub rake test
+```
