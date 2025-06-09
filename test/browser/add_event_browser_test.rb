@@ -1,3 +1,5 @@
+ENV["APP_ENV"] = "test"
+
 require "minitest/autorun"
 require "capybara/minitest"
 require "capybara"
@@ -33,11 +35,10 @@ class AddEventBrowserTest < Minitest::Test
 
   def setup
     root = File.expand_path("../..", __dir__)
-    system(
-      "jekyll build -s events_listing -d tmp/test_site",
-      chdir: root,
-      env: {"JEKYLL_ENV" => "development", "BACKEND_HOST" => Capybara.server_url}
-    )
+    backend_host = "http://#{Capybara.server_host}:#{Capybara.server_port}"
+    system({"JEKYLL_ENV" => "development", "BACKEND_HOST" => backend_host},
+      "jekyll", "build", "-s", "events_listing", "-d", "tmp/test_site",
+      chdir: root)
 
     Sinatra::Application.settings.google_sheets = DummySheets.new
 
