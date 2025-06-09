@@ -32,6 +32,9 @@ end
 
 group :test do
   gem "simplecov", require: false
+  gem "capybara", "~> 3.40.0"
+  gem "selenium-webdriver", "~> 4.33.0"
+  gem "webdrivers", "~> 5.3.1"
 end
 
 group :jekyll_plugins do
