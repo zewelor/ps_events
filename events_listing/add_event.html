@@ -497,22 +497,11 @@ sitemap: false
     });
 
     form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      if (!googleCredential || !googleTokenInput.value) {
         PXOForms.showToast('É obrigatório iniciar sessão com o Google antes de submeter um evento.', 'error');
-        return;
-      }
-
       PXOForms.submitUploadForm({
         form,
         submitBtn,
         onSuccess: (result) => {
           PXOForms.showToast(`Evento \"${result.event_name}\" adicionado com sucesso!`);
-          form.reset();
           imagePreview.classList.add('hidden');
-        }
       });
-    });
-  });
-</script>
