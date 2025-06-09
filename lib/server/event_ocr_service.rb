@@ -29,8 +29,8 @@ class EventOcrService
         - use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
         - If the time is not mentioned, use '00:00:00'
         - assume event time zosne is Europe/Lisbon
-      - Category (#{EventValidation::VALID_CATEGORIES.join(', ')})
-      - Price type (#{EventValidation::VALID_PRICE_TYPES.join(', ')})
+      - Category (#{EventValidation::VALID_CATEGORIES.join(", ")})
+      - Price type (#{EventValidation::VALID_PRICE_TYPES.join(", ")})
         - If the price is not mentioned, use 'Desconhecido'
         - If its more comples, like free till some hour, use 'Pago' and add a note in the description
     PROMPT
