@@ -19,6 +19,7 @@ After making changes, run `rubocop -a` to auto-correct any style issues. Run the
 ## Text
 
 When writing / translating text, for pages etc, use the following guidelines:
+
 - Use clear, concise language.
 - Write text visibile in the html etc in portuguese from portugal
 
