@@ -1,0 +1,115 @@
+---
+layout: default
+title: "OCR de Eventos"
+permalink: /event_ocr/
+sitemap: false
+---
+
+<section id="ocr-upload" class="max-w-xl mx-auto py-8">
+  <h1 class="page-title">Reconhecimento de Texto de Evento</h1>
+  {% unless jekyll.environment == 'development' %}
+  <div id="google-area" class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
+    <div id="google-signin"></div>
+    <div id="google-user" class="hidden">
+      <p class="form-label">Verificado como <span id="user-email"></span></p>
+    </div>
+  </div>
+  {% endunless %}
+  <form action="{{ site.env.BACKEND_HOST }}/events_ocr" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <input type="hidden" name="google_token" id="google_token" value="">
+    <div>
+      <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
+      <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
+    </div>
+    <button type="submit" id="submit-btn" class="navigation-button">Enviar</button>
+  </form>
+  <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
+
+  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-2xl">
+      <p class="font-semibold">Resultado do OCR</p>
+      <textarea id="ocr-text" class="form-input w-full h-64" readonly></textarea>
+      <button id="close-modal" class="navigation-button w-full">Fechar</button>
+    </div>
+  </div>
+</section>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+{% unless jekyll.environment == 'development' %}
+  let googleCredential = null;
+  function initGoogle() {
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: '730968670456-4kvre8am1isuqe3dbmdqs8845ntog6cq.apps.googleusercontent.com',
+        callback: handleGoogle
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin'),
+        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'pt-PT' }
+      );
+    } else {
+      setTimeout(initGoogle, 100);
+    }
+  }
+  function handleGoogle(res) {
+    googleCredential = res.credential;
+    const payload = JSON.parse(atob(res.credential.split('.')[1]));
+    document.getElementById('user-email').textContent = payload.email;
+    document.getElementById('google_token').value = res.credential;
+    document.getElementById('google-user').classList.remove('hidden');
+    document.getElementById('google-signin').classList.add('hidden');
+  }
+  document.addEventListener('DOMContentLoaded', initGoogle);
+{% endunless %}
+
+  const form = document.querySelector('#ocr-upload form');
+  const modal = document.getElementById('result-modal');
+  const ocrText = document.getElementById('ocr-text');
+  const closeModalBtn = document.getElementById('close-modal');
+
+  closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+{% unless jekyll.environment == 'development' %}
+    if (!googleCredential || !document.getElementById('google_token').value) {
+      showToast('É necessário iniciar sessão com o Google.', 'error');
+      return;
+    }
+{% endunless %}
+    const data = new FormData(form);
+    try {
+      const response = await fetch(form.action, { method: 'POST', body: data });
+      if (!response.ok) {
+        let msg = `Erro ${response.status}`;
+        try { const r = await response.json(); msg = r.message || msg; } catch (_) {}
+        showToast(msg, 'error');
+        return;
+      }
+      const result = await response.json();
+      if (result.status === 'ok') {
+        ocrText.value = result.text;
+        modal.classList.remove('hidden');
+        form.reset();
+      } else {
+        showToast(result.message || 'Erro desconhecido', 'error');
+      }
+    } catch (err) {
+      showToast('Erro ao enviar imagem', 'error');
+    }
+  });
+
+  function showToast(message, type = 'success') {
+    const bg = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const toast = document.createElement('div');
+    toast.className = `${bg} text-white px-4 py-2 rounded shadow transition-opacity duration-500`;
+    toast.textContent = message;
+    document.getElementById('toast-container').appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('opacity-0');
+      toast.addEventListener('transitionend', () => toast.remove());
+    }, 3000);
+  }
+</script>

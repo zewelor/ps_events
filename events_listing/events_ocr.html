@@ -1,12 +1,12 @@
 ---
 layout: default
-title: "Carregar Imagem"
-permalink: /event_image/
+title: "OCR de Eventos"
+permalink: /events_ocr/
 sitemap: false
 ---
 
-<section id="image-upload" class="max-w-xl mx-auto py-8">
-  <h1 class="page-title">Carregar Imagem do Evento</h1>
+<section id="ocr-upload" class="max-w-xl mx-auto py-8">
+  <h1 class="page-title">Reconhecimento de Texto de Evento</h1>
   {% unless jekyll.environment == 'development' %}
   <div id="google-area" class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin"></div>
@@ -15,10 +15,12 @@ sitemap: false
     </div>
   </div>
   {% endunless %}
-  <form action="{{ site.env.BACKEND_HOST }}/event_image" method="POST" enctype="multipart/form-data" class="space-y-6">
+  <form action="{{ site.env.BACKEND_HOST }}/events_ocr" method="POST" enctype="multipart/form-data" class="space-y-6">
     <input type="hidden" name="google_token" id="google_token" value="">
     <div>
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
+      <input type="file" name="event_image" id="event_image" required class="form-input" />
+    </div>
     <button type="submit" id="submit-btn" class="navigation-button flex items-center justify-center relative group">
       <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">Enviar</span>
       <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
@@ -29,11 +31,8 @@ sitemap: false
         A enviar...
       </span>
     </button>
-    </div>
 <script src="/assets/js/upload_form.js"></script>
   const submitBtn = document.getElementById('submit-btn');
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
   form.addEventListener('submit', (e) => {
       PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
     PXOForms.submitUploadForm({
@@ -41,9 +40,6 @@ sitemap: false
       submitBtn,
       onSuccess: (result) => {
     });
-  function initGoogle() {
-    if (typeof google !== 'undefined') {
-      google.accounts.id.initialize({
         client_id: '730968670456-4kvre8am1isuqe3dbmdqs8845ntog6cq.apps.googleusercontent.com',
         callback: handleGoogle
       });
@@ -66,31 +62,13 @@ sitemap: false
   document.addEventListener('DOMContentLoaded', initGoogle);
 {% endunless %}
 
-  const form = document.querySelector('#image-upload form');
+  const form = document.querySelector('#ocr-upload form');
   const modal = document.getElementById('result-modal');
-  const imageUrlInput = document.getElementById('image-url');
+  const ocrText = document.getElementById('ocr-text');
   const closeModalBtn = document.getElementById('close-modal');
-  const copyIcon = document.getElementById('copy-icon');
   const submitBtn = document.getElementById('submit-btn');
 
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-
-  // Function to copy the URL to clipboard
-  async function copyToClipboard() {
-    try {
-      await navigator.clipboard.writeText(imageUrlInput.value);
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
-    } catch (err) {
-      // Fallback for older browsers
-      imageUrlInput.select();
-      document.execCommand('copy');
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
-    }
-  }
-
-  // Add copy functionality to both the input and the icon
-  imageUrlInput.addEventListener('click', copyToClipboard);
-  copyIcon.addEventListener('click', copyToClipboard);
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -104,7 +82,7 @@ sitemap: false
       form,
       submitBtn,
       onSuccess: (result) => {
-        imageUrlInput.value = result.filename;
+        ocrText.value = result.text;
         modal.classList.remove('hidden');
         form.reset();
       }
