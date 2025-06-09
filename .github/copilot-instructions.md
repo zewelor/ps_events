@@ -34,7 +34,6 @@ Used in this project
 - Jekyll for static site generation.
 - Tailwind CSS for styling. We are using version 4
 - Sinatra for the backend.
-  - Dont start the Sinatra server. I've already done that in other shell. Its launched via bin/server
   - Its running on port 4567 via docker-compose. Its accessible at http://sinatra:4567
 
 ## UI and Styling
