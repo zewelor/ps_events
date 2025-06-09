@@ -68,6 +68,9 @@ jobs:
         run: |
           docker compose run --rm app rubocop
 
+      - name: Start Selenium
+        run: docker compose up -d selenium
+
       - name: Run Tests
         run: |
           docker compose run --rm app rake test

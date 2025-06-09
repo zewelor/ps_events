@@ -1,5 +1,11 @@
 services:
   app:
     image: ghcr.io/zewelor/ps_events:dev
+    environment:
+      SELENIUM_REMOTE_URL: "http://selenium:4444/wd/hub"
     volumes:
       - .:/app
+    depends_on:
+      - selenium
+  selenium:
+    image: selenium/standalone-chrome:latest
