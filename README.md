@@ -37,3 +37,5 @@ Run the tests with the remote driver:
 ```bash
 SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub rake test
 ```
+
+You can also set `SELENIUM_REMOTE_URL` in your `.env` file for Docker Compose.
