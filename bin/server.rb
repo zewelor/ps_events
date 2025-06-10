@@ -202,6 +202,7 @@ post "/add_event" do
   # Remove the file upload from params for validation
   validation_params = params.dup
   validation_params.delete(:event_image)
+  validation_params.delete(:google_token)
 
   # Validate the event data using dry-validation directly
   validator = EventValidation.new
