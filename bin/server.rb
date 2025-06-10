@@ -102,11 +102,9 @@ end
 
 # Configure allowed CORS origin
 configure do
-  default_origin = if settings.environment == :development
-    "http://localhost:4000"
-  else
-    "https://pxopulse.com"
-  end
+  # Default to the production domain. Development overrides are provided via
+  # docker-compose.
+  default_origin = "https://pxopulse.com"
   set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", default_origin)
 end
 
