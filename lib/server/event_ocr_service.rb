@@ -21,7 +21,7 @@ class EventOcrService
       Based on the photo / image, write concise information in European Portuguese (Portugal) about 4 events, in order. For each event, include:
 
       <json_schema>
-      #{File.read("/app/lib/event_schema.json")}
+      #{File.read(File.expand_path("../event_schema.json", __dir__))}
 
       </json_schema>
 
