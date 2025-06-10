@@ -100,11 +100,8 @@ configure :production do
   set :host_authorization, {permitted_hosts: [".pxopulse.com"]}
 end
 
-# Configure allowed CORS origin
 configure do
-  # Default to the production domain. Development overrides are provided via
-  # docker-compose.
-  default_origin = "https://pxopulse.com"
+  default_origin = "https://pxopulse.com" # overridden in development via docker-compose
   set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", default_origin)
 end
 
