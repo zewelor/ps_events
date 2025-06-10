@@ -1,5 +1,3 @@
-require "csv"
-require "json"
 require_relative "event_validation"
 
 class EventOcrService
