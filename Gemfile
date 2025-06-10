@@ -4,6 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gem "zeitwerk"
 gem "sinatra"
 gem "dry-validation", "~> 1.11"
+gem "json-schema", "~> 5.1"
 
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]
