@@ -32,7 +32,7 @@ begin
   result = service.analyze(image_path)
   puts "Analysis result:"
   puts "=" * 50
-  puts result
+  pp result
   puts "=" * 50
 rescue => e
   puts "Error processing image: #{e.message}"
