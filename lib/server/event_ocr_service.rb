@@ -20,22 +20,18 @@ class EventOcrService
     prompt = <<~PROMPT
       Based on the photo / image, write concise information in European Portuguese (Portugal) about 4 events, in order. For each event, include:
 
-      - Event name ( field 'name' )
-      - Description (field 'description')
-      - Location (field 'location')
-      - Organizer (field 'organizer')
+      <json_schema>
+      #{File.read("/app/lib/event_schema.json")}
+
+      </json_schema>
+
       - Start date and time (assume current year)
-        - Date in field 'start_date' in format "%d/%m/%Y"
-        - Time in field 'start_time' in format "%H:%M"
         - If the time is not mentioned, leave it empty
         - assume event time zone is Europe/Lisbon
       - End date and time (assume current year)
-        - Date in field 'end_date' in format "%d/%m/%Y"
-        - Time in field 'end_time' in format "%H:%M"
         - If the time is not mentioned, leave it empty
         - assume event time zone is Europe/Lisbon
-      - Category (#{EventValidation::VALID_CATEGORIES.join(", ")}) ( field 'category' )
-      - Price type (#{EventValidation::VALID_PRICE_TYPES.join(", ")}) (field 'price_type')
+      - Price type (field 'price_type')
         - If the price is not mentioned, use 'Desconhecido'
         - If its more comples, like free till some hour, use 'Pago' and add a note in the description
     PROMPT

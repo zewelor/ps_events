@@ -3,13 +3,8 @@ require "date"
 require "time"
 
 class EventValidation
-  SCHEMA_PATH = File.expand_path("event_schema.json", __dir__)
+  SCHEMA_PATH = File.expand_path("../event_schema.json", __dir__)
   SCHEMA = JSON.parse(File.read(SCHEMA_PATH))
-
-  VALID_CATEGORIES = [
-    "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
-    "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
-  ].freeze
 
   Result = Struct.new(:data, :errors) do
     def success?
