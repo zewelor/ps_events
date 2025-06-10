@@ -3,6 +3,9 @@ set shell := ["bash", "-uc"]
 up:
   docker compose up --remove-orphans
 
+down:
+  docker compose down
+
 docker_build:
   docker compose build --no-cache
 
