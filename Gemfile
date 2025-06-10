@@ -5,6 +5,7 @@ gem "zeitwerk"
 gem "sinatra"
 gem "dry-validation", "~> 1.11"
 gem "json-schema", "~> 5.1"
+gem "activesupport", "~> 8.0"
 
 group :development, :test do
   gem "debug", platforms: %i[mri mingw x64_mingw]
