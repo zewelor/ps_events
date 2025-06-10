@@ -102,7 +102,12 @@ end
 
 # Configure allowed CORS origin
 configure do
-  set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", "https://pxopulse.com")
+  default_origin = if settings.environment == :development
+    "http://localhost:4000"
+  else
+    "https://pxopulse.com"
+  end
+  set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", default_origin)
 end
 
 # Enable CORS for all routes, but only from the allowed origin
