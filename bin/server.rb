@@ -101,8 +101,8 @@ configure :production do
 end
 
 configure do
-  default_origin = "https://pxopulse.com" # overridden in development via docker-compose
-  set :allowed_origin, ENV.fetch("ALLOWED_ORIGIN", default_origin)
+  set :allowed_origin,
+    ENV.fetch("ALLOWED_ORIGIN", "https://pxopulse.com") # overridden in development via docker-compose
 end
 
 # Enable CORS for all routes, but only from the allowed origin
