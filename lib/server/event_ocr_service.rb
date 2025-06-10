@@ -42,27 +42,6 @@ class EventOcrService
         - If its more comples, like free till some hour, use 'Pago' and add a note in the description
     PROMPT
 
-    response_content = chat.ask(prompt, with: image_path).content
-
-    begin
-      parsed_json = JSON.parse(response_content)
-      # Assuming the response is an array of events or a single event object
-      events = parsed_json.is_a?(Array) ? parsed_json : [parsed_json]
-
-      # Get CSV headers from the events.csv file
-      csv_headers = CSV.read(CSV_FILE_PATH, headers: true).headers
-
-      events.map do |event_data|
-        next if event_data.empty?
-
-        # Build a hash with string keys for values_at
-        event_data_str_keys = event_data.transform_keys(&:to_s)
-        event_data_str_keys.values_at(*csv_headers).to_csv
-      end.compact.join
-    rescue JSON::ParserError => e
-      raise "Invalid JSON response: #{e.message} - Response content: #{response_content}"
-    rescue => e
-      raise "Failed to process and save data: #{e.message} - Response content: #{response_content}"
-    end
+    chat.ask(prompt, with: image_path).content
   end
 end
