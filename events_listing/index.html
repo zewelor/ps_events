@@ -14,15 +14,16 @@ image: /assets/index_image.png
   {% assign sorted_groups = grouped | sort: "name" %}
 
   <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center justify-between gap-2">
-    <div class="flex flex-wrap items-center gap-2">
-      <button data-filter-category="all" data-label="Todas as Categorias" class="filter-btn btn--active">
-        Todas as Categorias ({{ future_events | size }})
-      </button>
-      {% for group in sorted_groups %}
-        <button data-filter-category="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}" class="filter-btn btn--inactive">
-          {{ group.name | default: 'Evento' }} ({{ group.items | size }})
-        </button>
-      {% endfor %}
+    <div>
+      <label for="category-select" class="sr-only">Categoria</label>
+      <select id="category-select" class="form-input w-full sm:w-auto">
+        <option value="all" data-label="Todas as Categorias">Todas as Categorias ({{ future_events | size }})</option>
+        {% for group in sorted_groups %}
+          <option value="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}">
+            {{ group.name | default: 'Evento' }} ({{ group.items | size }})
+          </option>
+        {% endfor %}
+      </select>
     </div>
     <div id="clear-all-filters" class="hidden items-center gap-2">
       <button  class="navigation-button flex items-center gap-x-2 whitespace-nowrap" title="Limpar filtros">
