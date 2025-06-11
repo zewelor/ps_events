@@ -71,6 +71,20 @@ helpers do
       raise StandardError, "Image processing failed: #{e.message}"
     end
   end
+
+  # Convert HTML5 date input (yyyy-mm-dd) to dd/mm/YYYY expected by the
+  # validation layer. If the value is already in the desired format, it is
+  # returned unchanged. Any parsing errors fall back to the original string.
+  def normalize_date(date_str)
+    return "" if date_str.nil?
+    if /^\d{4}-\d{2}-\d{2}$/.match?(date_str)
+      Date.strptime(date_str, "%Y-%m-%d").strftime("%d/%m/%Y")
+    else
+      date_str
+    end
+  rescue ArgumentError
+    date_str
+  end
 end
 
 # Initialize Google Sheets service
@@ -206,6 +220,11 @@ post "/add_event" do
   validation_params = params.dup
   validation_params.delete(:event_image)
   validation_params.delete(:google_token)
+
+  # Convert dates from HTML5 format (yyyy-mm-dd) to the format expected by the
+  # validator (dd/mm/YYYY). Other formats pass through unchanged.
+  validation_params[:start_date] = normalize_date(validation_params[:start_date])
+  validation_params[:end_date] = normalize_date(validation_params[:end_date])
 
   # Validate the event data using dry-validation directly
   validator = EventValidation.new

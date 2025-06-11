@@ -150,4 +150,20 @@ class AddEventEndpointTest < Minitest::Test
     assert_includes out, "price_type"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
+
+  def test_iso_formatted_dates_are_converted
+    params = valid_params.merge(
+      start_date: "2025-12-01",
+      end_date: "2025-12-02"
+    )
+    out, _err = capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+        post "/add_event", params.merge(google_token: "token")
+      end
+    end
+    assert last_response.ok?, out
+    row = app.settings.google_sheets.rows.first
+    assert_equal "01/12/2025", row[3]
+    assert_equal "02/12/2025", row[5]
+  end
 end
