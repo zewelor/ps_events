@@ -1,6 +1,6 @@
 set shell := ["bash", "-uc"]
 
-up:
+up: down
   docker compose up --remove-orphans
 
 down:
