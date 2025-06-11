@@ -14,7 +14,7 @@ When adding new features, do not change the existing codebase unless necessary.
 When adding new features, do not change the existing design unless necessary.
 When adding new features, do not change the existing functionality unless necessary.
 
-After making changes, run `rubocop -a` to auto-correct any style issues. Run the tests to ensure everything works as expected.
+After making changes, run `rubocop -a` to auto-correct any style issues. Run the tests to ensure everything works as expected. Run it on the whole codebase, not just the changed files. Its only for .rb files.
 
 ## Text
 
