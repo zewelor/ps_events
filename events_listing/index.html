@@ -46,7 +46,7 @@ image: /assets/index_image.png
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
           <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape_once }}">
-            <a href="{{ event['name'] | datapage_url: 'events' }}" class="hover:text-gray-600 line-clamp-2">
+            <a href="{{ event.page_slug | datapage_url: 'events' }}" class="hover:text-[var(--color-text-muted)] line-clamp-2">
               {{ event["name"] }}
             </a>
           </h2>

@@ -72,6 +72,10 @@
   @apply btn px-3 py-1;
 }
 
+.cal-day {
+  @apply h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1;
+}
+
 /* Selected calendar day */
 .cal-day.selected {
   @apply bg-[var(--color-selected-filter)] text-white;

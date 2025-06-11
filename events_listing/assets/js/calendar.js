@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         date.setDate(weekStart.getDate() + i);
         const dateStr = formatISO(date);
         const cell = document.createElement('button');
-        cell.className = 'h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1 cal-day';
+        cell.className = 'cal-day';
         cell.dataset.date = dateStr;
         cell.innerHTML = `<span>${date.getDate()}</span>`;
         if (date.getMonth() !== month) {
