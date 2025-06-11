@@ -77,6 +77,11 @@
   @apply bg-[var(--color-selected-filter)] text-white;
 }
 
+/* Style for today's date in calendar */
+.cal-day-today span {
+  @apply underline underline-offset-2 decoration-2;
+}
+
 /* Form input fields common styling */
 .form-input {
   @apply card mt-1 block w-full border-b-4 border-[var(--color-buttons)] focus:ring-[var(--color-buttons-hover)] focus:border-[var(--color-buttons-hover)] focus:border-b-4 py-3 px-3;
