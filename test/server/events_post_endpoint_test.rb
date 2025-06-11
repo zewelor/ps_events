@@ -35,8 +35,8 @@ class AddEventEndpointTest < Minitest::Test
   def valid_params
     {
       name: "Test Event",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Porto",
       description: "Um evento de teste valido",
       category: "Música",
@@ -75,7 +75,7 @@ class AddEventEndpointTest < Minitest::Test
   end
 
   def test_validation_error
-    params = valid_params.merge(start_date: "2025-13-01")
+    params = valid_params.merge(start_date: "01/13/2025")
     out, _err = capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
         post "/add_event", params.merge(google_token: "token")
@@ -124,8 +124,8 @@ class AddEventEndpointTest < Minitest::Test
 
   def test_end_time_before_start_time
     params = valid_params.merge(
-      start_date: "2025-12-01",
-      end_date: "2025-12-01",
+      start_date: "01/12/2025",
+      end_date: "01/12/2025",
       start_time: "10:00",
       end_time: "09:00"
     )
@@ -149,5 +149,21 @@ class AddEventEndpointTest < Minitest::Test
     assert_equal 422, last_response.status
     assert_includes out, "price_type"
     assert_equal 0, app.settings.google_sheets.rows.length
+  end
+
+  def test_iso_formatted_dates_are_converted
+    params = valid_params.merge(
+      start_date: "2025-12-01",
+      end_date: "2025-12-02"
+    )
+    out, _err = capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+        post "/add_event", params.merge(google_token: "token")
+      end
+    end
+    assert last_response.ok?, out
+    row = app.settings.google_sheets.rows.first
+    assert_equal "01/12/2025", row[3]
+    assert_equal "02/12/2025", row[5]
   end
 end

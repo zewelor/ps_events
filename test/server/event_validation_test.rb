@@ -9,8 +9,8 @@ class TestEventValidation < Minitest::Test
   def test_valid_event
     data = {
       name: "Valid Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -23,8 +23,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_name_too_short
     data = {
       name: "V",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -39,7 +39,7 @@ class TestEventValidation < Minitest::Test
     data = {
       name: "Event Name",
       start_date: "01-12-2025", # Invalid format
-      end_date: "2025-12-02",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -53,8 +53,8 @@ class TestEventValidation < Minitest::Test
   def test_end_date_before_start_date
     data = {
       name: "Event Name",
-      start_date: "2025-12-02",
-      end_date: "2025-12-01",
+      start_date: "02/12/2025",
+      end_date: "01/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -68,8 +68,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_category
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Invalid Category",
@@ -83,8 +83,8 @@ class TestEventValidation < Minitest::Test
   def test_valid_optional_fields_empty
     data = {
       name: "Valid Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -103,8 +103,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_email
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -119,8 +119,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_phone_number_too_short
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -135,8 +135,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_phone_number_characters
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -151,8 +151,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_price_type
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -167,8 +167,8 @@ class TestEventValidation < Minitest::Test
   def test_invalid_event_link
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
-      end_date: "2025-12-02",
+      start_date: "01/12/2025",
+      end_date: "02/12/2025",
       location: "Valid Location",
       description: "This is a valid event description.",
       category: "Música",
@@ -183,9 +183,9 @@ class TestEventValidation < Minitest::Test
   def test_end_time_before_start_time_on_same_day
     data = {
       name: "Event Name",
-      start_date: "2025-12-01",
+      start_date: "01/12/2025",
       start_time: "14:00",
-      end_date: "2025-12-01",
+      end_date: "01/12/2025",
       end_time: "12:00",
       location: "Valid Location",
       description: "This is a valid event description.",
@@ -200,9 +200,9 @@ class TestEventValidation < Minitest::Test
   def test_valid_event_with_all_optional_fields
     data = {
       name: "Complete Event",
-      start_date: "2025-12-01",
+      start_date: "01/12/2025",
       start_time: "10:00",
-      end_date: "2025-12-01",
+      end_date: "01/12/2025",
       end_time: "18:00",
       location: "Full Location Details",
       description: "A very detailed description of the event, ensuring it meets length requirements.",
