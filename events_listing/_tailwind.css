@@ -39,6 +39,13 @@
   @apply text-[var(--color-text-muted)] text-sm;
 }
 
+@utility btn--inactive {
+  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+}
+
+@utility btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+}
 .navigation-button {
   @apply btn bg-[var(--color-buttons)] text-[var(--color-text-primary)] px-5 py-2 hover:bg-[var(--color-buttons-hover)];
 }
@@ -60,12 +67,18 @@
   @apply btn px-4 py-2 mr-2 mb-2;
 }
 
-.filter-btn--inactive {
-  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+/* Calendar range button styles */
+.range-btn {
+  @apply btn px-3 py-1;
 }
 
-.filter-btn--active {
-  @apply bg-[var(--color-selected-filter)] text-white hover:bg-[var(--color-selected-filter-hover)];
+.cal-day {
+  @apply h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1;
+}
+
+/* Selected calendar day */
+.cal-day.selected {
+  @apply bg-[var(--color-selected-filter)] text-white;
 }
 
 /* Form input fields common styling */
@@ -110,4 +123,21 @@
 /* Adjust button position when near footer */
 .scroll-to-top-btn.near-footer {
   @apply bottom-32 md:bottom-36;
+}
+
+/* Week selection button */
+.week-btn {
+  @apply btn--inactive h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center;
+}
+
+/* Calendar grid with narrow week column */
+.calendar-grid {
+  @apply grid text-center text-sm overflow-hidden border-gray-200 bg-white;
+  grid-template-columns: 2rem repeat(7,minmax(0,1fr));
+}
+
+
+/* Active week selector */
+.week-btn--active {
+  @apply bg-[var(--color-selected-filter)] text-white;
 }
