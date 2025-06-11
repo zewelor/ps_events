@@ -215,10 +215,10 @@ post "/add_event" do
     validated_params = result.to_h
     puts "✅ Validation successful for event: #{validated_params[:name]}"
 
-    # Format individual start and end date and time components
-    start_date_str = Date.parse(validated_params[:start_date]).strftime("%d/%m/%Y")
+    # Keep date and time components as received
+    start_date_str = validated_params[:start_date].strip
     start_time_str = validated_params[:start_time]&.strip || ""
-    end_date_str = Date.parse(validated_params[:end_date]).strftime("%d/%m/%Y")
+    end_date_str = validated_params[:end_date].strip
     end_time_str = validated_params[:end_time]&.strip || ""
 
     # Format submitted at timestamp

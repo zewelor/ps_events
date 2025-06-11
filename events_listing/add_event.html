@@ -11,8 +11,10 @@ sitemap: false
   {% assign test_category    = "Música" %}
   {% assign test_organizer   = "Test Organizer" %}
   {% assign test_location    = "Test Venue, Town" %}
-  {% assign test_start       = "2025-05-23T10:00" %}
-  {% assign test_end         = "2025-05-23T12:00" %}
+  {% assign test_start_date  = "2025-05-23" %}
+  {% assign test_start_time  = "10:00" %}
+  {% assign test_end_date    = "2025-05-23" %}
+  {% assign test_end_time    = "12:00" %}
   {% assign test_email       = "test@example.com" %}
   {% assign test_tel         = "+1234567890" %}
   {% assign test_price_type   = "Gratuito" %}
@@ -26,8 +28,10 @@ sitemap: false
   {% assign test_category = "" %}
   {% assign test_organizer = "" %}
   {% assign test_location = "" %}
-  {% assign test_start = "" %}
-  {% assign test_end = "" %}
+  {% assign test_start_date = "" %}
+  {% assign test_start_time = "" %}
+  {% assign test_end_date = "" %}
+  {% assign test_end_time = "" %}
   {% assign test_email = "" %}
   {% assign test_tel = "" %}
   {% assign test_price_type = "" %}
@@ -167,7 +171,7 @@ sitemap: false
           type="date"
           name="start_date"
           id="start_date"
-          value="{{ test_start | date: '%Y-%m-%d' }}"
+          value="{{ test_start_date }}"
           required
           class="form-input"
         />
@@ -178,7 +182,7 @@ sitemap: false
           type="time"
           name="start_time"
           id="start_time"
-          value="{{ test_start | date: '%H:%M' }}"
+          value="{{ test_start_time }}"
           class="form-input"
         />
         <p class="form-help">As datas são obrigatórias, as horas são opcionais</p>
@@ -193,7 +197,7 @@ sitemap: false
           type="date"
           name="end_date"
           id="end_date"
-          value="{{ test_end | date: '%Y-%m-%d' }}"
+          value="{{ test_end_date }}"
           class="form-input"
         />
         <label for="end_time" class="form-label mt-2">
@@ -203,7 +207,7 @@ sitemap: false
           type="time"
           name="end_time"
           id="end_time"
-          value="{{ test_end | date: '%H:%M' }}"
+          value="{{ test_end_time }}"
           class="form-input"
         />
       </div>
