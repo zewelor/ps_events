@@ -4,6 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const eventCards = document.querySelectorAll('.event-card');
   const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
+  const categorySelect = document.getElementById('category-select');
   const clearAllBtn = document.getElementById('clear-all-filters');
   const logoLink = document.getElementById('logo-link');
   let selectedCategory = 'all';
@@ -14,11 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = btn.dataset.label || btn.textContent.replace(/\s*\(.+\)$/, '');
     btn.dataset.label = label.trim();
   });
+  if (categorySelect) {
+    Array.from(categorySelect.options).forEach(opt => {
+      const label = opt.dataset.label || opt.textContent.replace(/\s*\(.+\)$/, '');
+      opt.dataset.label = label.trim();
+    });
+  }
 
   updateCategoryCounts();
   updateClearButtonVisibility(); // Initialize button visibility
 
   filterButtons.forEach(btn => btn.addEventListener('click', handleCategoryClick));
+  if (categorySelect) categorySelect.addEventListener('change', handleCategorySelect);
   document.addEventListener('calendar:dateSelected', e => { selectedRange = {start: e.detail.date, end: e.detail.date}; filterEvents(); });
   document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
   document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
@@ -34,6 +42,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     event.target.classList.remove('btn--inactive');
     event.target.classList.add('btn--active');
+    if (categorySelect) categorySelect.value = selectedCategory;
+    filterEvents();
+  }
+
+  function handleCategorySelect(event) {
+    selectedCategory = event.target.value;
+    document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
+      if (btn.dataset.filterCategory === selectedCategory) {
+        btn.classList.add('btn--active');
+        btn.classList.remove('btn--inactive');
+      } else {
+        btn.classList.remove('btn--active');
+        btn.classList.add('btn--inactive');
+      }
+    });
     filterEvents();
   }
 
@@ -81,6 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.style.display = count ? '' : 'none';
       }
     });
+    if (categorySelect) {
+      Array.from(categorySelect.options).forEach(opt => {
+        const label = opt.dataset.label;
+        const category = opt.value;
+        const count = category === 'all' ? total : (counts[category] || 0);
+        opt.textContent = `${label} (${count})`;
+        if (category !== 'all') {
+          opt.hidden = count === 0;
+        }
+      });
+    }
   }
 
   function resetFilters() {
@@ -95,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('btn--inactive');
       }
     });
+    if (categorySelect) categorySelect.value = 'all';
     document.dispatchEvent(new CustomEvent('calendar:reset'));
     filterEvents();
   }
