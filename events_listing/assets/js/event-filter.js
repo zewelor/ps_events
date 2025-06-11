@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const eventCards = document.querySelectorAll('.event-card');
   const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
-  const resetAllBtn = document.getElementById('reset-filters');
+  const clearAllBtn = document.getElementById('clear-all-filters');
   const logoLink = document.getElementById('logo-link');
   let selectedCategory = 'all';
   let selectedRange = null; // {start, end}
@@ -16,12 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updateCategoryCounts();
+  updateClearButtonVisibility(); // Initialize button visibility
 
   filterButtons.forEach(btn => btn.addEventListener('click', handleCategoryClick));
   document.addEventListener('calendar:dateSelected', e => { selectedRange = {start: e.detail.date, end: e.detail.date}; filterEvents(); });
   document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
   document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
-  resetAllBtn.addEventListener('click', resetFilters);
+  if (clearAllBtn) clearAllBtn.addEventListener('click', resetFilters);
   document.addEventListener('filters:reset', resetFilters);
   if (logoLink) logoLink.addEventListener('click', e => { e.preventDefault(); document.dispatchEvent(new CustomEvent('filters:reset')); });
 
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function filterEvents() {
     updateCategoryCounts();
+    updateClearButtonVisibility();
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
       const cardDate = card.dataset.date;
@@ -45,6 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
+  }
+
+  function updateClearButtonVisibility() {
+    if (!clearAllBtn) return; // Safety check
+    const hasFilters = selectedCategory !== 'all' || selectedRange !== null;
+    if (hasFilters) {
+      clearAllBtn.classList.remove('hidden');
+    } else {
+      clearAllBtn.classList.add('hidden');
+    }
   }
 
   function updateCategoryCounts() {

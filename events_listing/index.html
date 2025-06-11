@@ -13,18 +13,29 @@ image: /assets/index_image.png
   {% assign grouped = future_events | group_by: "category" %}
   {% assign sorted_groups = grouped | sort: "name" %}
 
-  <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center space-x-2">
-    <button data-filter-category="all" data-label="Todas as Categorias" class="filter-btn btn--active">
-      Todas as Categorias ({{ future_events | size }})
-    </button>
-    {% for group in sorted_groups %}
-      <button data-filter-category="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}" class="filter-btn btn--inactive">
-        {{ group.name | default: 'Evento' }} ({{ group.items | size }})
+  <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <button data-filter-category="all" data-label="Todas as Categorias" class="filter-btn btn--active">
+        Todas as Categorias ({{ future_events | size }})
       </button>
-    {% endfor %}
+      {% for group in sorted_groups %}
+        <button data-filter-category="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}" class="filter-btn btn--inactive">
+          {{ group.name | default: 'Evento' }} ({{ group.items | size }})
+        </button>
+      {% endfor %}
+    </div>
+    <div id="clear-all-filters" class="hidden items-center gap-2">
+      <button  class="navigation-button flex items-center gap-x-2 whitespace-nowrap" title="Limpar filtros">
+        <span class="flex items-center justify-center w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full transition-colors duration-200">
+          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </span>
+        <span>Limpar filtros</span>
+      </button>
+    </div>
   </div>
   {% include calendar.html %}
-  <button id="reset-filters" class="btn px-4 py-2 mb-4 bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)]">Limpar filtros</button>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}

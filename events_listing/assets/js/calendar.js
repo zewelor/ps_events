@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
   const monthBtn = document.getElementById('filter-month');
-  const rangeButtons = [todayBtn, weekBtn, monthBtn];
+  const rangeButtons = [resetBtn, todayBtn, weekBtn, monthBtn];
   if (!calendarEl) return;
 
   const eventCards = document.querySelectorAll('.event-card');
@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentYear = today.getFullYear();
   let currentMonth = today.getMonth();
   let selectedRange = null; // {start, end}
+
+  // Set "Todas As Datas" as active by default
+  activateRangeButton(resetBtn);
 
   buildCalendar(currentYear, currentMonth);
 
@@ -47,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const iso = formatISO(today);
     activateRangeButton(todayBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
-    resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectRange(iso, iso);
@@ -59,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const end = endOfWeek(today);
     activateRangeButton(weekBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
-    resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectRange(start, end);
@@ -71,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const end = formatISO(new Date(today.getFullYear(), today.getMonth() + 1, 0));
     activateRangeButton(monthBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
-    resetBtn.classList.remove('hidden');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectRange(start, end);
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetBtn.addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('calendar:clearDate'));
-    activateRangeButton(null);
+    activateRangeButton(resetBtn);
     clearSelection();
   });
 
@@ -92,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.remove('btn--active');
       btn.classList.add('btn--inactive');
     });
-    resetBtn.classList.add('hidden');
+    // Activate "Todas as Datas" (resetBtn) when clearing selection
+    resetBtn.classList.remove('btn--inactive');
+    resetBtn.classList.add('btn--active');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectedRange = null;
@@ -131,11 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
         weekBtn.classList.add('week-btn--active');
       }
       weekBtn.addEventListener('click', () => {
-        activateRangeButton(null);
+        activateRangeButton(null); // This will deactivate all date filter buttons including "Todas as Datas"
         calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
         calendarEl.querySelectorAll('.week-btn').forEach(b => b.classList.remove('week-btn--active'));
         document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
-        resetBtn.classList.remove('hidden');
         selectRange(startISO, endISO);
         weekBtn.classList.add('week-btn--active');
         highlightSelection();
@@ -176,10 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
             cell.classList.add('selected');
-            activateRangeButton(null);
+            activateRangeButton(null); // This will deactivate all date filter buttons including "Todas as Datas"
             selectRange(dateStr, dateStr);
             document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
-            resetBtn.classList.remove('hidden');
           }
         });
 
@@ -190,13 +190,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function activateRangeButton(btn) {
-    rangeButtons.forEach(b => {
-      b.classList.remove('btn--active');
-      b.classList.add('btn--inactive');
-    });
-    if (btn) {
+    if (btn === resetBtn) {
+      // When "Todas as Datas" is selected, deactivate all other date filters
+      rangeButtons.forEach(b => {
+        b.classList.remove('btn--active');
+        b.classList.add('btn--inactive');
+      });
+      resetBtn.classList.remove('btn--inactive');
+      resetBtn.classList.add('btn--active');
+    } else if (btn) {
+      // When any specific date filter is selected, deactivate all including "Todas as Datas"
+      rangeButtons.forEach(b => {
+        b.classList.remove('btn--active');
+        b.classList.add('btn--inactive');
+      });
       btn.classList.remove('btn--inactive');
       btn.classList.add('btn--active');
+    } else {
+      // When null is passed (for calendar date/week selections), deactivate all buttons including "Todas as Datas"
+      rangeButtons.forEach(b => {
+        b.classList.remove('btn--active');
+        b.classList.add('btn--inactive');
+      });
     }
   }
 

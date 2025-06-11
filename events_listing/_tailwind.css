@@ -62,7 +62,6 @@
   @apply section-card border-[var(--color-buttons)] border-b-4 mb-6;
 }
 
-
 /* Filter button styles */
 .filter-btn {
   @apply btn px-4 py-2 mr-2 mb-2;
