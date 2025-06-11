@@ -50,6 +50,6 @@ class EventsOcrEndpointTest < Minitest::Test
     assert last_response.ok?
     body = JSON.parse(last_response.body)
     assert_equal "ok", body["status"]
-    assert_equal "csv", body["text"]
+    assert_equal '"csv"', body["text"]
   end
 end
