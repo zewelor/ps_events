@@ -72,25 +72,64 @@ if (workbox) {
   } else {
     // Production strategies with modern best practices
 
+    // Ensure POST requests bypass caching entirely (kept from original, good placement)
+    workbox.routing.registerRoute(
+      ({ request }) => request.method === 'POST',
+      new workbox.strategies.NetworkOnly()
+    );
+
     // Ensure the service worker script is always fetched from the network
     workbox.routing.registerRoute(
       ({ url }) => url.pathname === '/sw.js',
       new workbox.strategies.NetworkOnly()
     );
 
-    // Stale While Revalidate for HTML pages (better UX than NetworkFirst)
+    // Stale While Revalidate for the Index Page
     workbox.routing.registerRoute(
-      ({ request }) => request.mode === 'navigate',
+      ({url, request}) => request.mode === 'navigate' && url.pathname === '/',
       new workbox.strategies.StaleWhileRevalidate({
-        cacheName: 'pages-cache-v1',
+        cacheName: 'index-page-cache-v1',
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200]
           }),
           new workbox.expiration.ExpirationPlugin({
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
-            purgeOnQuotaError: true
+            maxEntries: 5, // Cache a few entries, though index is usually one
+            maxAgeSeconds: 1 * 60 * 60 // 1 hour
+          })
+        ]
+      })
+    );
+
+    // Stale While Revalidate for Event Pages
+    workbox.routing.registerRoute(
+      ({url, request}) => request.mode === 'navigate' && url.pathname.startsWith('/events/'),
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'event-pages-cache-v1',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 50, // Adjust if you have many event pages
+            maxAgeSeconds: 48 * 60 * 60 // 48 hours
+          })
+        ]
+      })
+    );
+
+    // Stale While Revalidate for Other HTML Pages (general navigation fallback)
+    workbox.routing.registerRoute(
+      ({ request }) => request.mode === 'navigate',
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'other-pages-cache-v1',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200]
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 10, // Cache for other miscellaneous pages
+            maxAgeSeconds: 24 * 60 * 60 // 24 hours
           })
         ]
       })
@@ -139,28 +178,10 @@ if (workbox) {
       })
     );
 
-    // Network First for API calls and other dynamic content
-    const apiNetworkFirst = new workbox.strategies.NetworkFirst({
-      cacheName: 'api-cache-v1',
-      networkTimeoutSeconds: 3,
-      plugins: [
-        new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200]
-        }),
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 50,
-          maxAgeSeconds: 5 * 60, // 5 minutes
-          purgeOnQuotaError: true
-        })
-      ]
-    });
-
-    workbox.routing.setDefaultHandler((args) => {
-      if (args.request.method === 'GET') {
-        return apiNetworkFirst.handle(args);
-      }
-      return fetch(args.request);
-    });
+    // Default handler for any requests not caught by specific routes.
+    // For a static site, GET requests not matching above are unexpected or new.
+    // POST is already handled.
+    workbox.routing.setDefaultHandler(new workbox.strategies.NetworkOnly());
   }
 
   // Enhanced offline fallback with better error handling
