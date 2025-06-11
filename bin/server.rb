@@ -42,15 +42,6 @@ helpers do
     json_response(response_data, 200)
   end
 
-  def format_datetime(date_str, time_str = nil)
-    date = Date.parse(date_str)
-    if time_str && !time_str.strip.empty?
-      DateTime.parse("#{date_str} #{time_str}").strftime("%d/%m/%Y %H:%M")
-    else
-      date.strftime("%d/%m/%Y")
-    end
-  end
-
   def process_event_image(event_image)
     return "" unless event_image && event_image[:tempfile]
 
@@ -177,8 +168,7 @@ post "/events_ocr" do
 
   begin
     image_path = ImageService.process_upload(params[:event_image])
-    ocr = EventOcrService.new
-    text = ocr.analyze(image_path)
+    text = JSON.pretty_generate(EventOcrService.call(image_path))
     json_success("OCR completed", {text: text})
   rescue => e
     json_error(e.message)

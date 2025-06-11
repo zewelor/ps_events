@@ -10,6 +10,12 @@ end
 class EventOcrService
   MODEL = "gemini-2.5-flash-preview-05-20"
 
+  def self.call(image_path)
+    new.analyze(image_path)
+  rescue => e
+    raise "Erro ao analisar imagem: #{e.message}"
+  end
+
   def initialize
     @chat = RubyLLM.chat(model: MODEL)
   end

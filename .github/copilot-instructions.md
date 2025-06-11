@@ -27,6 +27,8 @@ When writing / translating text, for pages etc, use the following guidelines:
 
 run `rake test` to run the tests.
 
+If code during tests output anything on the console, capture it using capture_io
+
 ## Tools
 
 Used in this project
