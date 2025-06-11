@@ -35,7 +35,9 @@ image: /assets/index_image.png
       </button>
     </div>
   </div>
-  {% include calendar.html %}
+  <div class="hidden lg:block">
+    {% include calendar.html %}
+  </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
