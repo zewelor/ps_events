@@ -35,7 +35,10 @@ image: /assets/index_image.png
       </button>
     </div>
   </div>
-  <div>
+  <button id="calendar-toggle" class="navigation-button lg:hidden mb-4">
+    Mostrar Calendário
+  </button>
+  <div id="calendar-wrapper" class="hidden lg:block">
     {% include calendar.html %}
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
@@ -79,3 +82,4 @@ image: /assets/index_image.png
 </div>
 {% include aviso.html %}
 <script src="{{ '/assets/js/event-filter.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/calendar-toggle.js' | relative_url }}" defer></script>
