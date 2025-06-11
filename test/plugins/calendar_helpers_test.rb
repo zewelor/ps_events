@@ -11,9 +11,9 @@ class TestCalendarHelpers < Minitest::Test
   def setup
     @event = {
       "_name" => "Test Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "10:00",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "12:00",
       "description" => "Desc",
       "location" => "Loc"
@@ -36,9 +36,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_is_full_day_event_with_no_times
     full_day_event = {
       "_name" => "Full Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "",
       "description" => "All day event",
       "location" => "location"
@@ -50,9 +50,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_is_full_day_event_with_nil_times
     full_day_event = {
       "_name" => "Full Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => nil,
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => nil,
       "description" => "All day event",
       "location" => "location"
@@ -64,9 +64,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_is_not_full_day_event_with_start_time
     timed_event = {
       "_name" => "Timed Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "10:00",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "",
       "description" => "Timed event",
       "location" => "location"
@@ -78,9 +78,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_is_not_full_day_event_with_end_time
     timed_event = {
       "_name" => "Timed Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "12:00",
       "description" => "Timed event",
       "location" => "location"
@@ -92,9 +92,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_full_day_single_day
     full_day_event = {
       "_name" => "Full Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "",
       "description" => "All day event",
       "location" => "location"
@@ -109,9 +109,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_full_day_multi_day
     full_day_event = {
       "_name" => "Multi Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-03",
+      "end_date" => "03/12/2025",
       "end_time" => "",
       "description" => "Multi day event",
       "location" => "location"
@@ -126,7 +126,7 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_full_day_no_end_date
     full_day_event = {
       "_name" => "Single Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
       "end_date" => "",
       "end_time" => "",
@@ -142,9 +142,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_event_to_ics_full_day_single_day
     full_day_event = {
       "_name" => "Full Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "",
       "description" => "All day event",
       "location" => "location"
@@ -160,9 +160,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_event_to_ics_full_day_multi_day
     full_day_event = {
       "_name" => "Multi Day Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-03",
+      "end_date" => "03/12/2025",
       "end_time" => "",
       "description" => "Multi day event",
       "location" => "location"
@@ -186,7 +186,7 @@ class TestCalendarHelpers < Minitest::Test
   end
 
   def test_parse_date_only_valid_date
-    date = send(:parse_date_only, "2025-12-01")
+    date = send(:parse_date_only, "01/12/2025")
     assert_equal Date.new(2025, 12, 1), date
   end
 
@@ -215,9 +215,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_full_day_event_with_whitespace_times
     full_day_event = {
       "_name" => "Whitespace Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "   ",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "  ",
       "description" => "Event with whitespace times",
       "location" => "location"
@@ -262,7 +262,7 @@ class TestCalendarHelpers < Minitest::Test
 
   # Timezone tests
   def test_parse_time_creates_valid_time
-    time = send(:parse_time, "2025-12-01", "10:00")
+    time = send(:parse_time, "01/12/2025", "10:00")
     refute_nil time
     # Should parse the time correctly
     assert_equal 10, time.hour
@@ -271,7 +271,7 @@ class TestCalendarHelpers < Minitest::Test
 
   def test_format_google_time_does_not_convert_to_utc
     # Create a time
-    time = send(:parse_time, "2025-12-01", "10:00")
+    time = send(:parse_time, "01/12/2025", "10:00")
     formatted = send(:format_google_time, time)
     # Should preserve the local time, not convert to UTC
     assert_equal "20251201T100000", formatted
@@ -291,7 +291,7 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_with_start_time_no_end_time
     event_no_end = {
       "_name" => "Event No End",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "10:00",
       "end_date" => "",
       "end_time" => "",
@@ -309,7 +309,7 @@ class TestCalendarHelpers < Minitest::Test
   def test_event_to_ics_with_start_time_no_end_time
     event_no_end = {
       "_name" => "Event No End",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "10:00",
       "end_date" => "",
       "end_time" => "",
@@ -341,9 +341,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_with_start_time_and_nil_end_time
     event_nil_end = {
       "_name" => "Event Nil End",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "14:30",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => nil,
       "description" => "Event with nil end time",
       "location" => "location"
@@ -358,9 +358,9 @@ class TestCalendarHelpers < Minitest::Test
   def test_google_calendar_url_no_start_time_returns_empty
     event_no_start = {
       "_name" => "Event No Start",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "",
-      "end_date" => "2025-12-01",
+      "end_date" => "01/12/2025",
       "end_time" => "18:00",
       "description" => "Event with no start time",
       "location" => "location"
@@ -373,7 +373,7 @@ class TestCalendarHelpers < Minitest::Test
   def test_event_to_ics_with_start_time_no_end_time_afternoon
     event_afternoon = {
       "_name" => "Afternoon Event",
-      "start_date" => "2025-12-01",
+      "start_date" => "01/12/2025",
       "start_time" => "15:30",
       "end_date" => "",
       "end_time" => "",

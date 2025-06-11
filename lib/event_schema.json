@@ -12,12 +12,12 @@
   ],
   "properties": {
     "name": { "type": "string", "minLength": 3, "maxLength": 200 },
-    "start_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "format": "date" },
+    "start_date": { "type": "string", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
     "start_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
-    "end_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "format": "date" },
+    "end_date": { "type": "string", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
     "end_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
     "location": { "type": "string", "minLength": 3, "maxLength": 100 },
-    "description": { "type": "string", "minLength": 10, "maxLength": 1000 },
+    "description": { "type": "string", "minLength": 10, "maxLength": 2000 },
     "category": { "type": "string", "enum": [
       "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
       "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
@@ -25,7 +25,7 @@
     "organizer": { "type": "string", "minLength": 2, "maxLength": 100 },
     "contact_email": { "type": "string", "pattern": "^(|[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z\\d\\-]+)*\\.[a-z]+)$" },
     "contact_tel": { "type": "string", "pattern": "^(|(?=(?:.*\\d){7,})[\\d\\s\\-\\(\\)\\+]+)$" },
-    "price_type": { "type": "string", "pattern": "^(|Gratuito|Pago|Desconhecido)$" },
+    "price_type": { "type": "string", "enum": ["", "Gratuito", "Pago", "Desconhecido"] },
     "event_link1": { "type": "string", "pattern": "^(|https?://.+)$" },
     "event_link2": { "type": "string", "pattern": "^(|https?://.+)$" },
     "event_link3": { "type": "string", "pattern": "^(|https?://.+)$" },

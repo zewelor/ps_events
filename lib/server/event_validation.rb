@@ -38,15 +38,15 @@ class EventValidation
 
   def validate_relations(params, errors)
     begin
-      Date.strptime(params[:start_date], "%Y-%m-%d")
+      Date.strptime(params[:start_date], "%d/%m/%Y")
     rescue ArgumentError
-      (errors[:start_date] ||= []) << "must be a valid date (e.g., month between 01-12, day between 01-31)"
+      (errors[:start_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 01/12/2025)"
     end
 
     begin
-      Date.strptime(params[:end_date], "%Y-%m-%d")
+      Date.strptime(params[:end_date], "%d/%m/%Y")
     rescue ArgumentError
-      (errors[:end_date] ||= []) << "must be a valid date (e.g., month between 01-12, day between 01-31)"
+      (errors[:end_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 02/12/2025)"
     end
 
     if params[:start_time] && !params[:start_time].to_s.empty?
@@ -67,8 +67,8 @@ class EventValidation
 
     unless errors[:end_date] || errors[:start_date]
       begin
-        end_date = Date.strptime(params[:end_date], "%Y-%m-%d")
-        start_date = Date.strptime(params[:start_date], "%Y-%m-%d")
+        end_date = Date.strptime(params[:end_date], "%d/%m/%Y")
+        start_date = Date.strptime(params[:start_date], "%d/%m/%Y")
         if end_date < start_date
           (errors[:end_date] ||= []) << "must be on or after start date"
         end
