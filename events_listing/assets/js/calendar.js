@@ -6,8 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const nextBtn = document.getElementById('next-month');
   const todayBtn = document.getElementById('filter-today');
   const weekBtn = document.getElementById('filter-week');
-  const monthBtn = document.getElementById('filter-month');
-  const rangeButtons = [resetBtn, todayBtn, weekBtn, monthBtn];
+  const rangeButtons = [resetBtn, todayBtn, weekBtn];
   if (!calendarEl) return;
 
   const eventCards = document.querySelectorAll('.event-card');
@@ -60,17 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const start = startOfWeek(today);
     const end = endOfWeek(today);
     activateRangeButton(weekBtn);
-    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
-    currentYear = today.getFullYear();
-    currentMonth = today.getMonth();
-    selectRange(start, end);
-    buildCalendar(currentYear, currentMonth);
-  });
-
-  monthBtn.addEventListener('click', () => {
-    const start = formatISO(new Date(today.getFullYear(), today.getMonth(), 1));
-    const end = formatISO(new Date(today.getFullYear(), today.getMonth() + 1, 0));
-    activateRangeButton(monthBtn);
     document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
