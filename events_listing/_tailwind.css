@@ -128,7 +128,7 @@
 
 /* Calendar grid with narrow week column */
 .calendar-grid {
-  @apply grid text-center text-sm overflow-hidden border-2 border-gray-200 bg-white;
+  @apply grid text-center text-sm overflow-hidden border-gray-200 bg-white;
   grid-template-columns: 2rem repeat(7,minmax(0,1fr));
 }
 
