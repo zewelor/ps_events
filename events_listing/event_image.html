@@ -93,19 +93,20 @@ sitemap: false
   copyIcon.addEventListener('click', copyToClipboard);
 
   form.addEventListener('submit', (e) => {
-      onSuccess: (result) => {
-        imageUrlInput.value = result.filename;
-        showModal();
-        form.reset();
-      }
-    });
+    e.preventDefault();
+{% unless jekyll.environment == 'development' %}
+    if (!googleCredential || !document.getElementById('google_token').value) {
+      PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
+      return;
+    }
+
 {% endunless %}
     PXOForms.submitUploadForm({
       form,
       submitBtn,
       onSuccess: (result) => {
         imageUrlInput.value = result.filename;
-        modal.classList.remove('hidden');
+        showModal();
         form.reset();
       }
     });
