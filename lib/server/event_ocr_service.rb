@@ -22,17 +22,18 @@ class EventOcrService
 
   def analyze(image_path)
     chat.with_instructions <<~INSTR
-      You are an expert in analyzing images and extracting information.
-      User will provide you with an image containing text information about events.
-      Your task is to analyze the provided image and extract relevant text information in a structured format.
-      You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
-      Current year is #{Time.now.year}.
-      Return raw JSON with requested informations.
-      Return only with working raw JSON object, without any additional text or explanations.
-      If you cannot extract the information, return an empty JSON object {}.
-      Direclty return array with events, even if theres only one event.
-      Dont respond with markdown json code block, just direclty json array
-      Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order. For each event, include:
+      You are an expert in analyzing images and extracting information:
+
+      - Your task is to analyze the provided image and extract relevant text information in a structured format.
+      - Use only the information from the image, do not make assumptions or use external knowledge.
+      - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
+      - Current year is #{Time.now.year}.
+      - Return raw JSON with requested informations.
+        - Return only with working raw JSON object, without any additional text or explanations.
+      - If you cannot extract the information, return an empty JSON object {}.
+      - Direclty return array with events, even if theres only one event.
+      - Dont respond with markdown json code block, just direclty json array
+      - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order. For each event, include:
 
       <json_schema>
       #{JSON.dump(JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__))))}
