@@ -52,16 +52,6 @@ sitemap: false
 <script src="/assets/js/upload_form.js"></script>
 <script>
 {% unless jekyll.environment == 'development' %}
-  const submitBtn = document.getElementById('submit-btn');
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
-      PXOForms.showToast('URL copiado para a área de transferência!', 'success');
-  form.addEventListener('submit', (e) => {
-      PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
-    PXOForms.submitUploadForm({
-      form,
-      submitBtn,
-      onSuccess: (result) => {
-    });
   function initGoogle() {
     if (typeof google !== 'undefined') {
       google.accounts.id.initialize({
