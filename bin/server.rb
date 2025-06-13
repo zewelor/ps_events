@@ -194,7 +194,7 @@ post "/events_ocr" do
       raise StandardError, err if err
       image_path = ImageService.process_upload(params[:event_image])
     end
-    events = EventOcrService.call(image_path)
+    events = EventOcrService.call(image_path) # Assuming this returns an array of event structures
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
     service = AddEventService.new(
@@ -202,13 +202,23 @@ post "/events_ocr" do
       spreadsheet_id: settings.spreadsheet_id,
       events_range: settings.events_range
     )
-    events.each do |ev|
-      service.add_event(ev,
-        submitter_email: ocr_submitter_email,
-        image_path: use_image ? image_path : "")
+    # Ensure events is an array before calling .each, if it could be a single string from OCR
+    Array(events).each do |ev|
+      # Process only if ev is a hash, suitable for AddEventService
+      if ev.is_a?(Hash)
+        service.add_event(ev,
+          submitter_email: ocr_submitter_email,
+          image_path: use_image ? image_path : "")
+      end
     end
 
-    json_success("#{events.length} event(s) added via OCR")
+    events_count = if events.is_a?(Array)
+      events.length
+    else
+      ((events.is_a?(String) && !events.strip.empty?) ? 1 : 0)
+    end
+
+    json_success("#{events_count} evento(s) processado(s) via OCR", {text: JSON.pretty_generate(events)})
   rescue => e
     json_error(e.message)
   end
