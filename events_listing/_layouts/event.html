@@ -6,9 +6,29 @@ layout: default
   <h1 class="page-title text-center">{{ page._name }}</h1>
   <div class="text-center mb-6">
     {% if page.image and page.image != "" %}
-      <a href="{{ page.image | relative_url }}" target="_blank">
-        <img src="{{ page.image | relative_url }}" alt="{{ page._name | escape_once }}" class="max-w-full h-auto mx-auto rounded-lg" style="max-height: 400px; object-fit: contain;" width="896" height="400" />
+      <a href="{{ page.image | relative_url }}" target="_blank" id="event-image-link">
+        <img
+          id="event-image"
+          src="{{ page.image | relative_url }}"
+          alt="{{ page._name | escape_once }}"
+          class="max-w-full h-auto mx-auto rounded-lg cursor-pointer"
+          style="max-height: 400px; object-fit: contain;"
+          width="896"
+          height="400"
+        />
       </a>
+      <div id="image-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div id="image-overlay" class="absolute inset-0 bg-black/70"></div>
+        <div class="relative">
+          <img
+            id="modal-image"
+            src="{{ page.image | relative_url }}"
+            alt="{{ page._name | escape_once }}"
+            class="rounded-lg max-h-[90vh] mx-auto"
+          />
+          <button id="close-image-modal" class="navigation-button absolute top-4 right-4">Fechar</button>
+        </div>
+      </div>
     {% endif %}
   </div>
   <div class="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
@@ -189,6 +209,32 @@ function showCopySuccess() {
     successDiv.classList.add('hidden');
   }, 3000);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const imageLink = document.getElementById('event-image-link');
+  const imageModal = document.getElementById('image-modal');
+  const overlay = document.getElementById('image-overlay');
+  const closeBtn = document.getElementById('close-image-modal');
+
+  function closeModal() {
+    imageModal.classList.add('hidden');
+  }
+
+  if (imageLink) {
+    imageLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      imageModal.classList.remove('hidden');
+    });
+  }
+
+  overlay?.addEventListener('click', closeModal);
+  closeBtn?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+});
 </script>
 
 {% include aviso.html %}
