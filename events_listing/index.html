@@ -25,8 +25,8 @@ image: /assets/index_image.png
         {% endfor %}
       </select>
     </div>
-    <div id="clear-all-filters" class="hidden items-center gap-2">
-      <button  class="navigation-button flex items-center gap-x-2 whitespace-nowrap" title="Limpar filtros">
+    <div id="clear-all-filters" class="hidden items-center gap-2 w-full sm:w-auto">
+      <button class="navigation-button flex items-center justify-center gap-x-2 whitespace-nowrap w-full" title="Limpar filtros">
         <span class="flex items-center justify-center w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full transition-colors duration-200">
           <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
@@ -42,6 +42,20 @@ image: /assets/index_image.png
   <div id="calendar-wrapper" class="hidden lg:block">
     {% include calendar.html %}
   </div>
+
+  <!-- PWA Install Banner (Mobile Only) -->
+  <div id="pwa-install-banner" class="fixed bottom-0 left-0 right-0 md:hidden bg-gray-700 p-3 text-white shadow-lg z-50 hidden">
+    <div class="container mx-auto flex items-center justify-between gap-2">
+      <span class="text-sm">Instale a nossa app para uma melhor experiência!</span>
+      <div class="flex items-center flex-shrink-0">
+        <button id="install-pwa-btn" class="bg-[var(--color-buttons)] hover:bg-[var(--color-buttons-hover)] text-[var(--color-text-secondary)] py-1 px-3 rounded text-sm mr-2 whitespace-nowrap">
+          Instalar
+        </button>
+        <button id="close-pwa-banner-btn" class="text-gray-300 hover:text-white text-2xl leading-none p-2 cursor-pointer">&times;</button>
+      </div>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
@@ -84,3 +98,4 @@ image: /assets/index_image.png
 {% include aviso.html %}
 <script src="{{ '/assets/js/event-filter.js' | relative_url }}" defer></script>
 <script src="{{ '/assets/js/calendar-toggle.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/pwa-install.js' | relative_url }}" defer></script>
