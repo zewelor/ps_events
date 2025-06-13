@@ -13,6 +13,7 @@ require_relative "../lib/server/github_service"
 require_relative "../lib/server/google_auth_service"
 require_relative "../lib/server/security_service"
 require_relative "../lib/server/event_ocr_service"
+require_relative "../lib/server/add_event_service"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -165,6 +166,8 @@ post "/event_image" do
 end
 
 post "/events_ocr" do
+  google_user_email = nil
+
   unless settings.environment == :development
     unless params[:google_token] && !params[:google_token].strip.empty?
       return json_error("Google authentication required", 401)
@@ -178,12 +181,23 @@ post "/events_ocr" do
     unless SecurityService.is_valid?(auth[:email])
       return json_error("Email not authorized", 403)
     end
+
+    google_user_email = auth[:email]
   end
 
   begin
-    image_path = ImageService.process_upload(params[:event_image])
-    text = JSON.pretty_generate(EventOcrService.call(image_path))
-    json_success("OCR completed", {text: text})
+    image_path = process_event_image(params[:event_image])
+    events = EventOcrService.call(image_path)
+
+    submitter_email = google_user_email ? google_user_email.sub("@", "+ocr@") : ""
+    service = AddEventService.new(
+      google_sheets: settings.google_sheets,
+      spreadsheet_id: settings.spreadsheet_id,
+      events_range: settings.events_range
+    )
+    events.each { |ev| service.add_event(ev, submitter_email: submitter_email, image_path: image_path) }
+
+    json_success("#{events.length} event(s) added via OCR")
   rescue => e
     json_error(e.message)
   end
@@ -234,72 +248,23 @@ post "/add_event" do
     validated_params = result.to_h
     puts "✅ Validation successful for event: #{validated_params[:name]}"
 
-    # Keep date and time components as received
-    start_date_str = validated_params[:start_date].strip
-    start_time_str = validated_params[:start_time]&.strip || ""
-    end_date_str = validated_params[:end_date].strip
-    end_time_str = validated_params[:end_time]&.strip || ""
-
-    # Format submitted at timestamp
-    submitted_at = Time.now.strftime("%d/%m/%Y %H:%M")
-
-    # Prepare event data for spreadsheet
-    # Extract only filename from image_path if present (without extension)
-    image_filename = image_path.empty? ? "" : File.basename(image_path, ".*")
-
-    # Use Google authenticated email as submitter (who actually submitted)
-    submitter_email = google_user_email
-
-    # Use the provided contact email (which may be different from submitter)
     contact_email = validated_params[:contact_email]&.strip&.downcase
-
-    # Log if submitter and contact are different (for moderator cases)
     if contact_email != google_user_email.downcase
       puts "ℹ️ Event submitted by #{google_user_email} for contact #{contact_email}"
     end
 
-    event_data = [
-      submitted_at,
-      submitter_email,
-      validated_params[:name].strip,
-      start_date_str,
-      start_time_str,
-      end_date_str,
-      end_time_str,
-      validated_params[:location].strip,
-      validated_params[:description].strip,
-      validated_params[:category].strip,
-      validated_params[:organizer].strip,
-      contact_email, # Use the provided contact email
-      validated_params[:contact_tel]&.strip || "",
-      validated_params[:price_type]&.strip || "",
-      image_filename, # Store only the filename
-      validated_params[:event_link1]&.strip || "",
-      validated_params[:event_link2]&.strip || "",
-      validated_params[:event_link3]&.strip || "",
-      validated_params[:event_link4]&.strip || ""
-    ]
-
-    # Log the event data (mask sensitive info)
-    masked_data = event_data.dup
-    masked_data[1] = "#{masked_data[1].split("@").first}@***" if masked_data[1].include?("@") # submitter
-    masked_data[11] = "#{masked_data[11].split("@").first}@***" if masked_data[11]&.include?("@") # contact
-    puts "✅ Adding event: #{masked_data[2]} by #{masked_data[10]} on #{masked_data[3]} #{masked_data[4]} (submitted by #{masked_data[1]}, contact: #{masked_data[11]})"
-
     begin
-      # Add to Google Sheets
-      settings.google_sheets.append_row(
-        settings.spreadsheet_id,
-        settings.events_range,
-        event_data
-      )
+      AddEventService.new(
+        google_sheets: settings.google_sheets,
+        spreadsheet_id: settings.spreadsheet_id,
+        events_range: settings.events_range
+      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path)
 
       puts "✅ Event successfully added to spreadsheet"
 
-      # Respond with JSON status
       json_success("Event added successfully", {
         event_name: validated_params[:name],
-        event_date: start_date_str
+        event_date: validated_params[:start_date].strip
       })
     rescue => e
       puts "❌ Error adding event: #{e.message}"
