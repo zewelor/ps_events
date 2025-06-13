@@ -60,7 +60,12 @@ image: /assets/index_image.png
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
     {% assign meta = event.category | category_metadata %}
-    <div class="event-card" data-date="{{ event['start_date'] | date: '%Y-%m-%d' }}" data-category="{{ event.category | default: 'Evento' }}" data-category-color="{{ meta.color }}">
+    <div class="event-card"
+      data-date="{{ event['start_date'] | date: '%Y-%m-%d' }}"
+      data-start-date="{{ event['start_date'] | date: '%Y-%m-%d' }}"
+      data-end-date="{{ event['end_date'] | default: event['start_date'] | date: '%Y-%m-%d' }}"
+      data-category="{{ event.category | default: 'Evento' }}"
+      data-category-color="{{ meta.color }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
           <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape_once }}">

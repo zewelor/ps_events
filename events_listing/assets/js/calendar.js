@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const eventCards = document.querySelectorAll('.event-card');
   const events = Array.from(eventCards).map(card => ({
-    date: card.dataset.date,
+    startDate: card.dataset.startDate || card.dataset.date,
+    endDate: card.dataset.endDate || card.dataset.startDate || card.dataset.date,
     color: card.dataset.categoryColor,
     category: card.dataset.category
   }));
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dots = document.createElement('div');
         dots.className = 'flex space-x-1 mb-1';
         const categoriesOnDate = new Set(); // Keep track of categories already added for this date
-        events.filter(e => e.date === dateStr).forEach(e => {
+        events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate).forEach(e => {
           if (!categoriesOnDate.has(e.category)) { // Check if category already has a dot
             const dot = document.createElement('span');
             dot.className = 'w-2 h-2 lg:w-5 lg:h-5 rounded-full';
