@@ -37,9 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateClearButtonVisibility();
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
-      const cardDate = card.dataset.date;
+      const cardStart = card.dataset.startDate || card.dataset.date;
+      const cardEnd = card.dataset.endDate || cardStart;
       const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
-      const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
+      const matchDate = !selectedRange || (cardEnd >= selectedRange.start && cardStart <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
@@ -58,9 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const counts = {};
     let total = 0;
     eventCards.forEach(card => {
-      const date = card.dataset.date;
+      const start = card.dataset.startDate || card.dataset.date;
+      const end = card.dataset.endDate || start;
       const category = card.dataset.category;
-      const matchDate = !selectedRange || (date >= selectedRange.start && date <= selectedRange.end);
+      const matchDate = !selectedRange || (end >= selectedRange.start && start <= selectedRange.end);
       if (matchDate) {
         counts[category] = (counts[category] || 0) + 1;
         total++;
