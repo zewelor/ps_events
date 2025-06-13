@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cell.dataset.date = dateStr;
         cell.innerHTML = `<span>${date.getDate()}</span>`;
         if (date.getMonth() !== month) {
-          cell.querySelector('span').classList.add('text-gray-300');
+          cell.querySelector('span').classList.add('text-gray-400');
         }
 
         const dots = document.createElement('div');
