@@ -34,7 +34,7 @@ sitemap: false
   </form>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
 
-  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-md">
       <p class="font-semibold">Imagem carregada</p>
@@ -63,7 +63,17 @@ sitemap: false
   const copyIcon = document.getElementById('copy-icon');
   const submitBtn = document.getElementById('submit-btn');
 
-  closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  function showModal() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function hideModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  closeModalBtn.addEventListener('click', hideModal);
 
   // Function to copy the URL to clipboard
   async function copyToClipboard() {
@@ -83,12 +93,12 @@ sitemap: false
   copyIcon.addEventListener('click', copyToClipboard);
 
   form.addEventListener('submit', (e) => {
-    e.preventDefault();
-{% unless jekyll.environment == 'development' %}
-    if (!googleCredential || !document.getElementById('google_token').value) {
-      PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
-      return;
-    }
+      onSuccess: (result) => {
+        imageUrlInput.value = result.filename;
+        showModal();
+        form.reset();
+      }
+    });
 {% endunless %}
     PXOForms.submitUploadForm({
       form,
