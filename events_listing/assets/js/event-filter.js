@@ -3,22 +3,23 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const eventCards = document.querySelectorAll('.event-card');
-  const filterButtons = document.querySelectorAll('#event-filter-controls .filter-btn');
+  const categorySelect = document.getElementById('category-select');
+  const categoryOptions = categorySelect ? categorySelect.querySelectorAll('option') : [];
   const clearAllBtn = document.getElementById('clear-all-filters');
   const logoLink = document.getElementById('logo-link');
   let selectedCategory = 'all';
   let selectedRange = null; // {start, end}
 
-  // store button labels for easy count updates
-  filterButtons.forEach(btn => {
-    const label = btn.dataset.label || btn.textContent.replace(/\s*\(.+\)$/, '');
-    btn.dataset.label = label.trim();
+  // store option labels for easy count updates
+  categoryOptions.forEach(opt => {
+    const label = opt.dataset.label || opt.textContent.replace(/\s*\(.+\)$/, '');
+    opt.dataset.label = label.trim();
   });
 
   updateCategoryCounts();
   updateClearButtonVisibility(); // Initialize button visibility
 
-  filterButtons.forEach(btn => btn.addEventListener('click', handleCategoryClick));
+  if (categorySelect) categorySelect.addEventListener('change', handleCategoryChange);
   document.addEventListener('calendar:dateSelected', e => { selectedRange = {start: e.detail.date, end: e.detail.date}; filterEvents(); });
   document.addEventListener('calendar:rangeSelected', e => { selectedRange = e.detail; filterEvents(); });
   document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
@@ -26,14 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('filters:reset', resetFilters);
   if (logoLink) logoLink.addEventListener('click', e => { e.preventDefault(); document.dispatchEvent(new CustomEvent('filters:reset')); });
 
-  function handleCategoryClick(event) {
-    selectedCategory = event.target.dataset.filterCategory;
-    document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
-      btn.classList.remove('btn--active');
-      btn.classList.add('btn--inactive');
-    });
-    event.target.classList.remove('btn--inactive');
-    event.target.classList.add('btn--active');
+  function handleCategoryChange(event) {
+    selectedCategory = event.target.value;
     filterEvents();
   }
 
@@ -72,13 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    filterButtons.forEach(btn => {
-      const label = btn.dataset.label;
-      const category = btn.dataset.filterCategory;
-      const count = category === 'all' ? total : (counts[category] || 0);
-      btn.textContent = `${label} (${count})`;
-      if (category !== 'all') {
-        btn.style.display = count ? '' : 'none';
+    categoryOptions.forEach(opt => {
+      const label = opt.dataset.label;
+      const value = opt.value;
+      const count = value === 'all' ? total : (counts[value] || 0);
+      opt.textContent = `${label} (${count})`;
+      if (value !== 'all') {
+        opt.hidden = count === 0;
       }
     });
   }
@@ -86,15 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetFilters() {
     selectedCategory = 'all';
     selectedRange = null;
-    document.querySelectorAll('#event-filter-controls .filter-btn').forEach(btn => {
-      if (btn.dataset.filterCategory === 'all') {
-        btn.classList.add('btn--active');
-        btn.classList.remove('btn--inactive');
-      } else {
-        btn.classList.remove('btn--active');
-        btn.classList.add('btn--inactive');
-      }
-    });
+    if (categorySelect) categorySelect.value = 'all';
     document.dispatchEvent(new CustomEvent('calendar:reset'));
     filterEvents();
   }

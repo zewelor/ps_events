@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dots.className = 'flex space-x-1 mb-1';
         events.filter(e => e.date === dateStr).forEach(e => {
           const dot = document.createElement('span');
-          dot.className = 'w-5 h-5 rounded-full';
+          dot.className = 'w-2 h-2 lg:w-5 lg:h-5 rounded-full';
           dot.style.backgroundColor = e.color;
           dots.appendChild(dot);
         });
