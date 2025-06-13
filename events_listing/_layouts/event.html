@@ -4,21 +4,22 @@ layout: default
 
 <article class="card p-6 max-w-4xl mx-auto">
   <h1 class="page-title text-center">{{ page._name }}</h1>
-  <div class="mb-6">
+  <div class="text-center mb-6">
     {% if page.image and page.image != "" %}
-      <div class="relative mx-auto max-w-[896px] bg-neutral-200 rounded-lg overflow-hidden" style="padding-top: 44.6%;">
-        <a href="{{ page.image | relative_url }}" target="_blank" id="event-image-link">
-          <img
-            id="event-image"
-            src="{{ page.image | relative_url }}"
-            alt="{{ page._name | escape_once }}"
-            class="absolute inset-0 w-full h-full object-contain cursor-pointer"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
-        </a>
-      </div>
+      <a href="{{ page.image | relative_url }}" target="_blank" id="event-image-link">
+        <img
+          id="event-image"
+          src="{{ page.image | relative_url }}"
+          alt="{{ page._name | escape_once }}"
+          class="max-w-full h-auto mx-auto rounded-lg cursor-pointer"
+          style="max-height: 400px; object-fit: contain;"
+          width="896"
+          height="400"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </a>
       <div id="image-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
         <div id="image-overlay" class="absolute inset-0 bg-black/70"></div>
         <div class="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center">
