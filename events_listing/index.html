@@ -13,10 +13,10 @@ image: /assets/index_image.png
   {% assign grouped = future_events | group_by: "category" %}
   {% assign sorted_groups = grouped | sort: "name" %}
 
-  <div id="event-filter-controls" class="mb-4 flex flex-wrap items-center justify-between gap-2">
-    <div>
+  <div id="event-filter-controls" class="mb-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+    <div class="w-full sm:w-auto">
       <label for="category-select" class="sr-only">Categoria</label>
-      <select id="category-select" class="form-input w-full sm:w-auto">
+      <select id="category-select" class="form-input w-full">
         <option value="all" data-label="Todas as Categorias">Todas as Categorias ({{ future_events | size }})</option>
         {% for group in sorted_groups %}
           <option value="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}">
@@ -36,7 +36,7 @@ image: /assets/index_image.png
       </button>
     </div>
   </div>
-  <button id="calendar-toggle" class="navigation-button lg:hidden mb-4">
+  <button id="calendar-toggle" class="navigation-button lg:hidden mb-4 w-full">
     Mostrar Calendário
   </button>
   <div id="calendar-wrapper" class="hidden lg:block">
