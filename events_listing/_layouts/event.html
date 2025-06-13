@@ -17,16 +17,16 @@ layout: default
           height="400"
         />
       </a>
-      <div id="image-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+      <div id="image-modal" class="opacity-0 pointer-events-none fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300">
         <div id="image-overlay" class="absolute inset-0 bg-black/70"></div>
-        <div class="relative">
+        <div class="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center">
+          <button id="close-image-modal" class="navigation-button mb-4 self-end">Fechar</button>
           <img
             id="modal-image"
             src="{{ page.image | relative_url }}"
             alt="{{ page._name | escape_once }}"
-            class="rounded-lg max-h-[90vh] mx-auto"
+            class="rounded-lg max-h-[85vh] max-w-[95vw] mx-auto object-contain"
           />
-          <button id="close-image-modal" class="navigation-button absolute top-4 right-4">Fechar</button>
         </div>
       </div>
     {% endif %}
@@ -217,13 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeBtn = document.getElementById('close-image-modal');
 
   function closeModal() {
-    imageModal.classList.add('hidden');
+    imageModal.classList.add('opacity-0', 'pointer-events-none');
   }
 
   if (imageLink) {
     imageLink.addEventListener('click', (e) => {
       e.preventDefault();
-      imageModal.classList.remove('hidden');
+      imageModal.classList.remove('opacity-0', 'pointer-events-none');
     });
   }
 
