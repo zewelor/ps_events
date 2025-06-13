@@ -186,7 +186,14 @@ post "/events_ocr" do
   end
 
   begin
-    image_path = process_event_image(params[:event_image])
+    use_image = params[:use_event_image]
+    if use_image
+      image_path = process_event_image(params[:event_image])
+    else
+      err = ImageService.validate_upload(params[:event_image])
+      raise StandardError, err if err
+      image_path = ImageService.process_upload(params[:event_image])
+    end
     events = EventOcrService.call(image_path)
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
@@ -195,7 +202,11 @@ post "/events_ocr" do
       spreadsheet_id: settings.spreadsheet_id,
       events_range: settings.events_range
     )
-    events.each { |ev| service.add_event(ev, submitter_email: ocr_submitter_email, image_path: image_path) }
+    events.each do |ev|
+      service.add_event(ev,
+        submitter_email: ocr_submitter_email,
+        image_path: use_image ? image_path : "")
+    end
 
     json_success("#{events.length} event(s) added via OCR")
   rescue => e
