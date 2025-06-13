@@ -73,6 +73,10 @@ sitemap: false
 {% unless jekyll.environment == 'development' %}
     if (!googleCredential || !document.getElementById('google_token').value) {
       PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
+      return;
+    }
+
+{% endunless %}
     PXOForms.submitUploadForm({
       form,
       submitBtn,
@@ -81,9 +85,6 @@ sitemap: false
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         form.reset();
-      }
-    });
-  });
       }
     });
   });
