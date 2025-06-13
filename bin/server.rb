@@ -166,9 +166,9 @@ post "/event_image" do
 end
 
 post "/events_ocr" do
-  google_user_email = nil
-
-  unless settings.environment == :development
+  if settings.environment == :development
+    user_email = "development@example.com"
+  else
     unless params[:google_token] && !params[:google_token].strip.empty?
       return json_error("Google authentication required", 401)
     end
@@ -182,20 +182,20 @@ post "/events_ocr" do
       return json_error("Email not authorized", 403)
     end
 
-    google_user_email = auth[:email]
+    user_email = auth[:email]
   end
 
   begin
     image_path = process_event_image(params[:event_image])
     events = EventOcrService.call(image_path)
 
-    submitter_email = google_user_email ? google_user_email.sub("@", "+ocr@") : ""
+    ocr_submitter_email = user_email.sub("@", "+ocr@")
     service = AddEventService.new(
       google_sheets: settings.google_sheets,
       spreadsheet_id: settings.spreadsheet_id,
       events_range: settings.events_range
     )
-    events.each { |ev| service.add_event(ev, submitter_email: submitter_email, image_path: image_path) }
+    events.each { |ev| service.add_event(ev, submitter_email: ocr_submitter_email, image_path: image_path) }
 
     json_success("#{events.length} event(s) added via OCR")
   rescue => e
