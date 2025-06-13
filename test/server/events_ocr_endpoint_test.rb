@@ -65,7 +65,11 @@ class EventsOcrEndpointTest < Minitest::Test
         GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
           ImageService.stub :validate_upload, nil do
             ImageService.stub :process_upload, "/tmp/test.webp" do
-              post "/events_ocr", {google_token: "token", event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+              post "/events_ocr", {
+                google_token: "token",
+                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
+                use_event_image: "on"
+              }
             end
           end
         end
@@ -79,5 +83,27 @@ class EventsOcrEndpointTest < Minitest::Test
     row = app.settings.google_sheets.rows.first
     assert_equal "OCR Event", row[2]
     assert_includes row[1], "+ocr@"
+    assert_equal "test", row[14]
+  end
+
+  def test_ocr_without_event_image
+    out, _err = capture_io do
+      EventOcrService.stub :call, [valid_event] do
+        GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
+          ImageService.stub :validate_upload, nil do
+            ImageService.stub :process_upload, "/tmp/test.webp" do
+              post "/events_ocr", {
+                google_token: "token",
+                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+              }
+            end
+          end
+        end
+      end
+    end
+
+    assert last_response.ok?, out
+    row = app.settings.google_sheets.rows.first
+    assert_equal "", row[14]
   end
 end
