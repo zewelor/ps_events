@@ -145,11 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const dots = document.createElement('div');
         dots.className = 'flex space-x-1 mb-1';
+        const categoriesOnDate = new Set(); // Keep track of categories already added for this date
         events.filter(e => e.date === dateStr).forEach(e => {
-          const dot = document.createElement('span');
-          dot.className = 'w-2 h-2 lg:w-5 lg:h-5 rounded-full';
-          dot.style.backgroundColor = e.color;
-          dots.appendChild(dot);
+          if (!categoriesOnDate.has(e.category)) { // Check if category already has a dot
+            const dot = document.createElement('span');
+            dot.className = 'w-2 h-2 lg:w-5 lg:h-5 rounded-full';
+            dot.style.backgroundColor = e.color;
+            dots.appendChild(dot);
+            categoriesOnDate.add(e.category); // Add category to the set
+          }
         });
         cell.appendChild(dots);
 
