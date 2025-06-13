@@ -15,7 +15,7 @@ class AddEventService
 
   def build_row(event, submitter_email, image_path)
     [
-      Time.now.strftime("%d/%m/%Y %H:%M"),
+      Time.now.in_time_zone("Europe/Lisbon").strftime("%d/%m/%Y %H:%M"),
       submitter_email,
       event[:name].to_s.strip,
       event[:start_date].to_s.strip,
