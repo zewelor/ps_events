@@ -65,7 +65,7 @@ jobs:
 
   #     - name: Commit converted images
   #       if: steps.check-images.outputs.count != '0'
-  #       uses: stefanzweifel/git-auto-commit-action@v5
+  #       uses: stefanzweifel/git-auto-commit-action@v6
   #       with:
   #         commit_message: "Convert images to WebP"
   #         file_pattern: "events_listing/assets/images/*.webp ${{ env.INBOX_DIR }}/*"
@@ -107,7 +107,7 @@ jobs:
         run: git pull --rebase --autostash
 
       - name: Auto-commit updated events files
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "Regenerate events files"
           file_pattern: "events.csv"
