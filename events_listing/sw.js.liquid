@@ -29,7 +29,7 @@ if (workbox) {
   const precacheManifest = DEBUG ? [
     { url: '/offline.html', revision: '{% cache_bust_param %}' }
   ] : [
-    { url: '/', revision: '{% cache_bust_param %}' },
+    // Omit the index page from precaching to avoid cache-first behaviour
     { url: '/offline.html', revision: '{% cache_bust_param %}' },
     { url: '/assets/site.webmanifest', revision: '{% cache_bust_param %}' },
     { url: '/assets/css/styles.css', revision: '{% cache_bust_param %}' }
@@ -84,18 +84,19 @@ if (workbox) {
       new workbox.strategies.NetworkOnly()
     );
 
-    // Stale While Revalidate for the Index Page
+    // Network First for the Index Page to always try the network first
     workbox.routing.registerRoute(
-      ({url, request}) => request.mode === 'navigate' && url.pathname === '/',
-      new workbox.strategies.StaleWhileRevalidate({
+      ({ url, request }) => request.mode === 'navigate' && url.pathname === '/',
+      new workbox.strategies.NetworkFirst({
         cacheName: 'index-page-cache-v1',
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200]
           }),
           new workbox.expiration.ExpirationPlugin({
-            maxEntries: 5, // Cache a few entries, though index is usually one
-            maxAgeSeconds: 1 * 60 * 60 // 1 hour
+            maxEntries: 1,
+            maxAgeSeconds: 1 * 60 * 60, // 1 hora
+            purgeOnQuotaError: true
           })
         ]
       })
@@ -112,7 +113,8 @@ if (workbox) {
           }),
           new workbox.expiration.ExpirationPlugin({
             maxEntries: 50, // Adjust if you have many event pages
-            maxAgeSeconds: 48 * 60 * 60 // 48 hours
+            maxAgeSeconds: 48 * 60 * 60, // 48 horas
+            purgeOnQuotaError: true
           })
         ]
       })
@@ -129,7 +131,8 @@ if (workbox) {
           }),
           new workbox.expiration.ExpirationPlugin({
             maxEntries: 10, // Cache for other miscellaneous pages
-            maxAgeSeconds: 24 * 60 * 60 // 24 hours
+            maxAgeSeconds: 24 * 60 * 60, // 24 horas
+            purgeOnQuotaError: true
           })
         ]
       })
