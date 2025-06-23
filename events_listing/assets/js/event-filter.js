@@ -25,7 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('calendar:clearDate', () => { selectedRange = null; filterEvents(); });
   if (clearAllBtn) clearAllBtn.addEventListener('click', resetFilters);
   document.addEventListener('filters:reset', resetFilters);
-  if (logoLink) logoLink.addEventListener('click', e => { e.preventDefault(); document.dispatchEvent(new CustomEvent('filters:reset')); });
+  if (logoLink) logoLink.addEventListener('click', e => {
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      e.preventDefault();
+      document.dispatchEvent(new CustomEvent('filters:reset'));
+    }
+  });
 
   function handleCategoryChange(event) {
     selectedCategory = event.target.value;
