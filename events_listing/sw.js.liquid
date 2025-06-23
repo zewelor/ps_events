@@ -44,6 +44,9 @@ if (workbox) {
   // Set up offline fallback page reference
   const FALLBACK_HTML_URL = '/offline.html';
 
+  // Nome do cache para imagens, sem sufixo baseado em commit
+  const IMAGES_CACHE = 'images-cache-v1';
+
   // Ensure POST requests bypass caching entirely
   workbox.routing.registerRoute(
     ({ request }) => request.method === 'POST',
@@ -163,11 +166,12 @@ if (workbox) {
       })
     );
 
-    // Cache First for images with compression awareness
+    // Cache First para imagens; o nome do cache é estável
+    // e não inclui o parâmetro de cache bust
     workbox.routing.registerRoute(
       ({ request }) => request.destination === 'image',
       new workbox.strategies.CacheFirst({
-        cacheName: 'images-cache-v1',
+        cacheName: IMAGES_CACHE,
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200]
@@ -216,8 +220,8 @@ if (workbox) {
   });
 
   // Handle install and activate lifecycle events
-  // During activation we iterate over existing caches and
-  // remove any that don't contain the current {% cache_bust_param %}.
+  // Durante a activação removemos caches que não
+  // contenham o sufixo actual, excepto o cache de imagens.
   self.addEventListener('install', () => {
     self.skipWaiting();
   });
@@ -228,7 +232,10 @@ if (workbox) {
       (async () => {
         const expectedSuffix = '{% cache_bust_param %}';
         const keys = await caches.keys();
-        const cachesToDelete = keys.filter((cacheName) => !cacheName.includes(expectedSuffix));
+        const cachesToDelete = keys.filter((cacheName) => {
+          if (cacheName === IMAGES_CACHE) return false;
+          return !cacheName.includes(expectedSuffix);
+        });
         await Promise.all(cachesToDelete.map((cacheName) => caches.delete(cacheName)));
         await self.clients.claim();
       })()
@@ -260,8 +267,8 @@ if (workbox) {
     }
   });
 
-  // During activation we remove any caches that don't include the
-  // current {% cache_bust_param %}.
+  // Durante a activação removemos caches que não
+  // contenham o sufixo actual, excepto o cache de imagens.
   self.addEventListener('activate', (event) => {
     // Remove caches that don't include the current commit-based suffix
     event.waitUntil(
@@ -270,6 +277,7 @@ if (workbox) {
         const keys = await caches.keys();
         await Promise.all(
           keys.map((cacheName) => {
+            if (cacheName === IMAGES_CACHE) return Promise.resolve();
             if (!cacheName.includes(expectedSuffix)) {
               return caches.delete(cacheName);
             }
