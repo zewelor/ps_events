@@ -47,14 +47,14 @@ sitemap: false
   <!-- Google Sign-In Section - Top of page -->
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
-      <h3 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
+      <h2 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h2>
       <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
       <div class="flex items-center space-x-3">
         <div class="w-8 h-8 bg-selected-filter rounded-full flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" aria-label="decorative" focusable="false">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
           </svg>
         </div>
@@ -84,6 +84,7 @@ sitemap: false
         required
         maxlength="100"
         class="form-input"
+        aria-label="Nome"
       />
       <p class="form-help">Nome / Título do evento (máx. 100 caracteres)</p>
     </div>
@@ -141,6 +142,7 @@ sitemap: false
         required
         maxlength="100"
         class="form-input"
+        aria-label="Organizador"
       />
     </div>
 
@@ -157,6 +159,7 @@ sitemap: false
         required
         maxlength="150"
         class="form-input"
+        aria-label="Local"
       />
     </div>
 
@@ -174,6 +177,7 @@ sitemap: false
           value="{{ test_start_date }}"
           required
           class="form-input"
+          aria-label="Data de início"
         />
         <label for="start_time" class="form-label mt-2">
           Hora de início
@@ -184,6 +188,7 @@ sitemap: false
           id="start_time"
           value="{{ test_start_time }}"
           class="form-input"
+          aria-label="Hora de início"
         />
         <p class="form-help">As datas são obrigatórias, as horas são opcionais</p>
       </div>
@@ -199,6 +204,7 @@ sitemap: false
           id="end_date"
           value="{{ test_end_date }}"
           class="form-input"
+          aria-label="Data de fim"
         />
         <label for="end_time" class="form-label mt-2">
           Hora de fim
@@ -209,6 +215,7 @@ sitemap: false
           id="end_time"
           value="{{ test_end_time }}"
           class="form-input"
+          aria-label="Hora de fim"
         />
       </div>
     </div>
@@ -226,6 +233,7 @@ sitemap: false
           value="{{ test_email }}"
           maxlength="100"
           class="form-input"
+          aria-label="Email de contacto"
         />
         <p class="form-help">Email de contacto para o evento. Por defeito, será o seu email do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</p>
       </div>
@@ -241,6 +249,7 @@ sitemap: false
           value="{{ test_tel }}"
           maxlength="20"
           class="form-input"
+          aria-label="Telefone de contacto"
         />
       </div>
     </div>
@@ -291,6 +300,7 @@ sitemap: false
           maxlength="200"
           placeholder="https://facebook.com/..."
           class="form-input"
+          aria-label="Link do evento ou rede social 1"
         />
       </div>
       <div>
@@ -305,6 +315,7 @@ sitemap: false
           maxlength="200"
           placeholder="https://instagram.com/..."
           class="form-input"
+          aria-label="Link do evento ou rede social 2"
         />
       </div>
       <div>
@@ -319,6 +330,7 @@ sitemap: false
           maxlength="200"
           placeholder="https://example.com"
           class="form-input"
+          aria-label="Link do evento ou rede social 3"
         />
       </div>
       <div>
@@ -333,13 +345,14 @@ sitemap: false
           maxlength="200"
           placeholder="https://example.com"
           class="form-input"
+          aria-label="Link do evento ou rede social 4"
         />
       </div>
     </div>
 
     <!-- Responsibility Declaration -->
     <div class="our-section">
-      <h3 class="section-subtitle">Declaração de responsabilidade</h3>
+      <h2 class="section-subtitle">Declaração de responsabilidade</h2>
       <p class="muted-text">
         Confirmo que as informações fornecidas são verdadeiras e corretas, segundo o meu melhor conhecimento. Comprometo-me a mantê-las atualizadas e a solicitar quaisquer correções ou alterações, se necessário, através do e-mail pxopulse@gmail.com.
       </p>
@@ -350,7 +363,7 @@ sitemap: false
           name="responsibility_agreement"
           required
           {% if jekyll.environment == 'development' %}checked{% endif %}
-          class="mt-1 w-4 h-4 text-selected-filter bg-white border-gray-400 rounded focus:ring-selected-filter focus:ring-2"
+          <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true" aria-label="decorative" focusable="false">
         />
         <label for="responsibility_agreement" class="form-label">
           Li e concordo com os termos acima. <span class="text-red-500">*</span>

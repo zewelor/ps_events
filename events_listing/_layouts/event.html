@@ -6,7 +6,7 @@ layout: default
   <h1 class="page-title text-center">{{ page._name }}</h1>
   <div class="text-center mb-6">
     {% if page.image and page.image != "" %}
-      <a href="{{ page.image | relative_url }}" target="_blank" id="event-image-link">
+      <a href="{{ page.image | relative_url }}" target="_blank" aria-label="Abrir imagem do evento">
         <img
           id="event-image"
           src="{{ page.image | relative_url }}"
@@ -78,9 +78,9 @@ layout: default
   <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl shadow-md mb-6">
     <h2 class="event-details-section-title">
       <span class="text-3xl mr-3">🚀</span>
-      Espreita também!
-    </h2>
-    <div class="space-y-2">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" aria-label="decorative" focusable="false">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" aria-label="decorative" focusable="false">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" aria-label="decorative" focusable="false">
       {% assign link_array = "link_1,link_2,link_3,link_4" | split: "," %}
       {% for link_key in link_array %}
         {% if page[link_key] and page[link_key] != "" %}

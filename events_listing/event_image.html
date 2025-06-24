@@ -19,12 +19,12 @@ sitemap: false
     <input type="hidden" name="google_token" id="google_token" value="">
     <div>
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
-      <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
+      <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" aria-label="Imagem do evento" />
     </div>
     <button type="submit" id="submit-btn" class="navigation-button flex items-center justify-center relative group">
       <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">Enviar</span>
       <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
-        <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true" aria-label="decorative" focusable="false">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
@@ -34,7 +34,7 @@ sitemap: false
   </form>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
 
-  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
+        <svg id="copy-icon" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)] cursor-pointer hover:text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Clique para copiar" aria-hidden="true" aria-label="decorative" focusable="false">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-11/12 max-w-md">
       <p class="font-semibold">Imagem carregada</p>
