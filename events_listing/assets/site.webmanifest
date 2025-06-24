@@ -8,6 +8,8 @@
     "orientation": "portrait-primary",
     "theme_color": "#75c8e2",
     "background_color": "#ffffff",
+    "categories": ["entertainment", "lifestyle", "social"],
+    "lang": "pt-PT",
     "icons": [
         {
             "src": "/assets/favicon-16x16.png",
