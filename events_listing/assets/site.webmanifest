@@ -8,7 +8,6 @@
     "orientation": "portrait-primary",
     "theme_color": "#75c8e2",
     "background_color": "#ffffff",
-    "categories": ["lifestyle", "travel", "entertainment"],
     "icons": [
         {
             "src": "/assets/favicon-16x16.png",
