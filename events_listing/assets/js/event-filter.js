@@ -35,12 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function filterEvents() {
     updateCategoryCounts();
     updateClearButtonVisibility();
+    const rangeStart = selectedRange ? new Date(selectedRange.start) : null;
+    const rangeEnd = selectedRange ? new Date(selectedRange.end) : null;
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
-      const cardStart = card.dataset.startDate || card.dataset.date;
-      const cardEnd = card.dataset.endDate || cardStart;
+      const cardStart = new Date(card.dataset.startDate || card.dataset.date);
+      const cardEnd = new Date(card.dataset.endDate || cardStart);
       const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
-      const matchDate = !selectedRange || (cardEnd >= selectedRange.start && cardStart <= selectedRange.end);
+      const matchDate = !selectedRange || (cardEnd >= rangeStart && cardStart <= rangeEnd);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
@@ -58,11 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCategoryCounts() {
     const counts = {};
     let total = 0;
+    const rangeStart = selectedRange ? new Date(selectedRange.start) : null;
+    const rangeEnd = selectedRange ? new Date(selectedRange.end) : null;
     eventCards.forEach(card => {
-      const start = card.dataset.startDate || card.dataset.date;
-      const end = card.dataset.endDate || start;
+      const start = new Date(card.dataset.startDate || card.dataset.date);
+      const end = new Date(card.dataset.endDate || start);
       const category = card.dataset.category;
-      const matchDate = !selectedRange || (end >= selectedRange.start && start <= selectedRange.end);
+      const matchDate = !selectedRange || (end >= rangeStart && start <= rangeEnd);
       if (matchDate) {
         counts[category] = (counts[category] || 0) + 1;
         total++;
