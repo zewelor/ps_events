@@ -21,7 +21,7 @@
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
 
     {% seo %}
-    {% if page.image %}
+    {% if page.image and page.url != '/' %}
     <link rel="preload" as="image" href="{{ page.image | relative_url }}" fetchpriority="high">
     {% endif %}
   </head>
