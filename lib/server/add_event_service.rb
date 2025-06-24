@@ -1,3 +1,5 @@
+require "active_support/time"
+
 class AddEventService
   def initialize(google_sheets:, spreadsheet_id:, events_range:)
     @google_sheets = google_sheets
@@ -14,8 +16,11 @@ class AddEventService
   private
 
   def build_row(event, submitter_email, image_path)
+    # Set timezone to Lisbon/Portugal time
+    Time.zone = "Europe/Lisbon"
+
     [
-      Time.now.in_time_zone("Europe/Lisbon").strftime("%d/%m/%Y %H:%M"),
+      Time.zone.now.strftime("%d/%m/%Y %H:%M"),
       submitter_email,
       event[:name].to_s.strip,
       event[:start_date].to_s.strip,

@@ -47,7 +47,7 @@ end
 gem "rackup", "~> 2.2"
 gem "puma", "~> 6.6"
 
-gem "google-apis-sheets_v4", "~> 0.44.0"
+gem "google-apis-sheets_v4", "~> 0.45.0"
 
 # Image processing gem
 gem "mini_magick", "~> 5.2"

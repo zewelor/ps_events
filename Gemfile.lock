@@ -31,7 +31,7 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     amazing_print (1.8.1)
     ast (2.4.3)
-    base64 (0.2.0)
+    base64 (0.3.0)
     benchmark (0.4.0)
     bigdecimal (3.2.2)
     colorator (1.1.0)
@@ -39,7 +39,7 @@ GEM
     connection_pool (2.5.3)
     csv (3.3.5)
     date (3.4.1)
-    debug (1.10.0)
+    debug (1.11.0)
       irb (~> 1.10)
       reline (>= 0.3.8)
     declarative (0.0.20)
@@ -83,6 +83,7 @@ GEM
     em-websocket (0.5.3)
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0)
+    erb (5.0.1)
     event_stream_parser (1.0.0)
     eventmachine (1.2.7)
     faraday (2.13.1)
@@ -91,7 +92,7 @@ GEM
       logger
     faraday-multipart (1.1.0)
       multipart-post (~> 2.0)
-    faraday-net_http (3.4.0)
+    faraday-net_http (3.4.1)
       net-http (>= 0.5.0)
     faraday-retry (2.3.1)
       faraday (~> 2.0)
@@ -105,9 +106,9 @@ GEM
       mutex_m
       representable (~> 3.0)
       retriable (>= 2.0, < 4.a)
-    google-apis-sheets_v4 (0.44.0)
+    google-apis-sheets_v4 (0.45.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-cloud-env (2.3.0)
+    google-cloud-env (2.3.1)
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-logging-utils (0.2.0)
@@ -127,7 +128,7 @@ GEM
       mutex_m
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    icalendar (2.11.1)
+    icalendar (2.11.2)
       base64
       ice_cube (~> 0.16)
       logger
@@ -178,7 +179,7 @@ GEM
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     language_server-protocol (3.17.0.5)
-    lefthook (1.11.13)
+    lefthook (1.11.14)
     lint_roller (1.1.0)
     liquid (4.0.4)
     listen (3.9.0)
@@ -201,7 +202,7 @@ GEM
       uri
     nio4r (2.7.4)
     os (1.1.4)
-    ostruct (0.6.1)
+    ostruct (0.6.2)
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
@@ -238,7 +239,8 @@ GEM
       ffi (~> 1.0)
     rbs (3.9.4)
       logger
-    rdoc (6.13.1)
+    rdoc (6.14.0)
+      erb
       psych (>= 4.0.0)
     regexp_parser (2.10.0)
     reline (0.6.1)
@@ -270,7 +272,7 @@ GEM
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.38.0, < 2.0)
-    ruby-lsp (0.24.1)
+    ruby-lsp (0.24.2)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
@@ -308,7 +310,7 @@ GEM
       rack-protection (= 4.1.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
-    sorbet-runtime (0.5.12163)
+    sorbet-runtime (0.5.12194)
     standard (1.50.0)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -347,7 +349,7 @@ DEPENDENCIES
   csv
   debug
   dry-validation (~> 1.11)
-  google-apis-sheets_v4 (~> 0.44.0)
+  google-apis-sheets_v4 (~> 0.45.0)
   icalendar
   irb
   jekyll (~> 4.4)

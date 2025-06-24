@@ -29,7 +29,7 @@ if (workbox) {
   const precacheManifest = DEBUG ? [
     { url: '/offline.html', revision: '{% cache_bust_param %}' }
   ] : [
-    { url: '/', revision: '{% cache_bust_param %}' },
+    // Omit the index page from precaching to avoid cache-first behaviour
     { url: '/offline.html', revision: '{% cache_bust_param %}' },
     { url: '/assets/site.webmanifest', revision: '{% cache_bust_param %}' },
     { url: '/assets/css/styles.css', revision: '{% cache_bust_param %}' }
@@ -43,6 +43,9 @@ if (workbox) {
 
   // Set up offline fallback page reference
   const FALLBACK_HTML_URL = '/offline.html';
+
+  // Nome do cache para imagens, sem sufixo baseado em commit
+  const IMAGES_CACHE = 'images-cache-v1';
 
   // Ensure POST requests bypass caching entirely
   workbox.routing.registerRoute(
@@ -84,18 +87,19 @@ if (workbox) {
       new workbox.strategies.NetworkOnly()
     );
 
-    // Stale While Revalidate for the Index Page
+    // Network First for the Index Page to always try the network first
     workbox.routing.registerRoute(
-      ({url, request}) => request.mode === 'navigate' && url.pathname === '/',
-      new workbox.strategies.StaleWhileRevalidate({
+      ({ url, request }) => request.mode === 'navigate' && url.pathname === '/',
+      new workbox.strategies.NetworkFirst({
         cacheName: 'index-page-cache-v1',
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200]
           }),
           new workbox.expiration.ExpirationPlugin({
-            maxEntries: 5, // Cache a few entries, though index is usually one
-            maxAgeSeconds: 1 * 60 * 60 // 1 hour
+            maxEntries: 1,
+            maxAgeSeconds: 1 * 60 * 60, // 1 hora
+            purgeOnQuotaError: true
           })
         ]
       })
@@ -112,7 +116,8 @@ if (workbox) {
           }),
           new workbox.expiration.ExpirationPlugin({
             maxEntries: 50, // Adjust if you have many event pages
-            maxAgeSeconds: 48 * 60 * 60 // 48 hours
+            maxAgeSeconds: 48 * 60 * 60, // 48 horas
+            purgeOnQuotaError: true
           })
         ]
       })
@@ -129,7 +134,8 @@ if (workbox) {
           }),
           new workbox.expiration.ExpirationPlugin({
             maxEntries: 10, // Cache for other miscellaneous pages
-            maxAgeSeconds: 24 * 60 * 60 // 24 hours
+            maxAgeSeconds: 24 * 60 * 60, // 24 horas
+            purgeOnQuotaError: true
           })
         ]
       })
@@ -160,11 +166,12 @@ if (workbox) {
       })
     );
 
-    // Cache First for images with compression awareness
+    // Cache First para imagens; o nome do cache é estável
+    // e não inclui o parâmetro de cache bust
     workbox.routing.registerRoute(
       ({ request }) => request.destination === 'image',
       new workbox.strategies.CacheFirst({
-        cacheName: 'images-cache-v1',
+        cacheName: IMAGES_CACHE,
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200]
@@ -213,8 +220,8 @@ if (workbox) {
   });
 
   // Handle install and activate lifecycle events
-  // During activation we iterate over existing caches and
-  // remove any that don't contain the current {% cache_bust_param %}.
+  // Durante a activação removemos caches que não
+  // contenham o sufixo actual, excepto o cache de imagens.
   self.addEventListener('install', () => {
     self.skipWaiting();
   });
@@ -225,7 +232,10 @@ if (workbox) {
       (async () => {
         const expectedSuffix = '{% cache_bust_param %}';
         const keys = await caches.keys();
-        const cachesToDelete = keys.filter((cacheName) => !cacheName.includes(expectedSuffix));
+        const cachesToDelete = keys.filter((cacheName) => {
+          if (cacheName === IMAGES_CACHE) return false;
+          return !cacheName.includes(expectedSuffix);
+        });
         await Promise.all(cachesToDelete.map((cacheName) => caches.delete(cacheName)));
         await self.clients.claim();
       })()
@@ -257,8 +267,8 @@ if (workbox) {
     }
   });
 
-  // During activation we remove any caches that don't include the
-  // current {% cache_bust_param %}.
+  // Durante a activação removemos caches que não
+  // contenham o sufixo actual, excepto o cache de imagens.
   self.addEventListener('activate', (event) => {
     // Remove caches that don't include the current commit-based suffix
     event.waitUntil(
@@ -267,6 +277,7 @@ if (workbox) {
         const keys = await caches.keys();
         await Promise.all(
           keys.map((cacheName) => {
+            if (cacheName === IMAGES_CACHE) return Promise.resolve();
             if (!cacheName.includes(expectedSuffix)) {
               return caches.delete(cacheName);
             }

@@ -51,7 +51,7 @@ image: /assets/index_image.png
         <button id="install-pwa-btn" class="bg-[var(--color-buttons)] hover:bg-[var(--color-buttons-hover)] text-[var(--color-text-secondary)] py-1 px-3 rounded text-sm mr-2 whitespace-nowrap">
           Instalar
         </button>
-        <button id="close-pwa-banner-btn" class="text-gray-300 hover:text-white text-2xl leading-none p-2 cursor-pointer">&times;</button>
+        <button id="close-pwa-banner-btn" class="text-gray-400 hover:text-white text-2xl leading-none p-2 cursor-pointer">&times;</button>
       </div>
     </div>
   </div>
@@ -64,7 +64,7 @@ image: /assets/index_image.png
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
           <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape_once }}">
-            <a href="{{ event.page_slug | datapage_url: 'events' }}" class="hover:text-[var(--color-text-muted)] line-clamp-2">
+            <a href="{{ event.page_slug | datapage_url: '/events' }}" class="hover:text-[var(--color-text-muted)] line-clamp-2">
               {{ event["name"] }}
             </a>
           </h2>
@@ -73,11 +73,11 @@ image: /assets/index_image.png
             <span>{{ event | format_event_datetime }}</span>
           </div>
           <div class="flex items-center text-sm text-[var(--color-text-muted)] mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="http://www.w3.org/2000/svg" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0" aria-hidden="true" focusable="false"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0" aria-hidden="true" focusable="false"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
             <span>{{ event["location"] }}</span>
           </div>
         </div>
-        <a href="{{ event.page_slug | datapage_url: 'events' }}" class="navigation-button w-full sm:w-auto py-3">Saiba mais</a>
+        <a href="{{ event.page_slug | datapage_url: '/events' }}" class="navigation-button w-full sm:w-auto py-3">Saiba mais</a>
       </div>
       <div style="background-color: {{ meta.color }};" class="h-2"></div>
     </div>

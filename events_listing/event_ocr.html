@@ -40,7 +40,7 @@ sitemap: false
   </form>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
 
-  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative bg-white rounded-lg shadow-lg p-6 space-y-4 w-4/5 max-w-7xl">
       <p class="font-semibold">Resultado do OCR</p>
@@ -63,7 +63,10 @@ sitemap: false
   const closeModalBtn = document.getElementById('close-modal');
   const submitBtn = document.getElementById('submit-btn');
 
-  closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  closeModalBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -72,6 +75,7 @@ sitemap: false
       PXOForms.showToast('É necessário iniciar sessão com o Google.', 'error');
       return;
     }
+
 {% endunless %}
     PXOForms.submitUploadForm({
       form,
@@ -79,6 +83,7 @@ sitemap: false
       onSuccess: (result) => {
         ocrText.value = result.text;
         modal.classList.remove('hidden');
+        modal.classList.add('flex');
         form.reset();
       }
     });

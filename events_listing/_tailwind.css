@@ -20,7 +20,7 @@
 }
 
 @utility btn {
-  @apply rounded-lg text-sm font-medium transition-colors duration-200 active:scale-[0.98];
+  @apply rounded-lg cursor-pointer text-sm font-medium transition-colors duration-200 active:scale-[0.98];
 }
 
 @utility page-title {
