@@ -81,5 +81,8 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Run be-a11y
-        run: npx @belenkadev/be-a11y _site
+        run: pnpm dlx @belenkadev/be-a11y _site
