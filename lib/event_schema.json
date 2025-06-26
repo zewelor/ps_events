@@ -31,6 +31,6 @@
     "event_link3": { "type": "string", "pattern": "^(|https?://.+)$" },
     "event_link4": { "type": "string", "pattern": "^(|https?://.+)$" },
     "event_image": { "type": "object" },
-    "responsibility_agreement": { "type": "boolean", "const": true } 
+    "responsibility_agreement": { "type": "string", "const": "on" }
   }
 }

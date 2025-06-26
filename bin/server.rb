@@ -259,8 +259,7 @@ post "/add_event" do
   validation_params[:end_date] = normalize_date(validation_params[:end_date])
 
   # Validate the event data using dry-validation directly
-  validator = EventValidation.new
-  result = validator.call(validation_params)
+  result = EventValidation.call(validation_params)
 
   if result.success?
     validated_params = result.to_h
