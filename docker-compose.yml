@@ -3,7 +3,6 @@ x-app: &x-app
     context: .
     target: dev
   tty: true
-  stdin_open: true
   volumes:
     - .:/app:cached
     - bundler:/bundle

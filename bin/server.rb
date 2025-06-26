@@ -246,17 +246,12 @@ post "/add_event" do
   google_user_email = auth_result[:email]
   puts "✅ Google auth validated for: #{google_user_email}"
 
-  # Handle image upload first (if provided)
-  begin
-    image_path = process_event_image(params[:event_image])
-  rescue => e
-    return json_error(e.message)
-  end
-
   # Remove the file upload from params for validation
   validation_params = params.dup
   validation_params.delete(:event_image)
   validation_params.delete(:google_token)
+
+  image_path = "" # Initialize image_path
 
   # Convert dates from HTML5 format (yyyy-mm-dd) to the format expected by the
   # validator (dd/mm/YYYY). Other formats pass through unchanged.
@@ -270,6 +265,13 @@ post "/add_event" do
   if result.success?
     validated_params = result.to_h
     puts "✅ Validation successful for event: #{validated_params[:name]}"
+
+    # Process image only after successful validation
+    begin
+      image_path = process_event_image(params[:event_image])
+    rescue => e
+      return json_error(e.message)
+    end
 
     contact_email = validated_params[:contact_email]&.strip&.downcase
     if contact_email != google_user_email.downcase
