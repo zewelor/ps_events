@@ -49,7 +49,7 @@ services:
     command:
       - rerun
       - --pattern
-      - '{bin/server.rb,lib/server/**/*.rb}'
+      - '{bin/server.rb,lib/server/**/*.rb,lib/event_schema.json}'
       - --
       - ruby
       - bin/server.rb

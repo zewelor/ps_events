@@ -6,6 +6,14 @@ class EventValidation
   SCHEMA_PATH = File.expand_path("../event_schema.json", __dir__)
   SCHEMA = JSON.parse(File.read(SCHEMA_PATH))
 
+  def self.call(params)
+    new.call(params)
+  end
+
+  # Result class to encapsulate the validation result
+  # and provide a consistent interface for success/failure checks.
+  # It also provides a method to convert the data to a hash.
+
   Result = Struct.new(:data, :errors) do
     def success?
       errors.empty?
