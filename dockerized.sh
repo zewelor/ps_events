@@ -6,9 +6,9 @@ docker_compose_run_on_exec () {
 
   if docker compose ps | grep -q $container_name
   then
-    docker compose --progress quiet exec -it $container_name "$@"
+    docker compose --progress quiet exec -T $container_name "$@"
   else
-    docker compose --progress quiet run --rm -it $container_name "$@"
+    docker compose --progress quiet run --rm -iT $container_name "$@"
   fi
 }
 
