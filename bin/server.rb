@@ -203,7 +203,9 @@ post "/events_ocr" do
       spreadsheet_id: settings.spreadsheet_id,
       events_range: settings.events_range
     )
+
     pp events
+
     # Ensure events is an array before calling .each, if it could be a single string from OCR
     Array(events).each do |ev|
       # Process only if ev is a hash, suitable for AddEventService
