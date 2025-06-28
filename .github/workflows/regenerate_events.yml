@@ -14,7 +14,7 @@ on:
 # Ensure only one workflow runs at a time to prevent conflicts
 concurrency:
   group: regenerate-events
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # convert:
