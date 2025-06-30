@@ -1,0 +1,10 @@
+services:
+  app:
+    image: ghcr.io/zewelor/ps_events:dev
+    volumes:
+      - .:/app
+    networks:
+      - ps_events
+
+networks:
+  ps_events:

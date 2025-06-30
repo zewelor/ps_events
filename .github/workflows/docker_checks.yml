@@ -64,10 +64,14 @@ jobs:
           # Used by docker-compose.ci
           tags: ${{ steps.meta.outputs.tags }}
 
+      - name: Install podman-compose
+        run: |
+          pip install podman-compose
+
       - name: Run Rubocop
         run: |
-          docker compose run --rm app rubocop
+          podman-compose -f compose.ci.yml run --rm app rubocop
 
       - name: Run Tests
         run: |
-          docker compose run --rm app rake test
+          podman-compose -f compose.ci.yml run --rm app rake test

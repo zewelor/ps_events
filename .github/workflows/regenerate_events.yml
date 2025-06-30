@@ -99,7 +99,7 @@ jobs:
           curl -Lo events.csv "${{ secrets.CSV_ENDPOINT}}"
 
       # - name: Generate events.ics
-      #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
+      #   run: podman-compose -f compose.ci.yml run app bin/spreadsheet_to_ical -o events.ics
       #   env:
       #     COMPOSE_FILE: docker-compose.ci.yml
 
