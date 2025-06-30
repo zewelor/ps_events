@@ -134,6 +134,7 @@
 .calendar-grid {
   @apply grid text-center text-sm overflow-hidden border-gray-200 bg-white;
   grid-template-columns: 2rem repeat(7,minmax(0,1fr));
+  @apply min-h-[28rem];
 }
 
 
