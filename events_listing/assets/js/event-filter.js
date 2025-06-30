@@ -37,13 +37,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function filterEvents(shouldUpdateCounts = true) {
-    if (shouldUpdateCounts) updateCategoryCounts();
+    const applyCategory = selectedCategory !== 'all';
+    const applyRange = selectedRange !== null;
+
+    if (shouldUpdateCounts && applyRange) updateCategoryCounts();
     updateClearButtonVisibility();
+    if (!applyCategory && !applyRange) return;
+
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
       const cardDate = card.dataset.date;
-      const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
-      const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
+      const matchCategory = !applyCategory || cardCategory === selectedCategory;
+      const matchDate = !applyRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
