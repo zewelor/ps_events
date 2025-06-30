@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     opt.dataset.label = label.trim();
   });
 
-  updateCategoryCounts();
   updateClearButtonVisibility(); // Initialize button visibility
 
   if (categorySelect) categorySelect.addEventListener('change', handleCategoryChange);
@@ -34,11 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleCategoryChange(event) {
     selectedCategory = event.target.value;
-    filterEvents();
+    filterEvents(false); // don't recalc counts on category change
   }
 
-  function filterEvents() {
-    updateCategoryCounts();
+  function filterEvents(shouldUpdateCounts = true) {
+    if (shouldUpdateCounts) updateCategoryCounts();
     updateClearButtonVisibility();
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
