@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     opt.dataset.label = label.trim();
   });
 
-  updateCategoryCounts();
   updateClearButtonVisibility(); // Initialize button visibility
 
   if (categorySelect) categorySelect.addEventListener('change', handleCategoryChange);
@@ -34,17 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleCategoryChange(event) {
     selectedCategory = event.target.value;
-    filterEvents();
+    filterEvents(false); // don't recalc counts on category change
   }
 
-  function filterEvents() {
-    updateCategoryCounts();
+  function filterEvents(shouldUpdateCounts = true) {
+    const applyCategory = selectedCategory !== 'all';
+    const applyRange = selectedRange !== null;
+
+    if (shouldUpdateCounts && applyRange) updateCategoryCounts();
     updateClearButtonVisibility();
+    if (!applyCategory && !applyRange) return;
+
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
       const cardDate = card.dataset.date;
-      const matchCategory = selectedCategory === 'all' || cardCategory === selectedCategory;
-      const matchDate = !selectedRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
+      const matchCategory = !applyCategory || cardCategory === selectedCategory;
+      const matchDate = !applyRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
       card.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
