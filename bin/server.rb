@@ -185,7 +185,7 @@ post "/events_ocr" do
     else
       ImageService.validate_and_process(params[:event_image])
     end
-    events = EventOcrService.call(image_path) # Assuming this returns an array of event structures
+    events = EventOcrService.call(image_path, retry_sleep: 5)
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
     service = AddEventService.new(

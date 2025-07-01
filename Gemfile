@@ -34,6 +34,7 @@ end
 
 group :test do
   gem "simplecov", require: false
+  gem "webmock", "~> 3.23"
 end
 
 group :jekyll_plugins do
@@ -48,6 +49,7 @@ gem "rackup", "~> 2.2"
 gem "puma", "~> 6.6"
 
 gem "google-apis-sheets_v4", "~> 0.45.0"
+gem "retryable", "~> 3.0"
 
 # Image processing gem
 gem "mini_magick", "~> 5.2"
