@@ -224,6 +224,8 @@ post "/events_ocr" do
 
     json_success("#{events_count} evento(s) processado(s) via OCR", {text: JSON.pretty_generate(events)})
   rescue => e
+    pp events
+    puts "❌ Error processing OCR: #{e.message}"
     json_error(e.message)
   end
 end

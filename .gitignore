@@ -8,6 +8,7 @@
 /.bundle
 
 /.env
+/tmp/
 .pry_history
 /coverage/
 
