@@ -53,17 +53,19 @@ helpers do
     end
   end
 
-  def process_event_image(event_image)
+  def validate_event_image(event_image)
     return "" unless event_image && event_image[:tempfile]
 
-    begin
-      image_path = ImageService.validate_and_process(event_image)
-      upload_image_if_production(image_path)
-      image_path
-    rescue => e
-      puts "❌ Image processing error: #{e.message}"
-      raise StandardError, "Image processing failed: #{e.message}"
-    end
+    ImageService.validate_and_process(event_image)
+  rescue => e
+    puts "❌ Image processing error: #{e.message}"
+    raise StandardError, "Image processing failed: #{e.message}"
+  end
+
+  def process_event_image(event_image)
+    image_path = validate_event_image(event_image)
+    upload_image_if_production(image_path)
+    image_path
   end
 
   # Convert HTML5 date input (yyyy-mm-dd) to dd/mm/YYYY expected by the
@@ -180,11 +182,7 @@ post "/events_ocr" do
 
   begin
     use_image = params[:use_event_image]
-    image_path = if use_image
-      process_event_image(params[:event_image])
-    else
-      ImageService.validate_and_process(params[:event_image])
-    end
+    image_path = validate_event_image(params[:event_image])
     events = EventOcrService.call(image_path, retry_sleep: 5)
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
@@ -205,6 +203,8 @@ post "/events_ocr" do
           image_path: use_image ? image_path : "")
       end
     end
+
+    upload_image_if_production(image_path) if use_image
 
     events_count = if events.is_a?(Array)
       events.length
