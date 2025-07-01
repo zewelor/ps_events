@@ -48,15 +48,7 @@ helpers do
     return "" unless event_image && event_image[:tempfile]
 
     begin
-      # Validate the image
-      validation_error = ImageService.validate_upload(event_image)
-      if validation_error
-        raise StandardError, validation_error
-      end
-
-      # Process the image
-      image_path = ImageService.process_upload(event_image)
-      puts "✅ Image processed successfully: #{image_path}"
+      image_path = ImageService.validate_and_process(event_image)
 
       # Upload to GitHub only in production environment
       if settings.environment == :production
@@ -188,12 +180,10 @@ post "/events_ocr" do
 
   begin
     use_image = params[:use_event_image]
-    if use_image
-      image_path = process_event_image(params[:event_image])
+    image_path = if use_image
+      process_event_image(params[:event_image])
     else
-      err = ImageService.validate_upload(params[:event_image])
-      raise StandardError, err if err
-      image_path = ImageService.process_upload(params[:event_image])
+      ImageService.validate_and_process(params[:event_image])
     end
     events = EventOcrService.call(image_path) # Assuming this returns an array of event structures
 
