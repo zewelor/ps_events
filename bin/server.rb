@@ -44,21 +44,21 @@ helpers do
     json_response(response_data, 200)
   end
 
+  def upload_image_if_production(image_path)
+    if settings.environment == :production
+      GitHubService.upload_image(image_path)
+      puts "✅ Image uploaded to GitHub (production)"
+    else
+      puts "ℹ️ Skipping GitHub upload (not in production environment)"
+    end
+  end
+
   def process_event_image(event_image)
     return "" unless event_image && event_image[:tempfile]
 
     begin
       image_path = ImageService.validate_and_process(event_image)
-
-      # Upload to GitHub only in production environment
-      if settings.environment == :production
-        # Get the full file path for GitHub upload
-        GitHubService.upload_image(image_path)
-        puts "✅ Image uploaded to GitHub (production)"
-      else
-        puts "ℹ️ Skipping GitHub upload (not in production environment)"
-      end
-
+      upload_image_if_production(image_path)
       image_path
     rescue => e
       puts "❌ Image processing error: #{e.message}"
