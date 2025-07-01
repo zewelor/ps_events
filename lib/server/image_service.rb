@@ -83,4 +83,13 @@ class ImageService
 
     nil # No errors
   end
+
+  def self.validate_and_process(uploaded_file)
+    validation_error = validate_upload(uploaded_file)
+    raise StandardError, validation_error if validation_error
+
+    image_path = process_upload(uploaded_file)
+    puts "✅ Image processed successfully: #{image_path}"
+    image_path
+  end
 end

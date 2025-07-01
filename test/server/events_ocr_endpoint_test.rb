@@ -63,14 +63,12 @@ class EventsOcrEndpointTest < Minitest::Test
     out, _err = capture_io do
       EventOcrService.stub :call, [valid_event] do
         GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
-          ImageService.stub :validate_upload, nil do
-            ImageService.stub :process_upload, "/tmp/test.webp" do
-              post "/events_ocr", {
-                google_token: "token",
-                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
-                use_event_image: "on"
-              }
-            end
+          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+            post "/events_ocr", {
+              google_token: "token",
+              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
+              use_event_image: "on"
+            }
           end
         end
       end
@@ -90,13 +88,11 @@ class EventsOcrEndpointTest < Minitest::Test
     out, _err = capture_io do
       EventOcrService.stub :call, [valid_event] do
         GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
-          ImageService.stub :validate_upload, nil do
-            ImageService.stub :process_upload, "/tmp/test.webp" do
-              post "/events_ocr", {
-                google_token: "token",
-                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
-              }
-            end
+          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+            post "/events_ocr", {
+              google_token: "token",
+              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+            }
           end
         end
       end
