@@ -22,13 +22,13 @@ layout: default
       </a>
       <div id="image-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
         <div id="image-overlay" class="absolute inset-0 bg-black/70"></div>
-        <div class="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center">
-          <button id="close-image-modal" class="navigation-button mb-4 self-end">Fechar</button>
+        <div class="relative max-w-[100vw] max-h-[100vh] flex flex-col items-center">
+          <button id="close-image-modal" class="navigation-button mb-2 self-end">Fechar</button>
           <img
             id="modal-image"
             src="{{ page.image | relative_url }}"
             alt="{{ page._name | escape_once }}"
-            class="rounded-lg max-h-[85vh] max-w-[95vw] mx-auto object-contain"
+            class="rounded-lg max-h-[95vh] max-w-[95vw] mx-auto object-contain"
           />
         </div>
       </div>
