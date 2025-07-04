@@ -1,6 +1,6 @@
 require "json"
 require "retryable"
-require_relative "event_validation"
+require_relative "event_validation_error"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/array/wrap"
 
