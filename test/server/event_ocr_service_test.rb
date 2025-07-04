@@ -7,7 +7,6 @@ require_relative "../test_helper"
 Bundler.require(:default)
 
 require_relative "../../lib/server/event_ocr_service"
-require_relative "../../lib/server/event_validation_error"
 
 class TestEventOcrService < Minitest::Test
   include TestHelper
