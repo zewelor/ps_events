@@ -1,10 +1,17 @@
-#!/usr/bin/env ruby
+#!dockerized.sh ruby
 # frozen_string_literal: true
 
-# filepath: /home/omen/personal/ps_events/bin/test_llm
-
 require "bundler/setup"
+
+Bundler.require(:development)
+
+# Only require the specific gems we need for OCR, not everything including Sinatra
+require "json"
 require "ruby_llm"
+require "retryable"
+require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/array/wrap"
+
 require "pathname"
 require_relative "../lib/server/event_ocr_service"
 
@@ -37,6 +44,7 @@ begin
 rescue => e
   puts "Error processing image: #{e.message}"
   puts "Error details: #{e.class}"
+  puts e.backtrace.join("\n")
 
   if e.message.include?("API_KEY")
     puts

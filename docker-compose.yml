@@ -13,6 +13,7 @@ services:
     <<: *x-app
     env_file:
       - .env
+    entrypoint:
     command:
       - sh
       - -c
