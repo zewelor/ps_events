@@ -7,7 +7,7 @@ require "active_support/core_ext/array/wrap"
 
 RubyLLM.configure do |config|
   config.gemini_api_key = ENV.fetch("GEMINI_API_KEY", nil)
-  config.log_level = :debug
+  # config.log_level = :verbose
 end
 
 class EventOcrService
@@ -28,7 +28,7 @@ class EventOcrService
     # Set initial instructions
     chat.with_instructions(build_instructions)
 
-    llm_output = chat.ask("", with: image_path).content
+    llm_output = chat.ask(with: image_path).content
 
     begin
       # Parse and validate JSON output - this may raise EventValidationError
@@ -65,15 +65,22 @@ class EventOcrService
       - Use only the information from the image, do not make assumptions or use external knowledge.
       - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
       - Current year is #{Time.now.year}.
+      - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order.
       - If you cannot extract the information, return an empty JSON object {}.
+      - For location, skip writing / adding "Porto Santo". We always assume the location is somewhere on island Porto Santo.
       - Directly return array with events, even if theres only one event.
-      - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order. For each event, include:
+      - Focus on required fields, do not add any additional information, unless explicitly mentioned and contained in the image and json schema.
+      - If all of the events are in the same day AND same place / location, return only single event
+        - In description write hours and whats happening at what time. For example:
+          "10:00 - Abertura do evento, 11:00 - Palestra sobre tecnologia, 12:00 - Almoço"
+        - For start_time use hour from the first thing happening / listed.
+        - Unless there is a clear / explicit end or finish time, leave it empty. Do not assume end_time.
 
       - Start date and time (assume current year)
-        - If the time is not mentioned, leave it empty
+        - If the start time is not mentioned, leave it empty. If there are multiple events in the same day, AND place, use the first time mentioned.
         - assume event time zone is Europe/Lisbon
       - End date and time (assume current year)
-        - If the time is not mentioned, leave it empty
+        - If the end / finish time is not explicitly mentioned, leave it empty.
         - assume event time zone is Europe/Lisbon
         - Only include end time if it is different from start time
       - Price type (field 'price_type')
