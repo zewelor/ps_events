@@ -12,13 +12,13 @@
   ],
   "properties": {
     "name": { "type": "string", "minLength": 3, "maxLength": 200 },
-    "start_date": { "type": "string", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
+    "start_date": { "type": "string", "description": "Date when event starts, in the format dd/mm/yyyy", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
     "start_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
-    "end_date": { "type": "string", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
+    "end_date": { "type": "string", "description": "Date when event ends, in the format dd/mm/yyyy", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
     "end_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
     "location": { "type": "string", "minLength": 3, "maxLength": 100 },
     "description": { "type": "string", "minLength": 10, "maxLength": 2000 },
-    "category": { "type": "string", "enum": [
+    "category": { "type": "string", "description": "Event category chosen from enum list", "enum": [
       "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
       "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
     ] },

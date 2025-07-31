@@ -1,15 +1,17 @@
 require "json"
 require "retryable"
+require_relative "event_validation"
 require_relative "event_validation_error"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/array/wrap"
 
 RubyLLM.configure do |config|
   config.gemini_api_key = ENV.fetch("GEMINI_API_KEY", nil)
+  config.log_level = :debug
 end
 
 class EventOcrService
-  MODEL = "gemini-2.5-flash-preview-05-20"
+  MODEL = "gemini-2.5-flash"
 
   def self.call(*args, **kwargs)
     new = self.new
@@ -19,7 +21,7 @@ class EventOcrService
   end
 
   def initialize
-    @chat = RubyLLM.chat(model: MODEL)
+    @chat = RubyLLM.chat(model: MODEL).with_schema(JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__))))
   end
 
   def analyze(image_path, retry_sleep: 0)
@@ -34,7 +36,7 @@ class EventOcrService
     rescue EventValidationError => first_error
       # If first attempt fails, retry with error feedback
       puts "🔄 Retrying due to validation error: #{first_error.message}"
-      Retryable.retryable(tries: 2, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
+      Retryable.retryable(tries: 5, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
         puts "🔄 Retry attempt #{retries}"
 
         current_error = exception || first_error
@@ -42,6 +44,7 @@ class EventOcrService
         error_message = build_retry_message(current_error)
         llm_output = chat.ask(error_message, with: image_path).content
 
+        ap llm_output
         # Parse and validate JSON output - this may raise EventValidationError
         parse_and_validate_response(llm_output)
       end
@@ -62,16 +65,9 @@ class EventOcrService
       - Use only the information from the image, do not make assumptions or use external knowledge.
       - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
       - Current year is #{Time.now.year}.
-      - Return raw JSON with requested informations.
-        - Return only with working raw JSON object, without any additional text or explanations.
       - If you cannot extract the information, return an empty JSON object {}.
       - Directly return array with events, even if theres only one event.
-      - Dont respond with markdown json code block, just directly json array
       - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order. For each event, include:
-
-      <json_schema>
-      #{JSON.dump(JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__))))}
-      </json_schema>
 
       - Start date and time (assume current year)
         - If the time is not mentioned, leave it empty
@@ -82,7 +78,7 @@ class EventOcrService
         - Only include end time if it is different from start time
       - Price type (field 'price_type')
         - If the price is not mentioned, use 'Desconhecido'
-        - If its more comples, like free till some hour, use 'Pago' and add a note in the description
+        - If its more complex, like free till some hour, use 'Pago' and add a note in the description
     INSTR
   end
 
@@ -103,12 +99,10 @@ class EventOcrService
     end
 
     message += "\nPlease ensure that:\n"
-    message += "- The JSON is well formatted\n"
     message += "- All required fields are present\n"
     message += "- Dates are in the format dd/mm/yyyy\n"
     message += "- The category is one of the valid schema categories\n"
-    message += "- The event name has at least 3 characters\n"
-    message += "\nReturn only the corrected JSON, without any additional text."
+    message += "- The event name has at least 3 characters"
 
     message
   end
