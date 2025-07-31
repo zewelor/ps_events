@@ -16,6 +16,9 @@ class TestEventOcrService < Minitest::Test
 
     # Provide a dummy chat object for RubyLLM.chat
     @dummy_chat = Object.new
+    def @dummy_chat.with_schema(_schema)
+      self
+    end
   end
 
   def teardown
@@ -93,7 +96,7 @@ class TestEventOcrService < Minitest::Test
         self
       end
 
-      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message, with:|
+      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         case call_count
         when 1
@@ -135,7 +138,7 @@ class TestEventOcrService < Minitest::Test
         self
       end
 
-      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message, with:|
+      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         # Always return invalid JSON
         OpenStruct.new(content: '{"invalid": "json"')
@@ -153,7 +156,7 @@ class TestEventOcrService < Minitest::Test
       assert_includes stdout, "🔄 Retrying due to validation error"
       assert_includes stdout, "🔄 Retry attempt"
       assert_includes stdout, "📋 Original error message"
-      assert_equal 3, call_count
+      assert_equal 6, call_count
     end
   end
 
@@ -168,7 +171,7 @@ class TestEventOcrService < Minitest::Test
         self
       end
 
-      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message, with:|
+      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         # Return valid event data on first attempt
         OpenStruct.new(content: '[{"name": "Evento Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]')
@@ -200,7 +203,7 @@ class TestEventOcrService < Minitest::Test
         self
       end
 
-      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message, with:|
+      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         # Return valid event data
         OpenStruct.new(content: '[{"name": "Evento Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]')
       end

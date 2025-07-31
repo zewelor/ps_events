@@ -44,7 +44,6 @@ class EventOcrService
         error_message = build_retry_message(current_error)
         llm_output = chat.ask(error_message, with: image_path).content
 
-        ap llm_output
         # Parse and validate JSON output - this may raise EventValidationError
         parse_and_validate_response(llm_output)
       end
