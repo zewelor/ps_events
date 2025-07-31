@@ -3,6 +3,11 @@
 
 [Link to ics](https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/events.ics)
 
+## Setup
+
+- cp .env.example .env
+- lefthook install -f
+
 ## Usage
 
 
