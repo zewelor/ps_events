@@ -30,6 +30,9 @@ class EventValidation
 
   def call(params)
     errors = schema_errors(params)
+
+    return Result.new(params, errors) if errors.any?
+
     validate_relations(params, errors)
     Result.new(params, errors)
   end

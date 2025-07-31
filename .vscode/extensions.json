@@ -2,8 +2,8 @@
   "recommendations": [
     "kaiwood.endwise",
     "redhat.vscode-yaml",
-    "shopify.ruby-lsp",
     "github.vscode-github-actions",
-    "nefrob.vscode-just-syntax"
+    "nefrob.vscode-just-syntax",
+    "shopify.ruby-lsp"
   ]
 }
