@@ -173,7 +173,7 @@ GEM
     jekyll-watch (2.2.1)
       listen (~> 3.0)
     json (2.13.2)
-    json-schema (5.2.1)
+    json-schema (6.0.0)
       addressable (~> 2.8)
       bigdecimal (~> 3.1)
     jwt (2.10.1)
@@ -364,7 +364,7 @@ DEPENDENCIES
   jekyll-seo-tag!
   jekyll-sitemap (~> 1.4)
   jekyll-tailwindcss
-  json-schema (~> 5.1)
+  json-schema (~> 6.0)
   lefthook
   mini_magick (~> 5.2)
   minitest (~> 5.25)
