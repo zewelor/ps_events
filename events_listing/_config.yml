@@ -10,6 +10,7 @@ page_gen:
     title: name
     dir: events
     data: events
+    # extension: false Url helper still generates with .html
     filter_condition: "require 'date'; end_date = record['end_date']; Date.strptime(end_date.split(' ')[0], '%d/%m/%Y') >= (Date.today - 1)"
 
 tailwindcss:
