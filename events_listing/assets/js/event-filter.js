@@ -40,9 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyCategory = selectedCategory !== 'all';
     const applyRange = selectedRange !== null;
 
-    if (shouldUpdateCounts && applyRange) updateCategoryCounts();
+    // Always update counts when requested so reset restores full counts too
+    if (shouldUpdateCounts) updateCategoryCounts();
     updateClearButtonVisibility();
-    if (!applyCategory && !applyRange) return;
+    // If no filters are applied, ensure all events are shown
+    if (!applyCategory && !applyRange) {
+      eventCards.forEach(card => {
+        card.style.display = 'flex';
+      });
+      return;
+    }
 
     eventCards.forEach(card => {
       const cardCategory = card.dataset.category;
@@ -92,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedRange = null;
     if (categorySelect) categorySelect.value = 'all';
     document.dispatchEvent(new CustomEvent('calendar:reset'));
-    filterEvents();
+  // Unhide any previously hidden category options before recounting
+  categoryOptions.forEach(opt => { opt.hidden = false; });
+  filterEvents(true);
   }
 });
