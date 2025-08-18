@@ -4,6 +4,7 @@
     "redhat.vscode-yaml",
     "github.vscode-github-actions",
     "nefrob.vscode-just-syntax",
-    "shopify.ruby-lsp"
+    "shopify.ruby-lsp",
+    "ms-playwright.playwright"
   ]
 }

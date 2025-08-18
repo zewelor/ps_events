@@ -34,9 +34,14 @@ If code during tests output anything on the console, capture it using capture_io
 Used in this project
 
 - Jekyll for static site generation.
+  - Inside container its available at http://jekyll:4000
 - Tailwind CSS for styling. We are using version 4
 - Sinatra for the backend.
   - Its running on port 4567 via docker-compose. Its accessible at http://sinatra:4567
+
+### MCP tools
+
+- When using playwright, use localhost:4000 as host
 
 ## UI and Styling
 
