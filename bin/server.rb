@@ -73,6 +73,7 @@ helpers do
   # returned unchanged. Any parsing errors fall back to the original string.
   def normalize_date(date_str)
     return "" if date_str.nil?
+
     if /^\d{4}-\d{2}-\d{2}$/.match?(date_str)
       Date.strptime(date_str, "%Y-%m-%d").strftime("%d/%m/%Y")
     else
