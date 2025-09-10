@@ -86,6 +86,7 @@ module Jekyll
 
     def parse_date_only(date_str)
       return nil if date_str.nil? || date_str.to_s.strip.empty?
+
       Date.parse(date_str.to_s)
     rescue
       nil

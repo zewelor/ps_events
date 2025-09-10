@@ -31,6 +31,7 @@ class ImageService
       unless %w[JPEG PNG GIF WEBP BMP TIFF].include?(image_format)
         raise "Unsupported image format: #{image_format}"
       end      # Set format first (must be done outside combine_options)
+
       image.format "webp"
 
       # Use combine_options for better performance when doing multiple operations
