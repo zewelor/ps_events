@@ -7,6 +7,8 @@ on:
       - '.github/workflows/regenerate_events.yml'
     branches:
       - main
+  schedule:
+    - cron: '0 5 */1 * *'
   repository_dispatch:
     types: [regenerate-events]
   workflow_dispatch:
