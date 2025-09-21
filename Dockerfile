@@ -1,4 +1,4 @@
-FROM ghcr.io/zewelor/ruby:3.4.5-slim AS base
+FROM ghcr.io/zewelor/ruby:3.4.6-slim AS base
 
 ARG BUNDLER_VERSION=2.6.9
 ARG RUNTIME_PACKAGES="imagemagick"
