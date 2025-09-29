@@ -3,9 +3,6 @@
     'config:recommended',
     ':dependencyDashboard',
   ],
-  ignorePaths: [
-    '.github/workflows',
-  ],
   timezone: 'Europe/Warsaw',
   vulnerabilityAlerts: {
     enabled: true,
@@ -54,6 +51,21 @@
       ],
       automerge: true,
       automergeType: 'branch'
+    },
+    {
+      matchManagers: [
+        'github-actions',
+      ],
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: true,
+      automergeType: 'pr',
+      labels: [
+        'renovate/github-actions',
+        'dependency/github-actions',
+      ],
     },
   ],
 }
