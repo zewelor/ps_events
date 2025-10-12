@@ -59,11 +59,7 @@
         'github-actions',
       ],
       automerge: true,
-      automergeType: 'pr',
-      labels: [
-        'renovate/github-actions',
-        'dependency/github-actions',
-      ],
+      automergeType: 'pr'
     },
   ],
 }
