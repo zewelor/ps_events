@@ -36,6 +36,8 @@
       matchUpdateTypes: [
         'patch',
       ],
+      automerge: true,
+      automergeType: 'pr',
       labels: [
         'renovate/image-release',
         'dependency/patch',
