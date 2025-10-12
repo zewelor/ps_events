@@ -58,10 +58,6 @@
       matchManagers: [
         'github-actions',
       ],
-      matchUpdateTypes: [
-        'patch',
-        'minor',
-      ],
       automerge: true,
       automergeType: 'pr',
       labels: [
