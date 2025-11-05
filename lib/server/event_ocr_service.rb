@@ -115,8 +115,19 @@ class EventOcrService
 
   # Parse and validate the LLM response, returning a result struct
   def parse_and_validate_response(response)
+    if response.is_a?(Hash) || response.is_a?(Array)
+      data = response
+    else
+      begin
+        data = JSON.parse(response)
+      rescue JSON::ParserError => e
+        error_msg = "Erro ao analisar JSON: #{e.message}"
+        raise EventValidationError.new(error_msg, validation_errors: [e.message])
+      end
+    end
+
     # We can get a single object or an array of objects
-    data = Array.wrap(response).map(&:symbolize_keys)
+    data = Array.wrap(data).map(&:symbolize_keys)
 
     validator = EventValidation.new
     valid_events = []
