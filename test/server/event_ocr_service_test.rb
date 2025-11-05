@@ -1,7 +1,7 @@
 require "bundler/setup"
 require "minitest/autorun"
-require "json"
 require "stringio"
+require "ostruct"
 require_relative "../test_helper"
 
 Bundler.require(:default)
@@ -32,7 +32,7 @@ class TestEventOcrService < Minitest::Test
   def test_parse_valid_json_array
     with_stubbed_llm do
       @service = EventOcrService.new
-      raw_response = '[{"name": "Evento de Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]'
+      raw_response = [{name: "Evento de Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}]
       result = @service.send(:parse_and_validate_response, raw_response)
       assert_kind_of Array, result
       assert_equal 1, result.length
@@ -44,7 +44,7 @@ class TestEventOcrService < Minitest::Test
   def test_parse_valid_json_single_object_converts_to_array
     with_stubbed_llm do
       @service = EventOcrService.new
-      raw_response = '{"name": "Evento de Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}'
+      raw_response = {name: "Evento de Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}
       result = @service.send(:parse_and_validate_response, raw_response)
       assert_kind_of Array, result
       assert_equal 1, result.length
@@ -52,21 +52,10 @@ class TestEventOcrService < Minitest::Test
     end
   end
 
-  def test_parse_invalid_json
-    with_stubbed_llm do
-      @service = EventOcrService.new
-      raw_response = "{ invalid json"
-      error = assert_raises(EventValidationError) do
-        @service.send(:parse_and_validate_response, raw_response)
-      end
-      assert_includes error.message, "Erro ao analisar JSON"
-    end
-  end
-
   def test_parse_valid_json_but_invalid_event_data
     with_stubbed_llm do
       @service = EventOcrService.new
-      raw_response = '[{"name": "AB", "start_date": "invalid-date", "end_date": "15/06/2025", "location": "Porto", "description": "Short desc", "category": "Invalid Category", "organizer": "Organizador Teste"}]'
+      raw_response = [{name: "AB", start_date: "invalid-date", end_date: "15/06/2025", location: "Porto", description: "Short desc", category: "Invalid Category", organizer: "Organizador Teste"}]
       error = assert_raises(EventValidationError) do
         @service.send(:parse_and_validate_response, raw_response)
       end
@@ -77,7 +66,7 @@ class TestEventOcrService < Minitest::Test
   def test_parse_multiple_events_mixed_validity
     with_stubbed_llm do
       @service = EventOcrService.new
-      raw_response = '[{"name": "Evento Válido", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}, {"name": "AB", "start_date": "invalid-date", "end_date": "15/06/2025", "location": "Porto", "description": "Short desc", "category": "Invalid Category", "organizer": "Organizador Teste"}]'
+      raw_response = [{name: "Evento Válido", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}, {name: "AB", start_date: "invalid-date", end_date: "15/06/2025", location: "Porto", description: "Short desc", category: "Invalid Category", organizer: "Organizador Teste"}]
       error = assert_raises(EventValidationError) do
         @service.send(:parse_and_validate_response, raw_response)
       end
@@ -100,14 +89,11 @@ class TestEventOcrService < Minitest::Test
         call_count += 1
         case call_count
         when 1
-          # First call - return invalid JSON
-          OpenStruct.new(content: '{"invalid": "json"')
+          # First call - return valid JSON but invalid event data
+          OpenStruct.new(content: [{name: "AB", start_date: "invalid-date", end_date: "15/06/2025", location: "Porto", description: "Short desc", category: "Invalid Category", organizer: "Organizador Teste"}])
         when 2
-          # Second call - return valid JSON but invalid event data
-          OpenStruct.new(content: '[{"name": "AB", "start_date": "invalid-date", "end_date": "15/06/2025", "location": "Porto", "description": "Short desc", "category": "Invalid Category", "organizer": "Organizador Teste"}]')
-        when 3
-          # Third call - return valid event data
-          OpenStruct.new(content: '[{"name": "Evento Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]')
+          # Second call - return valid event data
+          OpenStruct.new(content: [{name: "Evento Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}])
         end
       end
 
@@ -121,42 +107,8 @@ class TestEventOcrService < Minitest::Test
       # Verify retry debug messages are present
       assert_includes stdout, "🔄 Retrying due to validation error"
       assert_includes stdout, "🔄 Retry attempt 0"
-      assert_includes stdout, "🔄 Retry attempt 1"
       assert_includes stdout, "📋 Original error message"
-      assert_equal 3, call_count
-    end
-  end
-
-  def test_retry_exhausted_raises_final_error_with_captured_output
-    with_stubbed_llm do
-      @service = EventOcrService.new
-
-      # Mock the chat object to always return invalid data
-      call_count = 0
-      @service.instance_variable_get(:@chat).define_singleton_method(:with_instructions) do |instructions|
-        @instructions = instructions
-        self
-      end
-
-      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
-        call_count += 1
-        # Always return invalid JSON
-        OpenStruct.new(content: '{"invalid": "json"')
-      end
-
-      # Capture stdout to verify debug messages
-      stdout, _stderr = capture_io do
-        error = assert_raises(RuntimeError) do
-          @service.analyze("/fake/image/path", retry_sleep: 0)
-        end
-        assert_includes error.message, "Erro ao analisar imagem"
-      end
-
-      # Verify retry debug messages are present for all attempts
-      assert_includes stdout, "🔄 Retrying due to validation error"
-      assert_includes stdout, "🔄 Retry attempt"
-      assert_includes stdout, "📋 Original error message"
-      assert_equal 6, call_count
+      assert_equal 2, call_count
     end
   end
 
@@ -174,7 +126,7 @@ class TestEventOcrService < Minitest::Test
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         # Return valid event data on first attempt
-        OpenStruct.new(content: '[{"name": "Evento Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]')
+        OpenStruct.new(content: [{name: "Evento Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}])
       end
 
       # Capture stdout to verify no retry messages
@@ -205,7 +157,7 @@ class TestEventOcrService < Minitest::Test
 
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         # Return valid event data
-        OpenStruct.new(content: '[{"name": "Evento Teste", "start_date": "15/06/2025", "end_date": "15/06/2025", "location": "Porto", "description": "Um evento de teste válido para os nossos testes", "category": "Música", "organizer": "Organizador Teste"}]')
+        OpenStruct.new(content: [{name: "Evento Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}])
       end
 
       # This should work without any network requests

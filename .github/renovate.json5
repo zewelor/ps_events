@@ -49,7 +49,6 @@
       ],
       matchUpdateTypes: [
         'patch',
-        'minor',
       ],
       automerge: true,
       automergeType: 'branch'
