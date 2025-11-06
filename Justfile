@@ -19,7 +19,6 @@ jekyll *args='':
 test:
   @source dockerized.sh > /dev/null ; rake test
 
-# Install Playwright browsers (host). Requires Node/npm available on host.
 e2e_install:
   npx -y @playwright/test@latest install
 

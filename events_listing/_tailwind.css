@@ -39,8 +39,12 @@
   @apply text-[var(--color-text-muted)] text-sm;
 }
 
+@utility calendar-group {
+  @apply w-full bg-white border border-gray-200 rounded-2xl sm:rounded-full px-3 py-2 shadow-sm sm:w-auto;
+}
+
 @utility btn--inactive {
-  @apply bg-[var(--color-buttons)] text-[var(--color-text-secondary)] hover:bg-[var(--color-buttons-hover)];
+  @apply bg-[var(--color-buttons)] text-white hover:bg-[var(--color-buttons-hover)];
 }
 
 @utility btn--active {
@@ -67,18 +71,27 @@
   @apply btn px-4 py-2 mr-2 mb-2;
 }
 
+/* Calendar navigation buttons */
+.calendar-nav-btn {
+  @apply btn inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-buttons)] text-white hover:bg-[var(--color-buttons-hover)] ring-1 ring-black/5;
+}
+
 /* Calendar range button styles */
 .range-btn {
-  @apply btn px-3 py-1;
+  @apply btn rounded-full px-4 py-2 text-sm font-semibold w-full sm:w-auto;
 }
 
 .cal-day {
-  @apply h-16 border-r-2 border-b-2 border-gray-200 flex flex-col items-center justify-between p-1;
+  @apply min-h-[3.75rem] w-full flex flex-col items-center justify-between gap-1.5 px-2.5 py-2.5 bg-white text-[var(--color-text-primary)] hover:bg-[var(--color-buttons)]/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-buttons)];
+}
+
+.calendar-day-number {
+  @apply text-lg leading-none;
 }
 
 /* Selected calendar day */
 .cal-day.selected {
-  @apply bg-[var(--color-selected-filter)] text-white;
+  @apply bg-[var(--color-selected-filter)] text-white shadow-inner;
 }
 
 /* Form input fields common styling */
@@ -127,18 +140,121 @@
 
 /* Week selection button */
 .week-btn {
-  @apply btn--inactive h-16 border-r-2 border-b-2 border-gray-200 flex items-center justify-center;
+  @apply btn btn--inactive min-h-[3.75rem] w-full rounded-none flex items-center justify-center text-base font-semibold text-[var(--color-text-secondary)];
+}
+
+.week-btn-icon {
+  @apply text-2xl leading-none;
 }
 
 /* Calendar grid with narrow week column */
 .calendar-grid {
-  @apply grid text-center text-sm overflow-hidden border-gray-200 bg-white;
-  grid-template-columns: 2rem repeat(7,minmax(0,1fr));
-  @apply min-h-[28rem];
+  @apply grid text-center text-sm bg-white border border-gray-200 rounded-xl overflow-hidden;
+  grid-template-columns: 2.5rem repeat(7,minmax(0,1fr));
 }
 
 
 /* Active week selector */
 .week-btn--active {
-  @apply bg-[var(--color-selected-filter)] text-white;
+  @apply bg-[var(--color-selected-filter)] text-white shadow-inner;
 }
+
+/* Calendar headers*/
+.calendar-header {
+  @apply flex items-center justify-center bg-white py-2 font-bold tracking-[0.16em] text-[var(--color-text-muted)];
+}
+
+.calendar-grid > * {
+  @apply border-r border-b border-gray-200;
+}
+
+.calendar-grid > *:nth-child(8n) {
+  border-right-width: 0;
+}
+
+.calendar-grid > *:nth-last-child(-n+8) {
+  border-bottom-width: 0;
+}
+
+.calendar-event-dots {
+  @apply flex items-center justify-center gap-1 pt-1;
+}
+
+.calendar-event-dot {
+  @apply inline-flex items-center justify-center rounded-full border-2 border-white shadow-sm;
+  width: 0.75rem;
+  height: 0.75rem;
+  min-width: 0.75rem;
+  min-height: 0.75rem;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12), 0 2px 4px rgba(15, 23, 42, 0.08);
+}
+
+@media (min-width: 1024px) {
+  .calendar-event-dot {
+    width: 1.125rem;
+    height: 1.125rem;
+    min-width: 1.125rem;
+    min-height: 1.125rem;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12), 0 3px 6px rgba(15, 23, 42, 0.1);
+  }
+}
+
+.calendar-event-spacer {
+  @apply block h-3;
+}
+
+@media (max-width: 639px) {
+  .calendar-nav-btn {
+    height: 1.9rem;
+    width: 1.9rem;
+  }
+
+  .range-btn {
+    @apply text-sm font-semibold;
+  }
+
+  .calendar-grid {
+    grid-template-columns: 1.75rem repeat(7, minmax(0, 1fr));
+  }
+
+  .cal-day {
+    @apply min-h-[3.25rem] gap-1 px-2 py-2;
+  }
+
+  .calendar-day-number {
+    @apply text-base;
+  }
+
+  .week-btn {
+    @apply min-h-[3.25rem] text-sm;
+  }
+
+  .week-btn-icon {
+    @apply text-xl;
+  }
+
+  .calendar-event-dots {
+    @apply gap-1;
+  }
+
+  .calendar-event-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  .calendar-event-spacer {
+    @apply h-2;
+  }
+
+  #calendar-title {
+    @apply text-base;
+  }
+
+  .calendar-header {
+    font-size: 0.6rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+  }
+}
+
+/* Today indicator: JS sets no class, so style via data-date equals today using attribute selector in runtime? Not possible in CSS. Leave for future JS enhancement. */
