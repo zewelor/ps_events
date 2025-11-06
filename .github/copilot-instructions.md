@@ -49,6 +49,22 @@ Used in this project
 - Implement responsive design with Tailwind CSS; use a mobile-first approach.
 - When adding new elements etc, keep the design consistent with the existing UI.
 
+### UI Validation Checklist
+
+- Start (or ensure running) the Jekyll container and preview via `http://jekyll:4000` using the Simple Browser when verifying UI changes.
+- Confirm styles are compiled by checking that `events_listing/_site/assets/css/styles.css` includes the new utilities (re-run `bundle exec jekyll build` if unsure).
+- Exercise critical flows manually: calendar navigation, filter buttons, and event cards should render correctly in both desktop and mobile breakpoints (use the Simple Browser's responsive toolbar or narrow the viewport).
+- Verify interactive affordances: hover states on buttons, visible calendar event dots, and consistent spacing around toolbar groups.
+- After visual review, run `bundle exec rubocop -a` and `rake test` to keep lint/tests green before handing work back.
+
+### Calendar Component Requirements
+
+- Month navigation, quick filters (“Todas as Datas”, “Hoje”, “Esta semana”), and inline day selection must coexist without console errors or broken styles.
+- Event dots must remain visible against the day background at all breakpoints; ensure each category still maps to a distinct colour.
+- Week selector column should align flush with the calendar grid and reuse existing button styles/colours from the design system.
+- Maintain a single-frame look around the grid (no double borders) and keep row heights comfortable on desktop and mobile.
+- Keep accessibility simple: semantic buttons, polite month title updates, and focus outlines on actionable elements are required—avoid reintroducing heavy ARIA state tracking unless necessary.
+
 ### Project Structure
 
 - Envs are loaded from the .env file, in docker-compose.yml

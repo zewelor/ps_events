@@ -76,16 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearSelection() {
     calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-    rangeButtons.forEach(btn => {
-      btn.classList.remove('btn--active');
-      btn.classList.add('btn--inactive');
-    });
-    // Activate "Todas as Datas" (resetBtn) when clearing selection
-    resetBtn.classList.remove('btn--inactive');
-    resetBtn.classList.add('btn--active');
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectedRange = null;
+    activateRangeButton(resetBtn);
     buildCalendar(currentYear, currentMonth);
   }
 
@@ -97,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const daysOfWeek = ['Sem', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     daysOfWeek.forEach(dayName => {
       const header = document.createElement('div');
-      header.className = 'py-2 font-semibold border-b border-gray-200';
+      header.className = 'calendar-header';
       header.textContent = dayName;
       calendarEl.appendChild(header);
     });
@@ -112,16 +106,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const weekBtn = document.createElement('button');
       weekBtn.className = 'week-btn';
-      weekBtn.innerHTML = '&raquo;';
+      const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+      const weekLabel = `Selecionar semana de ${formatDisplayDate(weekStart)} a ${formatDisplayDate(weekEnd)}`;
+      weekBtn.type = 'button';
+      weekBtn.setAttribute('aria-label', weekLabel);
+      weekBtn.innerHTML = `<span class="sr-only">${weekLabel}</span><span aria-hidden="true" class="week-btn-icon">&raquo;</span>`;
       const startISO = formatISO(weekStart);
-      const endISO = formatISO(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6));
+      const endISO = formatISO(weekEnd);
       weekBtn.dataset.start = startISO;
       weekBtn.dataset.end = endISO;
       if (selectedRange && selectedRange.start === startISO && selectedRange.end === endISO) {
         weekBtn.classList.add('week-btn--active');
       }
       weekBtn.addEventListener('click', () => {
-        activateRangeButton(null); // This will deactivate all date filter buttons including "Todas as Datas"
+        activateRangeButton(null); // Desativar filtros rápidos ao escolher uma semana manualmente
         calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
         calendarEl.querySelectorAll('.week-btn').forEach(b => b.classList.remove('week-btn--active'));
         document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
@@ -136,26 +134,35 @@ document.addEventListener('DOMContentLoaded', () => {
         date.setDate(weekStart.getDate() + i);
         const dateStr = formatISO(date);
         const cell = document.createElement('button');
+        cell.type = 'button';
         cell.className = 'cal-day';
         cell.dataset.date = dateStr;
-        cell.innerHTML = `<span>${date.getDate()}</span>`;
+        cell.innerHTML = `<span class="calendar-day-number">${date.getDate()}</span>`;
         if (date.getMonth() !== month) {
-          cell.querySelector('span').classList.add('text-gray-400');
+          cell.querySelector('.calendar-day-number').classList.add('text-gray-400', 'font-normal');
         }
 
         const dots = document.createElement('div');
-        dots.className = 'flex space-x-1 mb-1';
-        const categoriesOnDate = new Set(); // Keep track of categories already added for this date
+        dots.className = 'calendar-event-dots';
+        const categoriesOnDate = new Set();
         events.filter(e => e.date === dateStr).forEach(e => {
-          if (!categoriesOnDate.has(e.category)) { // Check if category already has a dot
+          if (!categoriesOnDate.has(e.category)) {
             const dot = document.createElement('span');
-            dot.className = 'w-2 h-2 lg:w-5 lg:h-5 rounded-full';
+            dot.className = 'calendar-event-dot';
             dot.style.backgroundColor = e.color;
             dots.appendChild(dot);
-            categoriesOnDate.add(e.category); // Add category to the set
+            categoriesOnDate.add(e.category);
           }
         });
-        cell.appendChild(dots);
+        if (dots.children.length > 0) {
+          dots.setAttribute('role', 'presentation');
+          cell.appendChild(dots);
+        } else {
+          const spacer = document.createElement('span');
+          spacer.className = 'calendar-event-spacer';
+          spacer.setAttribute('aria-hidden', 'true');
+          cell.appendChild(spacer);
+        }
 
         if (selectedRange && dateStr >= selectedRange.start && dateStr <= selectedRange.end) {
           cell.classList.add('selected');
@@ -169,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
             cell.classList.add('selected');
-            activateRangeButton(null); // This will deactivate all date filter buttons including "Todas as Datas"
+            activateRangeButton(null); // Desativar filtros rápidos ao escolher uma data individual
             selectRange(dateStr, dateStr);
             document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
           }
@@ -182,28 +189,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function activateRangeButton(btn) {
+    // Reset all buttons to inactive before applying the desired state
+    rangeButtons.forEach(b => {
+      b.classList.remove('btn--active');
+      b.classList.add('btn--inactive');
+    });
+
     if (btn === resetBtn) {
-      // When "Todas as Datas" is selected, deactivate all other date filters
-      rangeButtons.forEach(b => {
-        b.classList.remove('btn--active');
-        b.classList.add('btn--inactive');
-      });
       resetBtn.classList.remove('btn--inactive');
       resetBtn.classList.add('btn--active');
     } else if (btn) {
-      // When any specific date filter is selected, deactivate all including "Todas as Datas"
-      rangeButtons.forEach(b => {
-        b.classList.remove('btn--active');
-        b.classList.add('btn--inactive');
-      });
       btn.classList.remove('btn--inactive');
       btn.classList.add('btn--active');
-    } else {
-      // When null is passed (for calendar date/week selections), deactivate all buttons including "Todas as Datas"
-      rangeButtons.forEach(b => {
-        b.classList.remove('btn--active');
-        b.classList.add('btn--inactive');
-      });
     }
   }
 
@@ -247,5 +244,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Formats a JavaScript Date object into a short, localized string for display.
+   * Used for accessibility labels and UI elements.
+   * @param {Date} date - The date to format.
+   * @returns {string} - Formatted date string in 'dd MMM' format (Portuguese).
+   */
+  function formatDisplayDate(date) {
+    return date.toLocaleDateString('pt-PT', {day: '2-digit', month: 'short'});
   }
 });
