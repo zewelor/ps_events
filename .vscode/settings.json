@@ -3,7 +3,11 @@
     "*.css": "tailwindcss"
   },
   "chat.tools.terminal.autoApprove": {
-
+    "bundle": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "rake": true,
     "docker compose": true,
     "rm": false,
     "rmdir": false,
