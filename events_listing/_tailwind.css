@@ -83,6 +83,19 @@
 
 .cal-day {
   @apply min-h-[3.75rem] w-full flex flex-col items-center justify-between gap-1.5 px-2.5 py-2.5 bg-white text-[var(--color-text-primary)] hover:bg-[var(--color-buttons)]/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-buttons)];
+  @apply transition-all duration-200 ease-out;
+}
+
+.cal-day:hover {
+  @apply transform scale-105 z-10 shadow-md border-gray-200;
+}
+
+.cal-day.is-today {
+  @apply font-bold border-2 border-[var(--color-buttons)] text-[var(--color-buttons)];
+}
+
+.cal-day.selected.is-today {
+  @apply bg-[var(--color-selected-filter)] text-white border-transparent;
 }
 
 .calendar-day-number {
@@ -234,12 +247,12 @@
   }
 
   .calendar-event-dots {
-    @apply gap-1;
+    @apply gap-1.5;
   }
 
   .calendar-event-dot {
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.6rem;
+    height: 0.6rem;
   }
 
   .calendar-event-spacer {
