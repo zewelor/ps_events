@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   todayBtn.addEventListener('click', () => {
     const iso = formatISO(today);
     activateRangeButton(todayBtn);
-    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: iso, end: iso}}));
+    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', { detail: { start: iso, end: iso } }));
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectRange(iso, iso);
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const start = startOfWeek(today);
     const end = endOfWeek(today);
     activateRangeButton(weekBtn);
-    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start, end}}));
+    document.dispatchEvent(new CustomEvent('calendar:rangeSelected', { detail: { start, end } }));
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
     selectRange(start, end);
@@ -84,11 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildCalendar(year, month) {
-    const monthName = new Date(year, month).toLocaleString('pt-PT', {month:'long', year:'numeric'});
+    const monthName = new Date(year, month).toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
     titleEl.textContent = `${monthName}`;
     calendarEl.innerHTML = '';
 
-    const daysOfWeek = ['Sem', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const daysOfWeek = ['', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     daysOfWeek.forEach(dayName => {
       const header = document.createElement('div');
       header.className = 'calendar-header';
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activateRangeButton(null); // Desativar filtros rápidos ao escolher uma semana manualmente
         calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
         calendarEl.querySelectorAll('.week-btn').forEach(b => b.classList.remove('week-btn--active'));
-        document.dispatchEvent(new CustomEvent('calendar:rangeSelected', {detail: {start: startISO, end: endISO}}));
+        document.dispatchEvent(new CustomEvent('calendar:rangeSelected', { detail: { start: startISO, end: endISO } }));
         selectRange(startISO, endISO);
         weekBtn.classList.add('week-btn--active');
         highlightSelection();
@@ -138,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cell.className = 'cal-day';
         cell.dataset.date = dateStr;
         cell.innerHTML = `<span class="calendar-day-number">${date.getDate()}</span>`;
+        if (dateStr === formatISO(new Date())) {
+          cell.classList.add('is-today');
+        }
         if (date.getMonth() !== month) {
           cell.querySelector('.calendar-day-number').classList.add('text-gray-400', 'font-normal');
         }
@@ -178,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.classList.add('selected');
             activateRangeButton(null); // Desativar filtros rápidos ao escolher uma data individual
             selectRange(dateStr, dateStr);
-            document.dispatchEvent(new CustomEvent('calendar:dateSelected', {detail: {date: dateStr}}));
+            document.dispatchEvent(new CustomEvent('calendar:dateSelected', { detail: { date: dateStr } }));
           }
         });
 
@@ -205,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function selectRange(start, end) {
-    selectedRange = {start, end};
+    selectedRange = { start, end };
   }
 
   function highlightSelection() {
@@ -253,6 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {string} - Formatted date string in 'dd MMM' format (Portuguese).
    */
   function formatDisplayDate(date) {
-    return date.toLocaleDateString('pt-PT', {day: '2-digit', month: 'short'});
+    return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
   }
 });
