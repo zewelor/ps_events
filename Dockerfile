@@ -82,6 +82,7 @@ COPY --chown=app:app . ./
 USER app
 
 # Always refresh and save new llm model info on container start
+# hadolint ignore=SC1072 # Ruby inline command, not a shell script
 RUN ["ruby", "-e", "require 'bundler/setup'; Bundler.require(:default) ; RubyLLM.models.refresh! ; RubyLLM.models.save_to_json"]
 
 ENTRYPOINT ["/usr/bin/catatonit", "--"]
