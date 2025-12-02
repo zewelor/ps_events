@@ -2,7 +2,7 @@ pre-commit:
   commands:
     hadolint:
       glob: "Dockerfile"
-      run: docker run --rm -i -v "$PWD":/repo -w /repo hadolint/hadolint:latest hadolint --ignore DL3006 {files}
+      run: docker run --rm -i -v "$PWD":/repo -w /repo hadolint/hadolint:latest hadolint {files}
     rubocop:
       exclude: "application.rb|routes.rb"
       run: rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}

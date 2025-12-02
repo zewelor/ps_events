@@ -31,7 +31,7 @@ jobs:
       - uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: Dockerfile
-          ignore: DL3006
+          config: .hadolint.yaml
 
       - name: Docker meta
         id: meta
