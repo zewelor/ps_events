@@ -11,7 +11,7 @@ RubyLLM.configure do |config|
 end
 
 class EventOcrService
-  MODEL = "gemini-2.5-flash"
+  MODEL = "gemini-2.5-pro"
 
   def self.call(*args, **kwargs)
     new = self.new
@@ -21,7 +21,7 @@ class EventOcrService
   end
 
   def initialize
-    @chat = RubyLLM.chat(model: MODEL).with_schema(JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__))))
+    @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema)
   end
 
   def analyze(image_path, retry_sleep: 0)
@@ -56,11 +56,20 @@ class EventOcrService
 
   attr_reader :chat
 
+  def build_schema
+    schema = JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__)))
+    {
+      "type" => "array",
+      "items" => schema
+    }
+  end
+
   def build_instructions
     <<~INSTR
       You are an expert in analyzing images and extracting information:
 
       - Your task is to analyze the provided image and extract relevant text information in a structured format.
+      - Think extra hard to not miss any event on the image.
       - Use only the information from the image, do not make assumptions or use external knowledge.
       - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
       - Current year is #{Time.now.year}.
@@ -74,7 +83,6 @@ class EventOcrService
           "10:00 - Abertura do evento, 11:00 - Palestra sobre tecnologia, 12:00 - Almoço"
         - For start_time use hour from the first thing happening / listed.
         - Unless there is a clear / explicit end or finish time, leave it empty. Do not assume end_time.
-
       - Start date and time (assume current year)
         - If the start time is not mentioned, leave it empty. If there are multiple events in the same day, AND place, use the first time mentioned.
         - assume event time zone is Europe/Lisbon
@@ -105,6 +113,7 @@ class EventOcrService
     end
 
     message += "\nPlease ensure that:\n"
+    message += "- The JSON response follows the expected schema\n"
     message += "- All required fields are present\n"
     message += "- Dates are in the format dd/mm/yyyy\n"
     message += "- The category is one of the valid schema categories\n"
@@ -127,7 +136,10 @@ class EventOcrService
     end
 
     # We can get a single object or an array of objects
-    data = Array.wrap(data).map(&:symbolize_keys)
+    data = Array.wrap(data).each do |item|
+      item.symbolize_keys!
+      item[:responsibility_agreement] = "on"
+    end
 
     validator = EventValidation.new
     valid_events = []
