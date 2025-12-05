@@ -50,7 +50,7 @@ end
 gem "rackup", "~> 2.2"
 gem "puma", "~> 7.0"
 
-gem "google-apis-sheets_v4", "~> 0.45.0"
+gem "google-apis-sheets_v4", "~> 0.46.0"
 gem "retryable", "~> 3.0"
 
 # Image processing gem
