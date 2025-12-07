@@ -11,7 +11,7 @@ RubyLLM.configure do |config|
 end
 
 class EventOcrService
-  MODEL = "gemini-2.5-pro"
+  MODEL = "gemini-2.5-flash"
 
   def self.call(*args, **kwargs)
     new = self.new
