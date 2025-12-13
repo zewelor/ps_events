@@ -55,6 +55,16 @@
     },
     {
       matchManagers: [
+        'bundler',
+      ],
+      matchPackageNames: [
+        'minitest',
+      ],
+      automerge: true,
+      automergeType: 'branch'
+    },
+    {
+      matchManagers: [
         'github-actions',
       ],
       automerge: true,
