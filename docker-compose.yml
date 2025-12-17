@@ -21,7 +21,7 @@ services:
   jekyll:
     <<: *x-app
     ports:
-      - "127.0.0.1:4000:4000"
+      - "127.0.0.1:4001:4000"
       - "127.0.0.1:35729:35729"
     environment:
       BACKEND_HOST: "http://localhost:4001"
