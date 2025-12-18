@@ -37,7 +37,7 @@
         'patch',
       ],
       automerge: true,
-      automergeType: 'pr',
+      automergeType: 'branch',
       labels: [
         'renovate/image-release',
         'dependency/patch',
@@ -68,7 +68,7 @@
         'github-actions',
       ],
       automerge: true,
-      automergeType: 'pr'
+      automergeType: 'branch'
     },
   ],
 }
