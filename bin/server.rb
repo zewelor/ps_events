@@ -197,24 +197,21 @@ post "/events_ocr" do
     pp events
 
     # Ensure events is an array before calling .each, if it could be a single string from OCR
+    appended_ranges = []
     Array(events).each do |ev|
-      # Process only if ev is a hash, suitable for AddEventService
       if ev.is_a?(Hash)
-        service.add_event(ev,
+        result = service.add_event(ev,
           submitter_email: ocr_submitter_email,
           image_path: use_image ? image_path : "")
+        appended_ranges << result.updates.updated_range if result&.updates&.updated_range
       end
     end
 
     upload_image_if_production(image_path) if use_image
 
-    events_count = if events.is_a?(Array)
-      events.length
-    else
-      ((events.is_a?(String) && !events.strip.empty?) ? 1 : 0)
-    end
-
-    json_success("#{events_count} evento(s) processado(s) via OCR", {text: JSON.pretty_generate(events)})
+    events_count = appended_ranges.size
+    range_info = appended_ranges.any? ? " → #{appended_ranges.join(", ")}" : ""
+    json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {text: JSON.pretty_generate(events)})
   rescue => e
     pp events
     puts "❌ Error processing OCR: #{e.message}"
