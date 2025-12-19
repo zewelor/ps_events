@@ -15,3 +15,10 @@
 .env
 .aider*
 _site/
+
+# Images in root directory only
+/*.jpeg
+/*.jpg
+/*.png
+/*.webp
+/*.gif
