@@ -4,7 +4,7 @@
       "Bash(gh pr view:*)",
       "Bash(gh pr merge:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nchore: change automergeType to branch for patch updates\n\nPatch updates \\(docker, bundler, github-actions\\) now use branch\nautomerge which doesn''t require GitHub''s \"Allow auto-merge\" setting.\nThis ensures automatic merging works without additional repo config.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git ls-tree:*)"
     ]
   }
 }
