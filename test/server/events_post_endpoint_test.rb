@@ -10,12 +10,16 @@ class AddEventEndpointTest < Minitest::Test
   class DummySheets
     attr_reader :rows
 
+    MockUpdates = Struct.new(:updated_range)
+    MockResponse = Struct.new(:updates)
+
     def initialize
       @rows = []
     end
 
-    def append_row(_spreadsheet_id, _range, data)
+    def append_row(_spreadsheet_id, range, data)
       @rows << data
+      MockResponse.new(MockUpdates.new("#{range}!A#{@rows.size}"))
     end
   end
 

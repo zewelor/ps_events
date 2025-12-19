@@ -10,7 +10,15 @@ class AddEventService
   def add_event(event, submitter_email:, image_path: "")
     row = build_row(event, submitter_email, image_path)
     log_event(row)
-    @google_sheets.append_row(@spreadsheet_id, @events_range, row)
+
+    unless @google_sheets
+      puts "⚠️ Google Sheets service is nil - row NOT appended (APP_ENV=test?)"
+      return nil
+    end
+
+    result = @google_sheets.append_row(@spreadsheet_id, @events_range, row)
+    puts "✅ Row appended to sheet: #{result.updates.updated_range}" if result&.updates
+    result
   end
 
   private
