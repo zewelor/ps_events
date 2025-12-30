@@ -26,7 +26,7 @@ module Jekyll
 
       filtered_events = events.select do |event|
         # Fallback to start_date if end_date is missing or empty
-        end_date_string = (event["end_date"].empty? ? event["start_date"] : event["end_date"]).to_s.strip
+        end_date_string = (event["end_date"].to_s.empty? ? event["start_date"] : event["end_date"]).to_s.strip
 
         begin
           event_end_date = Date.parse(end_date_string)

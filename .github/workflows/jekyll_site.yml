@@ -12,7 +12,7 @@ on:
   schedule:
     - cron: '0 5 */1 * *'
   workflow_run:
-    workflows: ["Regenerate events"]
+    workflows: ["Regenerate events", "Docker Checks"]
     branches: [main]
     types:
       - completed
@@ -34,6 +34,8 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    # Skip if triggered by failed workflow_run (e.g., Docker Checks failed)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
