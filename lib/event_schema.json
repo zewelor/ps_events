@@ -4,7 +4,6 @@
   "required": [
     "name",
     "start_date",
-    "end_date",
     "location",
     "description",
     "category",
@@ -14,7 +13,7 @@
     "name": { "type": "string", "minLength": 3, "maxLength": 200 },
     "start_date": { "type": "string", "description": "Date when event starts, in the format dd/mm/yyyy", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
     "start_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
-    "end_date": { "type": "string", "description": "Date when event ends, in the format dd/mm/yyyy", "pattern": "^\\d{2}/\\d{2}/\\d{4}$" },
+    "end_date": { "type": "string", "description": "Date when event ends, in the format dd/mm/yyyy. Optional - defaults to start_date if empty.", "pattern": "^(|\\d{1,2}/\\d{1,2}/\\d{4})$" },
     "end_time": { "type": "string", "pattern": "^(|\\d{2}:\\d{2})$" },
     "location": { "type": "string", "minLength": 3, "maxLength": 100 },
     "description": { "type": "string", "minLength": 10, "maxLength": 2000 },

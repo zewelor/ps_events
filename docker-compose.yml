@@ -42,11 +42,11 @@ services:
   sinatra:
     <<: *x-app
     ports:
-      - "127.0.0.1:4001:4567"
+      - "127.0.0.1:4002:4567"
     env_file:
       - .env
     environment:
-      ALLOWED_ORIGIN: "http://localhost:4000"
+      ALLOWED_ORIGIN: "http://localhost:4001"
     command:
       - rerun
       - --pattern

@@ -25,17 +25,15 @@ module Jekyll
       current_date = Date.today
 
       filtered_events = events.select do |event|
-        end_date_string = event.fetch("end_date")
+        # Fallback to start_date if end_date is missing or empty
+        end_date_string = (event["end_date"].empty? ? event["start_date"] : event["end_date"]).to_s.strip
 
-        if end_date_string && !end_date_string.empty?
-          # Use End Date field for date comparison
-          begin
-            event_end_date = Date.parse(end_date_string)
-            event_end_date >= current_date
-          rescue => e
-            Jekyll.logger.warn "End date parsing error for event '#{event["name"]}': #{e.message}"
-            false
-          end
+        begin
+          event_end_date = Date.parse(end_date_string)
+          event_end_date >= current_date
+        rescue => e
+          Jekyll.logger.warn "Date parsing error for event '#{event["name"]}': #{e.message}"
+          false
         end
       end
 

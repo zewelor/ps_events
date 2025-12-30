@@ -5,7 +5,10 @@
       "Bash(gh pr merge:*)",
       "Bash(git add:*)",
       "Bash(git ls-tree:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(python3:*)",
+      "Bash(ruby -Ilib -Itest test/server/event_validation_test.rb:*)",
+      "Bash(docker compose run:*)"
     ]
   }
 }

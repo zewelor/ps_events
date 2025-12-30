@@ -54,10 +54,13 @@ class EventValidation
       (errors[:start_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 01/12/2025)"
     end
 
-    begin
-      Date.strptime(params[:end_date], "%d/%m/%Y")
-    rescue ArgumentError
-      (errors[:end_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 02/12/2025)"
+    # Only validate end_date if provided (it's optional, defaults to start_date)
+    if params[:end_date] && !params[:end_date].to_s.strip.empty?
+      begin
+        Date.strptime(params[:end_date], "%d/%m/%Y")
+      rescue ArgumentError
+        (errors[:end_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 02/12/2025)"
+      end
     end
 
     if params[:start_time] && !params[:start_time].to_s.empty?
@@ -76,7 +79,10 @@ class EventValidation
       end
     end
 
-    unless errors[:end_date] || errors[:start_date]
+    # Only validate end_date >= start_date if end_date is provided
+    end_date_present = params[:end_date] && !params[:end_date].to_s.strip.empty?
+
+    if end_date_present && !errors[:end_date] && !errors[:start_date]
       begin
         end_date = Date.strptime(params[:end_date], "%d/%m/%Y")
         start_date = Date.strptime(params[:start_date], "%d/%m/%Y")
@@ -87,10 +93,14 @@ class EventValidation
       end
     end
 
-    if params[:start_date] && params[:end_date] &&
+    # For same-day events, validate end_time > start_time
+    # If end_date is empty, treat as same-day event (fallback to start_date)
+    effective_end_date = end_date_present ? params[:end_date] : params[:start_date]
+    is_same_day = params[:start_date] == effective_end_date
+
+    if is_same_day &&
         params[:start_time] && params[:end_time] &&
-        !params[:start_time].to_s.empty? && !params[:end_time].to_s.empty? &&
-        params[:start_date] == params[:end_date]
+        !params[:start_time].to_s.empty? && !params[:end_time].to_s.empty?
       begin
         start_time = Time.parse(params[:start_time])
         end_time = Time.parse(params[:end_time])

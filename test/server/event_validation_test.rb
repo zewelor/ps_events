@@ -100,6 +100,53 @@ class TestEventValidation < Minitest::Test
     assert result.success?, "Validation should succeed when optional fields are empty: #{result.errors.to_h}"
   end
 
+  def test_valid_event_without_end_date
+    data = {
+      name: "Single Day Event",
+      start_date: "01/12/2025",
+      end_date: "",
+      location: "Valid Location",
+      description: "This is a valid single-day event without end_date.",
+      category: "Música",
+      organizer: "Valid Organizer"
+    }
+    result = @validator.call(data)
+    assert result.success?, "Validation should succeed when end_date is empty (defaults to start_date): #{result.errors.to_h}"
+  end
+
+  def test_valid_event_with_times_but_no_end_date
+    data = {
+      name: "Single Day Event With Times",
+      start_date: "01/12/2025",
+      start_time: "10:00",
+      end_date: "",
+      end_time: "18:00",
+      location: "Valid Location",
+      description: "This is a valid single-day event with times but no end_date.",
+      category: "Música",
+      organizer: "Valid Organizer"
+    }
+    result = @validator.call(data)
+    assert result.success?, "Validation should succeed when end_date is empty but times are valid: #{result.errors.to_h}"
+  end
+
+  def test_invalid_end_time_before_start_time_when_no_end_date
+    data = {
+      name: "Single Day Event",
+      start_date: "01/12/2025",
+      start_time: "18:00",
+      end_date: "",
+      end_time: "10:00",
+      location: "Valid Location",
+      description: "End time is before start time on same day.",
+      category: "Música",
+      organizer: "Valid Organizer"
+    }
+    result = @validator.call(data)
+    assert result.failure?, "Validation should fail when end_time is before start_time (no end_date means same day)"
+    refute_empty result.errors[:end_time]
+  end
+
   def test_invalid_email
     data = {
       name: "Event Name",
