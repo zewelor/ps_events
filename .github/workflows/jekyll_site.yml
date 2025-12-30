@@ -12,7 +12,7 @@ on:
   schedule:
     - cron: '0 5 */1 * *'
   workflow_run:
-    workflows: ["Regenerate events", "Docker Checks"]
+    workflows: ["Regenerate events"]
     branches: [main]
     types:
       - completed
@@ -37,6 +37,43 @@ jobs:
     # Skip if triggered by failed workflow_run (e.g., Docker Checks failed)
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - name: Wait for Docker Checks if running
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Check if Docker Checks workflow is running for this commit and wait for it
+          MAX_WAIT=600  # 10 minutes max
+          POLL_INTERVAL=15
+
+          for i in $(seq 1 $((MAX_WAIT / POLL_INTERVAL))); do
+            # Check for running/queued workflows
+            RUNNING=$(gh api repos/${{ github.repository }}/actions/workflows/docker_checks.yml/runs \
+              --jq ".workflow_runs[] | select(.head_sha == \"${{ github.sha }}\" and (.status == \"in_progress\" or .status == \"queued\")) | .id" \
+              | head -1)
+
+            if [ -z "$RUNNING" ]; then
+              echo "No Docker Checks running for this commit."
+
+              # Check if there was a completed run and if it succeeded
+              CONCLUSION=$(gh api repos/${{ github.repository }}/actions/workflows/docker_checks.yml/runs \
+                --jq ".workflow_runs[] | select(.head_sha == \"${{ github.sha }}\") | .conclusion" \
+                | head -1)
+
+              if [ "$CONCLUSION" = "failure" ]; then
+                echo "Docker Checks failed for this commit. Aborting deploy."
+                exit 1
+              fi
+
+              echo "Proceeding with Jekyll build."
+              exit 0
+            fi
+
+            echo "Docker Checks is running (run ID: $RUNNING). Waiting ${POLL_INTERVAL}s... (attempt $i)"
+            sleep $POLL_INTERVAL
+          done
+
+          echo "Timeout waiting for Docker Checks. Proceeding anyway."
+
       - name: Checkout
         uses: actions/checkout@v6
 
