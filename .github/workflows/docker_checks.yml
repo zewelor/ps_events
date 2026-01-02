@@ -58,8 +58,8 @@ jobs:
         with:
           push: true
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ci
+          cache-to: type=gha,mode=max,scope=ci
           target: ci
           # Used by docker-compose.ci
           tags: ${{ steps.meta.outputs.tags }}
