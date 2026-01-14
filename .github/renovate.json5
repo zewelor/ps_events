@@ -65,6 +65,24 @@
     },
     {
       matchManagers: [
+        'bundler',
+      ],
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      matchPackageNames: [
+        'lefthook',
+        'rubocop-performance',
+        'ruby-lsp',
+        'amazing_print',
+        'standard',
+      ],
+    },
+    {
+      matchManagers: [
         'github-actions',
       ],
       automerge: true,

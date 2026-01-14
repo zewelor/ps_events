@@ -71,3 +71,8 @@ jobs:
       - name: Run Tests
         run: |
           docker compose run --rm app rake test
+
+      - name: Jekyll doctor
+        run: |
+          docker compose run --rm -e JEKYLL_ENV=production -e COMMIT_SHA=${{ github.sha }} -e BACKEND_HOST=http://sinatra:4567 app bundle exec jekyll doctor --source /app/events_listing
+
