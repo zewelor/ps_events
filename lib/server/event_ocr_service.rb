@@ -4,14 +4,15 @@ require_relative "event_validation"
 require_relative "event_validation_error"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/array/wrap"
+require "active_support/core_ext/enumerable"
 
 RubyLLM.configure do |config|
   config.gemini_api_key = ENV.fetch("GEMINI_API_KEY", nil)
-  # config.log_level = :verbose
+  # config.log_level = :debug
 end
 
 class EventOcrService
-  MODEL = "gemini-flash-latest"
+  MODEL = "gemini-3-flash-preview"
 
   def self.call(*args, **kwargs)
     new = self.new
@@ -21,7 +22,7 @@ class EventOcrService
   end
 
   def initialize
-    @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema)
+    @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema).with_thinking(effort: :medium)
   end
 
   def analyze(image_path, retry_sleep: 0)
@@ -91,8 +92,9 @@ class EventOcrService
         - assume event time zone is Europe/Lisbon
         - Only include end time if it is different from start time
       - Price type (field 'price_type')
-        - If the price is not mentioned, use 'Desconhecido'
+        - If the price of an event is not specifically mentioned, use 'Desconhecido'
         - If its more complex, like free till some hour, use 'Pago' and add a note in the description
+        - Be sure that price mentioned is price for attending the event, not for something else, like parking / extra menu / etc.
     INSTR
   end
 
@@ -137,6 +139,7 @@ class EventOcrService
 
     # We can get a single object or an array of objects
     data = Array.wrap(data).each do |item|
+      item.compact_blank!
       item.symbolize_keys!
       item[:responsibility_agreement] = "on"
     end

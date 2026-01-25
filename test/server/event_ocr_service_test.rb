@@ -19,6 +19,10 @@ class TestEventOcrService < Minitest::Test
     def @dummy_chat.with_schema(_schema)
       self
     end
+
+    def @dummy_chat.with_thinking(_opts)
+      self
+    end
   end
 
   def teardown

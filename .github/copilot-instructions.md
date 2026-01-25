@@ -25,7 +25,14 @@ When writing / translating text, for pages etc, use the following guidelines:
 
 ## Testing
 
-run `rake test` to run the tests.
+This project is dockerized. To run commands in the containerized environment, you should use the helper script.
+The preferred way to run tests is:
+
+```bash
+source dockerized.sh; rake test
+```
+
+This will ensure the aliases are set up correctly before running the tests.
 
 If code during tests output anything on the console, capture it using capture_io
 
