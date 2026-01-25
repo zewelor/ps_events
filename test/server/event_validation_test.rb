@@ -93,7 +93,6 @@ class TestEventValidation < Minitest::Test
       end_time: "",
       contact_email: "",
       contact_tel: "",
-      price_type: "",
       event_link1: ""
     }
     result = @validator.call(data)
