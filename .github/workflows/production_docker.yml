@@ -59,7 +59,9 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           target: live
           platforms: linux/amd64
-          cache-from: type=gha,scope=live           # scope=<scope>: which scope cache object belongs to (default buildkit)
+          cache-from: |
+            type=gha,scope=live
+            type=gha,scope=ci
           cache-to: type=gha,mode=max,scope=live
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -9,6 +9,13 @@ on:
       - 'bin/server.rb'
       - 'events_listing/**'
       - '!.github/workflows/docker_checks.yml'
+  pull_request:
+    paths-ignore:
+      - 'images/**'
+      - '.github/workflows/**'
+      - 'bin/server.rb'
+      - 'events_listing/**'
+      - '!.github/workflows/docker_checks.yml'
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
@@ -43,6 +50,7 @@ jobs:
             type=raw,enable=true,priority=300,prefix=,suffix=,value=dev
 
       - name: Login to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -56,7 +64,7 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v6
         with:
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           load: true
           cache-from: type=gha,scope=ci
           cache-to: type=gha,mode=max,scope=ci

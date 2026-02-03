@@ -6,7 +6,14 @@
 ## Setup
 
 - cp .env.example .env
+- source dockerized.sh
 - lefthook install -f
+
+Run hooks via the dockerized aliases:
+
+```bash
+source dockerized.sh; lefthook run pre-commit
+```
 
 ## Usage
 
