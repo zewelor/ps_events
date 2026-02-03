@@ -10,7 +10,7 @@ gem "json-schema", "~> 6.0"
 gem "activesupport", "~> 8.0"
 
 group :development, :test do
-  gem "debug", platforms: %i[mri mingw x64_mingw]
+  gem "debug", platforms: %i[mri]
   gem "irb"
   gem "rack-test", "~> 2.2"
   gem "minitest", "~> 5.25"
@@ -31,7 +31,6 @@ group :development do
   gem "jekyll", "~> 4.4"
 
   gem "bigdecimal", "~> 3.1"
-  gem "rerun"
 end
 
 group :test do

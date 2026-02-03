@@ -66,13 +66,12 @@ jobs:
 
       - name: Run Rubocop
         run: |
-          docker compose run --rm app rubocop
+          docker compose run --rm app bundle exec rubocop
 
       - name: Run Tests
         run: |
-          docker compose run --rm app rake test
+          docker compose run --rm app bundle exec rake test
 
       - name: Jekyll doctor
         run: |
           docker compose run --rm -e JEKYLL_ENV=production -e COMMIT_SHA=${{ github.sha }} -e BACKEND_HOST=http://sinatra:4567 app bundle exec jekyll doctor --source /app/events_listing
-
