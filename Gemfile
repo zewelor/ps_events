@@ -31,7 +31,6 @@ group :development do
   gem "jekyll", "~> 4.4"
 
   gem "bigdecimal", "~> 3.1"
-  gem "rerun"
 end
 
 group :test do

@@ -27,9 +27,18 @@ services:
       BACKEND_HOST: "http://localhost:4001"
       JEKYLL_ENV: development
     command:
-      - rerun
-      - --pattern
-      - '{events_listing/_plugins/**/*.rb,events.csv,Gemfile.lock,events_listing/_config.yml}'
+      - watchexec
+      - --restart
+      - --watch
+      - .
+      - -f
+      - events_listing/_plugins/**/*.rb
+      - -f
+      - events.csv
+      - -f
+      - Gemfile.lock
+      - -f
+      - events_listing/_config.yml
       - --
       - jekyll
       - server
@@ -48,9 +57,16 @@ services:
     environment:
       ALLOWED_ORIGIN: "http://localhost:4001"
     command:
-      - rerun
-      - --pattern
-      - '{bin/server.rb,lib/server/**/*.rb,lib/event_schema.json}'
+      - watchexec
+      - --restart
+      - --watch
+      - .
+      - -f
+      - bin/server.rb
+      - -f
+      - lib/server/**/*.rb
+      - -f
+      - lib/event_schema.json
       - --
       - ruby
       - bin/server.rb

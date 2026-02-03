@@ -1,24 +1,23 @@
 FROM ghcr.io/zewelor/ruby:4.0.1-slim AS base
 
-ARG BUNDLER_VERSION=2.6.9
 ARG RUNTIME_PACKAGES="imagemagick"
-ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file"
+ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
+ARG WATCHEXEC_VERSION="2.3.3"
 
 # We mount whole . dir into app, so vendor/bundle would get overwritten
 ENV BUNDLE_PATH=/bundle \
-    BUNDLE_BIN=/bundle/bin \
-    GEM_HOME=/bundle
+  BUNDLE_BIN=/bundle/bin \
+  GEM_HOME=/bundle
 
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    $RUNTIME_PACKAGES && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    gem install bundler -v "$BUNDLER_VERSION"
+  apt-get install -y --no-install-recommends \
+  $RUNTIME_PACKAGES && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 FROM base AS basedev
 
@@ -27,15 +26,30 @@ ENV BUNDLE_AUTO_INSTALL=true
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    $DEV_PACKAGES && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+  apt-get install -y --no-install-recommends \
+  $DEV_PACKAGES && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install watchexec for development containers (replaces rerun)
+# hadolint ignore=DL3003
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) watchexec_arch="x86_64-unknown-linux-gnu" ;; \
+    arm64) watchexec_arch="aarch64-unknown-linux-gnu" ;; \
+    *) echo "Unsupported architecture: $arch" >&2; exit 1 ;; \
+  esac; \
+  tmpdir="$(mktemp -d)"; \
+  curl -fsSL -o "$tmpdir/watchexec.tar.xz" "https://github.com/watchexec/watchexec/releases/download/v${WATCHEXEC_VERSION}/watchexec-${WATCHEXEC_VERSION}-${watchexec_arch}.tar.xz"; \
+  tar -C "$tmpdir" -xJf "$tmpdir/watchexec.tar.xz"; \
+  install -m 0755 "$(find "$tmpdir" -type f -name watchexec -print -quit)" /usr/local/bin/watchexec; \
+  rm -rf "$tmpdir"
 
 FROM basedev AS dev
 
 RUN mkdir -p "$BUNDLE_PATH" && \
-    chown -R app:app "$BUNDLE_PATH"
+  chown -R app:app "$BUNDLE_PATH"
 
 USER app
 
@@ -52,26 +66,26 @@ FROM baseliveci AS ci
 
 # hadolint ignore=SC2086
 RUN mkdir -p $BUNDLE_PATH && \
-    chown -R app $BUNDLE_PATH
+  chown -R app $BUNDLE_PATH
 
 RUN bundle install "-j$(nproc)" --retry 3 && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+  rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
 FROM baseliveci AS live_builder
 
 ENV BUNDLE_WITHOUT="development:test:jekyll_plugins"
 
 RUN bundle install "-j$(nproc)" --retry 3 && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+  rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
 FROM base AS live
 
 # We enable `BUNDLE_DEPLOYMENT` so that bundler won't take the liberty to upgrade any gems.
 # APP_ENV for sinatra
 ENV BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_WITHOUT="development:test:jekyll_plugins" \
-    RUBYOPT='--disable-did_you_mean' \
-    APP_ENV="production"
+  BUNDLE_WITHOUT="development:test:jekyll_plugins" \
+  RUBYOPT='--disable-did_you_mean' \
+  APP_ENV="production"
 
 # Workdir set in base image
 # hadolint ignore=DL3045
