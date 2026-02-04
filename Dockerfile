@@ -6,10 +6,7 @@ ARG WATCHEXEC_VERSION="2.3.3"
 
 # We mount whole . dir into app, so vendor/bundle would get overwritten
 ENV BUNDLE_PATH=/bundle \
-  BUNDLE_BIN=/bundle/bin \
   GEM_HOME=/bundle
-
-ENV PATH="${BUNDLE_BIN}:${PATH}"
 
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
