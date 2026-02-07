@@ -147,12 +147,18 @@ configure do
       ApiAuthService.validate_token(token)
     end)
 
-    puts "✅ API Bearer authentication registered"
+    unless ENV["APP_ENV"] == "test"
+      puts "✅ API Bearer authentication registered"
+    end
   else
-    puts "ℹ️ API Bearer authentication not registered (no API_KEYS configured)"
+    unless ENV["APP_ENV"] == "test"
+      puts "ℹ️ API Bearer authentication not registered (no API_KEYS configured)"
+    end
   end
 
-  puts "Available auth methods: #{AuthRegistry.available_methods.join(", ")}"
+  unless ENV["APP_ENV"] == "test"
+    puts "Available auth methods: #{AuthRegistry.available_methods.join(", ")}"
+  end
 end
 
 # Enable CORS for all routes, but only from the allowed origin

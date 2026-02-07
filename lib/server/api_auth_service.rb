@@ -19,9 +19,13 @@ module ApiAuthService
       @keys[token] = email
     end
 
-    puts "✅ ApiAuthService: Loaded #{@keys.size} API key(s)"
+    unless ENV["APP_ENV"] == "test"
+      puts "✅ ApiAuthService: Loaded #{@keys.size} API key(s)"
+    end
   rescue InvalidFormatError => e
-    puts "❌ ApiAuthService: Failed to load keys - #{e.message}"
+    unless ENV["APP_ENV"] == "test"
+      puts "❌ ApiAuthService: Failed to load keys - #{e.message}"
+    end
     raise
   end
 
