@@ -26,3 +26,7 @@ e2e_install:
 # Ensure: docker compose up jekyll (in another terminal)
 e2e:
   npx -y @playwright/test@latest test e2e/tests --config=e2e/playwright.config.ts
+
+# Generate API key for OCR bearer auth
+gen_api_key:
+  ruby bin/gen_api_key.rb

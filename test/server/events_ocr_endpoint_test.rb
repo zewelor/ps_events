@@ -3,6 +3,7 @@ ENV["APP_ENV"] = "test"
 require "minitest/autorun"
 require "rack/test"
 require_relative "../../bin/server"
+require_relative "../../lib/server/auth_registry"
 
 class EventsOcrEndpointTest < Minitest::Test
   include Rack::Test::Methods
@@ -52,22 +53,27 @@ class EventsOcrEndpointTest < Minitest::Test
   end
 
   def test_missing_token
-    post "/events_ocr", {}
+    AuthRegistry.stub :authenticate, {authenticated: false, error: "Authentication required"} do
+      post "/events_ocr", {}
+    end
     assert_equal 401, last_response.status
+    assert_equal 0, app.settings.google_sheets.rows.length
   end
 
   def test_not_authorized
-    GoogleAuthService.stub :validate_token, {success: true, email: "bad@example.com"} do
+    AuthRegistry.stub :authenticate, {authenticated: false, error: "Email not authorized", status_code: 403} do
       post "/events_ocr", {google_token: "token"}
     end
     assert_equal 403, last_response.status
+    assert_equal 0, app.settings.google_sheets.rows.length
   end
 
   def test_successful_ocr
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     out, _err = capture_io do
       EventOcrService.stub :call, [valid_event] do
-        GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
-          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
             post "/events_ocr", {
               google_token: "token",
               event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
@@ -89,10 +95,11 @@ class EventsOcrEndpointTest < Minitest::Test
   end
 
   def test_ocr_without_event_image
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     out, _err = capture_io do
       EventOcrService.stub :call, [valid_event] do
-        GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
-          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
             post "/events_ocr", {
               google_token: "token",
               event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
@@ -105,5 +112,23 @@ class EventsOcrEndpointTest < Minitest::Test
     assert last_response.ok?, out
     row = app.settings.google_sheets.rows.first
     assert_equal "", row[14]
+  end
+
+  def test_bearer_auth_success
+    out, _err = capture_io do
+      EventOcrService.stub :call, [valid_event] do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+            post "/events_ocr", {
+              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+            }
+          end
+        end
+      end
+    end
+
+    assert last_response.ok?, out
+    row = app.settings.google_sheets.rows.first
+    assert_includes row[1], "+ocr@"
   end
 end

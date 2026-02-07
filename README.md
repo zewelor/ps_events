@@ -18,6 +18,31 @@ source dockerized.sh; lefthook run pre-commit
 ## Usage
 
 
+### API Authentication (OCR)
+
+Endpoint `/events_ocr` pode ser chamado com Bearer token em vez de Google OAuth.
+
+**Configurar no .env:**
+
+```bash
+API_KEYS=token1:email1@example.com,token2:email2@partner.pl
+```
+
+**Gerar um token (CLI):**
+
+```bash
+just gen_api_key
+```
+
+**Exemplo de chamada:**
+
+```bash
+curl -X POST http://localhost:4567/events_ocr \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -F "event_image=@plakat.jpg"
+```
+
+
 Generate an ICS file from the default Google Sheets CSV:
 
 ```bash

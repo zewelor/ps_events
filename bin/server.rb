@@ -16,6 +16,8 @@ require_relative "../lib/server/google_auth_service"
 require_relative "../lib/server/security_service"
 require_relative "../lib/server/event_ocr_service"
 require_relative "../lib/server/add_event_service"
+require_relative "../lib/server/auth_registry"
+require_relative "../lib/server/api_auth_service"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -108,6 +110,51 @@ configure do
     ENV.fetch("ALLOWED_ORIGIN", "https://pxopulse.com") # overridden in development via docker-compose
 end
 
+# Register authentication methods
+configure do
+  # Google OAuth - always available
+  AuthRegistry.register(:google_oauth, lambda do |request|
+    # Skip in development mode
+    return {authenticated: false} if settings.environment == :development
+
+    params = request.params
+    unless params[:google_token] && !params[:google_token].strip.empty?
+      return {authenticated: false}
+    end
+
+    auth = GoogleAuthService.validate_token(params[:google_token])
+    unless auth[:success]
+      return {authenticated: false}
+    end
+
+    unless SecurityService.is_valid?(auth[:email])
+      return {authenticated: false, error: "Email not authorized", status_code: 403}
+    end
+
+    {authenticated: true, email: auth[:email]}
+  end)
+
+  # API Bearer token - only if API_KEYS configured
+  api_keys = ENV["API_KEYS"]
+  if api_keys && !api_keys.strip.empty?
+    ApiAuthService.load_keys!(api_keys)
+
+    AuthRegistry.register(:api_bearer, lambda do |request|
+      auth_header = request.env["HTTP_AUTHORIZATION"]
+      return {authenticated: false} unless auth_header&.start_with?("Bearer ")
+
+      token = auth_header.sub("Bearer ", "").strip
+      ApiAuthService.validate_token(token)
+    end)
+
+    puts "✅ API Bearer authentication registered"
+  else
+    puts "ℹ️ API Bearer authentication not registered (no API_KEYS configured)"
+  end
+
+  puts "Available auth methods: #{AuthRegistry.available_methods.join(", ")}"
+end
+
 # Enable CORS for all routes, but only from the allowed origin
 before do
   origin = request.env["HTTP_ORIGIN"]
@@ -163,23 +210,17 @@ post "/event_image" do
 end
 
 post "/events_ocr" do
+  # Authentication via AuthRegistry (supports Google OAuth or API Bearer)
   if settings.environment == :development
     user_email = "development@example.com"
   else
-    unless params[:google_token] && !params[:google_token].strip.empty?
-      return json_error("Google authentication required", 401)
+    auth_result = AuthRegistry.authenticate(request)
+    unless auth_result[:authenticated]
+      status_code = auth_result[:status_code] || 401
+      return json_error(auth_result[:error] || "Authentication required", status_code)
     end
-
-    auth = GoogleAuthService.validate_token(params[:google_token])
-    unless auth[:success]
-      return json_error("Google authentication failed: #{auth[:error]}", 401)
-    end
-
-    unless SecurityService.is_valid?(auth[:email])
-      return json_error("Email not authorized", 403)
-    end
-
-    user_email = auth[:email]
+    user_email = auth_result[:email]
+    puts "✅ Authenticated via #{auth_result[:method]}: #{user_email}"
   end
 
   begin
