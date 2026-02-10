@@ -1,5 +1,11 @@
 #!/usr/bin/env ruby
 
+# Sinatra environment is driven by RACK_ENV. Our containers set APP_ENV, so
+# make sure production doesn't silently run as :development.
+if ENV["RACK_ENV"].to_s.strip.empty? && !ENV["APP_ENV"].to_s.strip.empty?
+  ENV["RACK_ENV"] = ENV["APP_ENV"]
+end
+
 require "bundler/setup"
 require "json"
 require "active_support/all" # Add this line
@@ -18,6 +24,7 @@ require_relative "../lib/server/event_ocr_service"
 require_relative "../lib/server/add_event_service"
 require_relative "../lib/server/auth_registry"
 require_relative "../lib/server/api_auth_service"
+require_relative "../lib/server/param_utils"
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -118,13 +125,18 @@ configure do
     return {authenticated: false} if settings.environment == :development
 
     params = request.params
-    unless params[:google_token] && !params[:google_token].strip.empty?
+    google_token = ParamUtils.fetch(params, :google_token)
+    unless google_token && !google_token.strip.empty?
       return {authenticated: false}
     end
 
-    auth = GoogleAuthService.validate_token(params[:google_token])
+    auth = GoogleAuthService.validate_token(google_token)
     unless auth[:success]
-      return {authenticated: false}
+      return {
+        authenticated: false,
+        error: "Google authentication failed: #{auth[:error] || "Invalid token"}",
+        status_code: 401
+      }
     end
 
     unless SecurityService.is_valid?(auth[:email])
@@ -178,7 +190,7 @@ options "*" do
   end
   response.headers["Access-Control-Allow-Origin"] = settings.allowed_origin
   response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-  response.headers["Access-Control-Allow-Headers"] = "Content-Type,Accept,Origin"
+  response.headers["Access-Control-Allow-Headers"] = "Content-Type,Accept,Origin,Authorization"
   200
 end
 
@@ -193,11 +205,12 @@ end
 
 post "/event_image" do
   unless settings.environment == :development
-    unless params[:google_token] && !params[:google_token].strip.empty?
+    google_token = ParamUtils.fetch(params, :google_token)
+    unless google_token && !google_token.strip.empty?
       return json_error("Google authentication required", 401)
     end
 
-    auth = GoogleAuthService.validate_token(params[:google_token])
+    auth = GoogleAuthService.validate_token(google_token)
     unless auth[:success]
       return json_error("Google authentication failed: #{auth[:error]}", 401)
     end
@@ -271,13 +284,14 @@ post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
   # Require Google token
-  unless params[:google_token] && !params[:google_token].strip.empty?
+  google_token = ParamUtils.fetch(params, :google_token)
+  unless google_token && !google_token.strip.empty?
     puts "❌ No Google token provided"
     return json_error("Google authentication is required to submit an event", 401)
   end
 
   # Validate Google token (now required)
-  auth_result = GoogleAuthService.validate_token(params[:google_token])
+  auth_result = GoogleAuthService.validate_token(google_token)
   unless auth_result[:success]
     puts "❌ Google auth failed: #{auth_result[:error]}"
     return json_error("Google authentication failed: #{auth_result[:error]}", 401)

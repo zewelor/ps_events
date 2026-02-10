@@ -37,7 +37,18 @@ class AuthRegistryTest < Minitest::Test
     AuthRegistry.register(:fails2, ->(_req) { {authenticated: false} })
     result = AuthRegistry.authenticate(nil)
     refute result[:authenticated]
-    assert_equal "Authentication failed", result[:error]
+    assert_equal "Authentication required", result[:error]
+  end
+
+  def test_authenticate_returns_first_actionable_failure
+    AuthRegistry.register(:google_oauth, ->(_req) { {authenticated: false, error: "Email not authorized", status_code: 403} })
+    AuthRegistry.register(:api_bearer, ->(_req) { {authenticated: false} })
+
+    result = AuthRegistry.authenticate(nil)
+    refute result[:authenticated]
+    assert_equal "Email not authorized", result[:error]
+    assert_equal 403, result[:status_code]
+    assert_equal :google_oauth, result[:method]
   end
 
   def test_authenticate_no_methods_configured

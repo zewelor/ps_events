@@ -19,11 +19,19 @@ module AuthRegistry
       return {authenticated: false, error: "No authentication methods configured"}
     end
 
+    best_failure = nil
     @handlers.each do |name, handler|
       result = handler.call(request)
       return result.merge(method: name) if result[:authenticated]
+
+      # Preserve actionable failures (e.g. 403 not whitelisted, 401 invalid token)
+      # but keep trying other methods in case another strategy succeeds.
+      if (result[:error] || result[:status_code]) && best_failure.nil?
+        best_failure = result.merge(method: name)
+      end
     end
 
-    {authenticated: false, error: "Authentication failed"}
+    # If no handler provided an actionable failure, assume credentials were not provided at all.
+    best_failure || {authenticated: false, error: "Authentication required"}
   end
 end
