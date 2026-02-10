@@ -79,12 +79,16 @@ RUN bundle install "-j$(nproc)" --retry 3 && \
 
 FROM base AS live
 
+# Inject git SHA at build time (workflow passes build-arg GIT_CODE_VERSION).
+ARG GIT_CODE_VERSION="unknown"
+
 # We enable `BUNDLE_DEPLOYMENT` so that bundler won't take the liberty to upgrade any gems.
 # APP_ENV for sinatra
 ENV BUNDLE_DEPLOYMENT="1" \
   BUNDLE_WITHOUT="development:test:jekyll_plugins" \
   RUBYOPT='--disable-did_you_mean' \
-  APP_ENV="production"
+  APP_ENV="production" \
+  GIT_CODE_VERSION="${GIT_CODE_VERSION}"
 
 # Workdir set in base image
 # hadolint ignore=DL3045
