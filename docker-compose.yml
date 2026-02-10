@@ -40,6 +40,8 @@ services:
       - -f
       - events_listing/_config.yml
       - --
+      - bundle
+      - exec
       - jekyll
       - server
       - --force_polling

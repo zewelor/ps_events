@@ -30,7 +30,7 @@ group :development do
 
   gem "jekyll", "~> 4.4"
 
-  gem "bigdecimal", "~> 3.1"
+  gem "bigdecimal", "~> 4.0"
 end
 
 group :test do
