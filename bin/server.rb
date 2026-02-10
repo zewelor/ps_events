@@ -196,11 +196,24 @@ end
 
 # Health check endpoint
 get "/health" do
-  json_response({
+  response_data = {
     status: "ok",
     timestamp: Time.now.iso8601,
     google_sheets_connected: !settings.google_sheets.nil?
-  })
+  }
+
+  if ENV["HEALTH_DIAGNOSTICS"].to_s == "1" && ENV["APP_ENV"] != "test"
+    response_data.merge!({
+      app_env: ENV["APP_ENV"],
+      rack_env: ENV["RACK_ENV"],
+      sinatra_env: settings.environment.to_s,
+      auth_methods: AuthRegistry.available_methods,
+      api_bearer_enabled: ApiAuthService.enabled?,
+      code_version: ENV["GIT_CODE_VERSION"]
+    })
+  end
+
+  json_response(response_data)
 end
 
 post "/event_image" do
