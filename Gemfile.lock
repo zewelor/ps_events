@@ -196,7 +196,8 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    minitest (5.27.0)
+    minitest (6.0.1)
+      prism (~> 1.5)
     multi_json (1.19.1)
     multipart-post (2.4.1)
     mustermann (3.0.4)
@@ -370,7 +371,7 @@ DEPENDENCIES
   json-schema (~> 6.0)
   lefthook
   mini_magick (~> 5.2)
-  minitest (~> 5.25)
+  minitest (~> 6.0)
   puma (~> 7.0)
   rack-test (~> 2.2)
   rackup (~> 2.2)

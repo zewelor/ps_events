@@ -2,6 +2,7 @@ ENV["APP_ENV"] = "test"
 
 require "minitest/autorun"
 require "rack/test"
+require_relative "../test_helper"
 require_relative "../../bin/server"
 require_relative "../../lib/server/auth_registry"
 
