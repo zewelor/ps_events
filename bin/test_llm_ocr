@@ -20,29 +20,31 @@ service = EventOcrService.new
 
 # CLI argument validation
 if ARGV.length != 1
-  puts "Usage: #{$0} <image_path>"
-  puts "Example: #{$0} ./my_image.jpg"
+  puts "Usage: #{$0} <file_path>"
+  puts "Example image: #{$0} ./my_image.jpg"
+  puts "Example PDF: #{$0} /tmp/my_events.pdf"
   exit 1
 end
 
-image_path = ARGV[0]
+input_path = ARGV[0]
 
-# Validate image file exists
-unless File.exist?(image_path)
-  puts "Error: Image file '#{image_path}' does not exist."
+# Validate input file exists
+unless File.exist?(input_path)
+  puts "Error: File '#{input_path}' does not exist."
   exit 1
 end
 
 begin
-  puts "Analyzing image: #{image_path}"
+  puts "Analyzing file: #{input_path}"
+  puts "Detected PDF input; processing all pages." if File.extname(input_path).casecmp(".pdf").zero?
   puts
-  result = service.analyze(image_path)
+  result = service.analyze(input_path)
   puts "Analysis result:"
   puts "=" * 50
   pp result
   puts "=" * 50
 rescue => e
-  puts "Error processing image: #{e.message}"
+  puts "Error processing file: #{e.message}"
   puts "Error details: #{e.class}"
   puts e.backtrace.join("\n")
 

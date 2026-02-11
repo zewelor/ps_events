@@ -1,5 +1,8 @@
 require "json"
+require "fileutils"
+require "mini_magick"
 require "retryable"
+require "tmpdir"
 require_relative "event_validation"
 require_relative "event_validation_error"
 require "active_support/core_ext/hash/keys"
@@ -13,6 +16,7 @@ end
 
 class EventOcrService
   MODEL = "gemini-3-flash-preview"
+  PDF_DENSITY = 200
 
   def self.call(*args, **kwargs)
     new = self.new
@@ -25,10 +29,20 @@ class EventOcrService
     @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema).with_thinking(effort: :medium)
   end
 
-  def analyze(image_path, retry_sleep: 0)
+  def analyze(input_path, retry_sleep: 0)
     # Set initial instructions
     chat.with_instructions(build_instructions)
 
+    return analyze_pdf(input_path, retry_sleep: retry_sleep) if pdf_file?(input_path)
+
+    analyze_image(input_path, retry_sleep: retry_sleep)
+  end
+
+  private
+
+  attr_reader :chat
+
+  def analyze_image(image_path, retry_sleep:)
     llm_output = chat.ask(with: image_path).content
 
     begin
@@ -53,9 +67,44 @@ class EventOcrService
     raise "Erro ao analisar imagem: #{e.message}"
   end
 
-  private
+  def analyze_pdf(pdf_path, retry_sleep:)
+    page_image_paths, temp_dir = extract_pdf_pages_to_images(pdf_path)
+    events = page_image_paths.flat_map do |page_image_path|
+      analyze_image(page_image_path, retry_sleep: retry_sleep)
+    end
 
-  attr_reader :chat
+    events
+  ensure
+    cleanup_temp_dir(temp_dir)
+  end
+
+  def extract_pdf_pages_to_images(pdf_path)
+    temp_dir = Dir.mktmpdir("event_ocr_pdf_")
+    output_pattern = File.join(temp_dir, "page-%04d.png")
+    MiniMagick.convert do |convert|
+      convert.density(PDF_DENSITY)
+      convert << pdf_path
+      convert << output_pattern
+    end
+
+    page_image_paths = Dir.glob(File.join(temp_dir, "page-*.png")).sort
+    raise "Erro ao converter PDF: nenhum conteúdo de imagem foi gerado" if page_image_paths.empty?
+
+    [page_image_paths, temp_dir]
+  rescue => e
+    cleanup_temp_dir(temp_dir)
+    raise "Erro ao converter PDF: #{e.message}"
+  end
+
+  def cleanup_temp_dir(path)
+    return if path.nil? || !Dir.exist?(path)
+
+    FileUtils.remove_entry(path)
+  end
+
+  def pdf_file?(input_path)
+    File.extname(input_path).casecmp(".pdf").zero?
+  end
 
   def build_schema
     schema = JSON.parse(File.read(File.expand_path("../event_schema.json", __dir__)))

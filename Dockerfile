@@ -1,6 +1,6 @@
 FROM ghcr.io/zewelor/ruby:4.0.1-slim AS base
 
-ARG RUNTIME_PACKAGES="imagemagick"
+ARG RUNTIME_PACKAGES="imagemagick ghostscript"
 ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
 ARG WATCHEXEC_VERSION="2.3.3"
 

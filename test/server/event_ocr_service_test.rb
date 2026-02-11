@@ -2,6 +2,7 @@ require "bundler/setup"
 require "minitest/autorun"
 require "stringio"
 require "ostruct"
+require "tmpdir"
 require_relative "../test_helper"
 
 Bundler.require(:default)
@@ -21,6 +22,10 @@ class TestEventOcrService < Minitest::Test
     end
 
     def @dummy_chat.with_thinking(_opts)
+      self
+    end
+
+    def @dummy_chat.with_instructions(_instructions)
       self
     end
   end
@@ -84,11 +89,6 @@ class TestEventOcrService < Minitest::Test
 
       # Mock the chat object to return different responses on each call
       call_count = 0
-      @service.instance_variable_get(:@chat).define_singleton_method(:with_instructions) do |instructions|
-        @instructions = instructions
-        self
-      end
-
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         case call_count
@@ -122,11 +122,6 @@ class TestEventOcrService < Minitest::Test
 
       # Mock the chat object to return valid data on first attempt
       call_count = 0
-      @service.instance_variable_get(:@chat).define_singleton_method(:with_instructions) do |instructions|
-        @instructions = instructions
-        self
-      end
-
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         call_count += 1
         # Return valid event data on first attempt
@@ -154,11 +149,6 @@ class TestEventOcrService < Minitest::Test
       @service = EventOcrService.new
 
       # Mock the chat object
-      @service.instance_variable_get(:@chat).define_singleton_method(:with_instructions) do |instructions|
-        @instructions = instructions
-        self
-      end
-
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message = nil, with:|
         # Return valid event data
         OpenStruct.new(content: [{name: "Evento Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}])
@@ -172,6 +162,96 @@ class TestEventOcrService < Minitest::Test
       # WebMock will raise an error if any HTTP requests were attempted
       # The fact that we reach this point means no network requests were made
       assert true, "No network requests were made during the test"
+    end
+  end
+
+  def test_analyze_routes_pdf_to_pdf_handler
+    with_stubbed_llm do
+      @service = EventOcrService.new
+      called_with = nil
+
+      @service.define_singleton_method(:analyze_pdf) do |path, retry_sleep:|
+        called_with = [path, retry_sleep]
+        [{name: "Evento PDF"}]
+      end
+
+      result = @service.analyze("/tmp/events.pdf", retry_sleep: 3)
+
+      assert_equal [{name: "Evento PDF"}], result
+      assert_equal ["/tmp/events.pdf", 3], called_with
+    end
+  end
+
+  def test_analyze_routes_image_to_image_handler
+    with_stubbed_llm do
+      @service = EventOcrService.new
+      called_with = nil
+
+      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:|
+        called_with = [path, retry_sleep]
+        [{name: "Evento Imagem"}]
+      end
+
+      result = @service.analyze("/tmp/events.png", retry_sleep: 2)
+
+      assert_equal [{name: "Evento Imagem"}], result
+      assert_equal ["/tmp/events.png", 2], called_with
+    end
+  end
+
+  def test_analyze_pdf_aggregates_all_pages_and_cleans_temp_dir
+    with_stubbed_llm do
+      @service = EventOcrService.new
+      temp_dir = Dir.mktmpdir("event_ocr_pdf_test_")
+      page_one = File.join(temp_dir, "page-0001.png")
+      page_two = File.join(temp_dir, "page-0002.png")
+      File.write(page_one, "page1")
+      File.write(page_two, "page2")
+
+      @service.define_singleton_method(:extract_pdf_pages_to_images) do |_pdf_path|
+        [[page_one, page_two], temp_dir]
+      end
+
+      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:|
+        [{name: "Evento de #{File.basename(path)}", retry_sleep: retry_sleep}]
+      end
+
+      result = @service.send(:analyze_pdf, "/tmp/sample.pdf", retry_sleep: 1)
+
+      assert_equal 2, result.length
+      assert_equal "Evento de page-0001.png", result[0][:name]
+      assert_equal "Evento de page-0002.png", result[1][:name]
+      assert_equal 1, result[0][:retry_sleep]
+      refute Dir.exist?(temp_dir)
+    end
+  end
+
+  def test_extract_pdf_pages_to_images_uses_minimagick_convert
+    with_stubbed_llm do
+      @service = EventOcrService.new
+      temp_dir = Dir.mktmpdir("event_ocr_pdf_convert_test_")
+      output_file = File.join(temp_dir, "page-0001.png")
+      convert_called = false
+
+      fake_tool = Object.new
+      fake_tool.define_singleton_method(:density) { |_value| nil }
+      fake_tool.define_singleton_method(:<<) { |_value| nil }
+
+      Dir.stub(:mktmpdir, temp_dir) do
+        MiniMagick.stub(:convert, lambda { |&blk|
+          convert_called = true
+          blk.call(fake_tool)
+          File.write(output_file, "png")
+        }) do
+          page_paths, returned_dir = @service.send(:extract_pdf_pages_to_images, "/tmp/sample.pdf")
+
+          assert convert_called
+          assert_equal [output_file], page_paths
+          assert_equal temp_dir, returned_dir
+        end
+      end
+    ensure
+      @service.send(:cleanup_temp_dir, temp_dir)
     end
   end
 
