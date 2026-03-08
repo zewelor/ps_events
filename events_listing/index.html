@@ -1,10 +1,14 @@
 ---
 layout: default
-title: Events Listing
+title: "Eventos no Porto Santo"
+description: "pxopulse é a agenda do Porto Santo com eventos, cultura, desporto, workshops e atividades para descobrir na ilha."
 image: /assets/index_image.png
 ---
 
 <h1 class="page-title text-[var(--color-text-primary)] text-center">Próximos eventos no Porto Santo</h1>
+<p class="body-text mx-auto mb-6 max-w-3xl text-center">
+  O <strong>pxopulse</strong> é a agenda do Porto Santo para descobrir eventos, atividades e novidades na ilha.
+</p>
 <section id="event-list" class="mb-8">
   {% comment %} Filter events to only include current and future events (events that haven't ended yet) {% endcomment %}
   {% assign future_events = site.data.events | filter_current_and_future_events %}
@@ -41,19 +45,6 @@ image: /assets/index_image.png
   </button>
   <div id="calendar-wrapper" class="hidden lg:block">
     {% include calendar.html %}
-  </div>
-
-  <!-- PWA Install Banner (Mobile Only) -->
-  <div id="pwa-install-banner" class="fixed bottom-0 left-0 right-0 md:hidden bg-gray-700 p-3 text-white shadow-lg z-50 hidden">
-    <div class="container mx-auto flex items-center justify-between gap-2">
-      <span class="text-sm">Instale a nossa app para uma melhor experiência!</span>
-      <div class="flex items-center flex-shrink-0">
-        <button id="install-pwa-btn" class="bg-[var(--color-buttons)] hover:bg-[var(--color-buttons-hover)] text-[var(--color-text-secondary)] py-1 px-3 rounded text-sm mr-2 whitespace-nowrap">
-          Instalar
-        </button>
-        <button id="close-pwa-banner-btn" class="text-gray-400 hover:text-white text-2xl leading-none p-2 cursor-pointer">&times;</button>
-      </div>
-    </div>
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-6">
@@ -98,4 +89,3 @@ image: /assets/index_image.png
 {% include aviso.html %}
 <script src="{{ '/assets/js/event-filter.js' | relative_url }}" defer></script>
 <script src="{{ '/assets/js/calendar-toggle.js' | relative_url }}" defer></script>
-<script src="{{ '/assets/js/pwa-install.js' | relative_url }}" defer></script>

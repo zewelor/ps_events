@@ -1,7 +1,9 @@
 title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
 logo: /assets/logo180.webp
-description: "PXO Pulse é um website que lista eventos que acontecem na ilha dourada do Porto Santo."
+description: "PXO Pulse é a agenda de eventos do Porto Santo, com concertos, workshops, desporto, cultura e atividades para residentes e visitantes."
+lang: pt-PT
+locale: pt_PT
 data_dir: _data
 
 page_gen:
@@ -16,5 +18,14 @@ page_gen:
 tailwindcss:
   css_path: ./events_listing/_tailwind.css
 
+# `twitter.username` feeds Twitter Card metadata,
+# while `social.links` feeds JSON-LD `sameAs` links for `jekyll-seo-tag`.
+# They look redundant, but they are consumed by different outputs.
 twitter:
   username: pxopulse87799
+
+social:
+  links:
+    - https://pxopulse.com
+    - https://www.instagram.com/pxopulse
+    - https://x.com/pxopulse87799

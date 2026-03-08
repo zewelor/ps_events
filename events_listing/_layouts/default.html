@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="overflow-y-auto [scrollbar-gutter:stable]">
+<html lang="{{ site.lang | default: 'pt-PT' }}" class="overflow-y-auto [scrollbar-gutter:stable]">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
 
     {% seo %}
+    {% include seo_tags.html %}
     {% if page.image and page.url != '/' %}
     <link rel="preload" as="image" href="{{ page.image | relative_url }}" fetchpriority="high">
     {% endif %}
@@ -32,6 +33,7 @@
       {{ content }}
     </main>
     {% include footer.html %}
+    {% include pwa_install_ui.html %}
 
     <!-- Scroll to Top Button -->
     <button id="scroll-to-top" class="scroll-to-top-btn" aria-label="Voltar ao topo">
@@ -63,6 +65,7 @@
     </script>
 
     <!-- Scroll to Top Button Script -->
+    <script src="{{ '/assets/js/pwa-install.js' | relative_url }}" defer></script>
     <script src="{{ '/assets/js/scroll-to-top.js' | relative_url }}" defer></script>
   </body>
 </html>
