@@ -178,7 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         cell.addEventListener('click', () => {
-          if (cell.classList.contains('selected')) {
+          const isSingleDaySelection = selectedRange && selectedRange.start === dateStr && selectedRange.end === dateStr;
+
+          if (cell.classList.contains('selected') && isSingleDaySelection) {
             clearSelection();
             document.dispatchEvent(new CustomEvent('calendar:clearDate'));
           } else {

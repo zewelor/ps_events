@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let deferredPrompt = null;
   let currentState = fallbackState();
+  let footerCtaVisible = false;
 
   function isIosDevice() {
     return /iPad|iPhone|iPod/.test(window.navigator.userAgent) ||
@@ -151,14 +152,33 @@ document.addEventListener('DOMContentLoaded', () => {
     window.localStorage.removeItem(BANNER_DISMISS_KEY);
   }
 
-  function showBanner() {
-    if (!isBannerDismissed() && shouldShowInstallUi()) {
-      installBanner.classList.remove('hidden');
-    }
-  }
-
   function hideBanner() {
     installBanner.classList.add('hidden');
+  }
+
+  function syncBannerVisibility() {
+    if (!shouldShowInstallUi() || isBannerDismissed() || footerCtaVisible) {
+      hideBanner();
+      return;
+    }
+
+    installBanner.classList.remove('hidden');
+  }
+
+  function syncFooterCtaVisibility() {
+    if (footerCta.classList.contains('hidden')) {
+      footerCtaVisible = false;
+      syncBannerVisibility();
+      return;
+    }
+
+    const rect = footerCta.getBoundingClientRect();
+    footerCtaVisible = rect.top < window.innerHeight && rect.bottom > 0;
+    syncBannerVisibility();
+  }
+
+  function showBanner() {
+    syncBannerVisibility();
   }
 
   function showFooterCta() {
@@ -167,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       footerCta.classList.add('hidden');
     }
+
+    window.requestAnimationFrame(syncFooterCtaVisibility);
   }
 
   function closeHelpDialog() {
@@ -284,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     standaloneQuery.addListener(handleDisplayModeChange);
   }
 
+  window.addEventListener('scroll', syncFooterCtaVisibility, { passive: true });
   window.addEventListener('resize', setUiState);
 
   setUiState();
