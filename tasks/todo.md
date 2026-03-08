@@ -15,3 +15,18 @@
 - Added a build-based SEO smoke test for homepage metadata so `title`, `description`, `keywords`, and `lang` are checked automatically.
 - Homepage now contains the exact visible phrase `pxopulse`, and the homepage `description` also includes the same exact-match string.
 - Verification completed with `source dockerized.sh; jekyll build --source /app/events_listing`, `source dockerized.sh; rubocop -a`, and `source dockerized.sh; rake test`.
+
+## Current Fix
+
+- [x] Add `data-end-date` to rendered event cards for span-aware filtering
+- [x] Update date filtering and category counts to use inclusive event span overlap
+- [x] Render calendar dots for all days covered by a multi-day event
+- [x] Clear stale week/day highlights when a selected date is toggled off
+- [x] Re-run build, tests, and manual calendar verification
+
+## Current Review
+
+- Multi-day events now stay visible for any selected day or week that overlaps their start/end span, and category counts use the same overlap rule.
+- Calendar dots now render on every covered day of a multi-day event instead of disappearing after the start date.
+- Toggling off a selected day after a week selection now clears all selected cells, removes the active week chevron, and restores `Todas as Datas` as the active quick filter.
+- Verification completed with `source dockerized.sh; bundle exec jekyll build --source /app/events_listing`, `source dockerized.sh; rubocop -a`, `source dockerized.sh; rake test`, and manual browser checks on the local preview for `2026-04-06` plus the `08/03–14/03` to `09/03` interaction path.

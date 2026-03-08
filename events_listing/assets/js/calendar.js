@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const eventCards = document.querySelectorAll('.event-card');
   const events = Array.from(eventCards).map(card => ({
-    date: card.dataset.date,
+    start: card.dataset.date,
+    end: card.dataset.endDate || card.dataset.date,
     color: card.dataset.categoryColor,
     category: card.dataset.category
   }));
@@ -68,19 +69,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetBtn.addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('calendar:clearDate'));
-    activateRangeButton(resetBtn);
-    clearSelection();
+    clearSelection(true);
   });
 
-  document.addEventListener('calendar:reset', clearSelection);
+  document.addEventListener('calendar:reset', () => clearSelection(true));
 
-  function clearSelection() {
+  function clearVisualSelection() {
     calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-    currentYear = today.getFullYear();
-    currentMonth = today.getMonth();
+    calendarEl.querySelectorAll('.week-btn--active').forEach(btn => btn.classList.remove('week-btn--active'));
+  }
+
+  function clearSelection(resetView = false) {
+    clearVisualSelection();
     selectedRange = null;
     activateRangeButton(resetBtn);
-    buildCalendar(currentYear, currentMonth);
+
+    if (resetView) {
+      currentYear = today.getFullYear();
+      currentMonth = today.getMonth();
+      buildCalendar(currentYear, currentMonth);
+    }
   }
 
   function buildCalendar(year, month) {
@@ -120,11 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       weekBtn.addEventListener('click', () => {
         activateRangeButton(null); // Desativar filtros rápidos ao escolher uma semana manualmente
-        calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-        calendarEl.querySelectorAll('.week-btn').forEach(b => b.classList.remove('week-btn--active'));
+        clearVisualSelection();
         document.dispatchEvent(new CustomEvent('calendar:rangeSelected', { detail: { start: startISO, end: endISO } }));
         selectRange(startISO, endISO);
-        weekBtn.classList.add('week-btn--active');
         highlightSelection();
       });
       calendarEl.appendChild(weekBtn);
@@ -148,13 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const dots = document.createElement('div');
         dots.className = 'calendar-event-dots';
         const categoriesOnDate = new Set();
-        events.filter(e => e.date === dateStr).forEach(e => {
-          if (!categoriesOnDate.has(e.category)) {
+        events.filter(event => dateStr >= event.start && dateStr <= event.end).forEach(event => {
+          if (!categoriesOnDate.has(event.category)) {
             const dot = document.createElement('span');
             dot.className = 'calendar-event-dot';
-            dot.style.backgroundColor = e.color;
+            dot.style.backgroundColor = event.color;
             dots.appendChild(dot);
-            categoriesOnDate.add(e.category);
+            categoriesOnDate.add(event.category);
           }
         });
         if (dots.children.length > 0) {
@@ -173,15 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cell.addEventListener('click', () => {
           if (cell.classList.contains('selected')) {
-            cell.classList.remove('selected');
-            selectedRange = null;
+            clearSelection();
             document.dispatchEvent(new CustomEvent('calendar:clearDate'));
           } else {
-            calendarEl.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-            cell.classList.add('selected');
+            clearVisualSelection();
             activateRangeButton(null); // Desativar filtros rápidos ao escolher uma data individual
             selectRange(dateStr, dateStr);
             document.dispatchEvent(new CustomEvent('calendar:dateSelected', { detail: { date: dateStr } }));
+            highlightSelection();
           }
         });
 
@@ -212,13 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function highlightSelection() {
+    clearVisualSelection();
+    if (!selectedRange) return;
     calendarEl.querySelectorAll('.week-btn').forEach(btn => {
-      btn.classList.remove('week-btn--active');
-      if (selectedRange && btn.dataset.start === selectedRange.start && btn.dataset.end === selectedRange.end) {
+      if (btn.dataset.start === selectedRange.start && btn.dataset.end === selectedRange.end) {
         btn.classList.add('week-btn--active');
       }
     });
-    if (!selectedRange) return;
     calendarEl.querySelectorAll('.cal-day').forEach(cell => {
       const d = cell.dataset.date;
       if (d >= selectedRange.start && d <= selectedRange.end) {

@@ -2,11 +2,17 @@
 // Moved from inline script in index.html
 
 document.addEventListener('DOMContentLoaded', () => {
-  const eventCards = document.querySelectorAll('.event-card');
+  const eventCards = Array.from(document.querySelectorAll('.event-card'));
   const categorySelect = document.getElementById('category-select');
   const categoryOptions = categorySelect ? categorySelect.querySelectorAll('option') : [];
   const clearAllBtn = document.getElementById('clear-all-filters');
   const logoLink = document.getElementById('logo-link');
+  const events = eventCards.map(card => ({
+    element: card,
+    category: card.dataset.category,
+    start: card.dataset.date,
+    end: card.dataset.endDate || card.dataset.date
+  }));
   let selectedCategory = 'all';
   let selectedRange = null; // {start, end}
 
@@ -36,6 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
     filterEvents(false); // don't recalc counts on category change
   }
 
+  function overlapsSelectedRange(event) {
+    return !selectedRange || (event.start <= selectedRange.end && event.end >= selectedRange.start);
+  }
+
   function filterEvents(shouldUpdateCounts = true) {
     const applyCategory = selectedCategory !== 'all';
     const applyRange = selectedRange !== null;
@@ -45,18 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateClearButtonVisibility();
     // If no filters are applied, ensure all events are shown
     if (!applyCategory && !applyRange) {
-      eventCards.forEach(card => {
-        card.style.display = 'flex';
+      events.forEach(event => {
+        event.element.style.display = 'flex';
       });
       return;
     }
 
-    eventCards.forEach(card => {
-      const cardCategory = card.dataset.category;
-      const cardDate = card.dataset.date;
-      const matchCategory = !applyCategory || cardCategory === selectedCategory;
-      const matchDate = !applyRange || (cardDate >= selectedRange.start && cardDate <= selectedRange.end);
-      card.style.display = matchCategory && matchDate ? 'flex' : 'none';
+    events.forEach(event => {
+      const matchCategory = !applyCategory || event.category === selectedCategory;
+      const matchDate = !applyRange || overlapsSelectedRange(event);
+      event.element.style.display = matchCategory && matchDate ? 'flex' : 'none';
     });
   }
 
@@ -73,12 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCategoryCounts() {
     const counts = {};
     let total = 0;
-    eventCards.forEach(card => {
-      const date = card.dataset.date;
-      const category = card.dataset.category;
-      const matchDate = !selectedRange || (date >= selectedRange.start && date <= selectedRange.end);
+    events.forEach(event => {
+      const matchDate = overlapsSelectedRange(event);
       if (matchDate) {
-        counts[category] = (counts[category] || 0) + 1;
+        counts[event.category] = (counts[event.category] || 0) + 1;
         total++;
       }
     });
@@ -99,8 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedRange = null;
     if (categorySelect) categorySelect.value = 'all';
     document.dispatchEvent(new CustomEvent('calendar:reset'));
-  // Unhide any previously hidden category options before recounting
-  categoryOptions.forEach(opt => { opt.hidden = false; });
-  filterEvents(true);
+    // Unhide any previously hidden category options before recounting
+    categoryOptions.forEach(opt => { opt.hidden = false; });
+    filterEvents(true);
   }
 });
