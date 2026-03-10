@@ -32,7 +32,15 @@ concurrency:
 jobs:
   # Build job
   build:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    if: >
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
+      (
+        github.event_name != 'push' ||
+        (
+          !contains(toJSON(github.event.commits), 'bin/spreadsheet_to_ical') &&
+          !contains(toJSON(github.event.commits), '.github/workflows/regenerate_events.yml')
+        )
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Resolve checkout ref

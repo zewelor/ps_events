@@ -38,6 +38,11 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: ${{ github.sha }}
+          ZERO_SHA: 0000000000000000000000000000000000000000
         run: |
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "production=true" >> "$GITHUB_OUTPUT"
@@ -47,8 +52,10 @@ jobs:
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             git fetch --no-tags origin "${BASE_REF}"
             changed_files="$(git diff --name-only "origin/${BASE_REF}"...HEAD)"
-          else
+          elif [ "${BEFORE_SHA}" = "${ZERO_SHA}" ]; then
             changed_files="$(jq -r '[.commits[]? | (.added[]?, .modified[]?, .removed[]?)] | unique | .[]' "$GITHUB_EVENT_PATH")"
+          else
+            changed_files="$(gh api "repos/${REPOSITORY}/compare/${BEFORE_SHA}...${TARGET_SHA}" --jq '.files[].filename')"
           fi
 
           production=false

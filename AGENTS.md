@@ -92,6 +92,11 @@ Used in this project
 - After editing that chart, validate the Mermaid syntax before finishing the task.
 - When GitHub workflow logic changes, update both the workflow files and the diagram in the same task so the documentation does not drift.
 
+### Conscious Workflow Trade-offs
+- Keep GitHub Actions orchestration simple for this hobby project, even if that leaves small, understood races in place.
+- `regenerate_events.yml` intentionally reuses the moving `:ci` image for faster daily runs instead of waiting for a per-commit rebuild; if a same-push race happens, the next daily run is expected to pick up the newer image.
+- When a push also triggers `regenerate_events.yml`, prefer skipping the push-triggered `jekyll_site.yml` deploy and let the `workflow_run` path be the canonical site deployment for that change.
+
 ### 1. Plan Mode Default
 - Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
 - If something goes sideways, STOP and re-plan immediately - don't keep pushing

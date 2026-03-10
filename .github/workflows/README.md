@@ -17,10 +17,11 @@ flowchart TD
     regen_complete --> jekyll["jekyll_site.yml<br/>Build and deploy site"]
 
     regen_commit -. no push-triggered workflows .-> token_note["GITHUB_TOKEN commits<br/>do not trigger push workflows"]
+    push_regen -. push deploy skipped;<br/>workflow_run is canonical .-> jekyll
 
     push_events["push(main)<br/>events.csv"] --> jekyll
 
-    push_site["push(main)<br/>events_listing/**<br/>or jekyll_site.yml"] --> jekyll
+    push_site["push(main)<br/>events_listing/**<br/>or jekyll_site.yml<br/>(unless regenerate handoff files changed)"] --> jekyll
     schedule_site["schedule / workflow_dispatch"] --> jekyll
 
     push_backend["push(main)<br/>other non-events_listing changes"] --> docker_checks
@@ -32,3 +33,9 @@ flowchart TD
     docker_tests --> docker_production["push_production job"]
     docker_changes --> docker_production
 ```
+
+Design notes:
+
+- `jekyll_site.yml` intentionally stays independent from `docker_checks.yml`; the site deploy should not wait on backend-oriented checks unless a concrete breakage proves that coupling is needed.
+- When the same push also triggers `regenerate_events.yml`, the push-triggered Jekyll deploy is skipped and the `workflow_run` path from `Regenerate events` becomes the canonical deploy path.
+- `regenerate_events.yml` intentionally validates against the moving `:ci` image for a simpler and faster daily workflow. A same-push race with a fresh `docker_checks` rebuild is an accepted trade-off in this hobby project.

@@ -7,3 +7,4 @@
 - For workflow changes in this repo, avoid adding fallback branches for speculative edge cases unless the user explicitly wants that extra resilience; prefer the simplest deterministic flow first.
 - For this repo's CI, prefer a single moving `:ci` image tag over per-commit CI image tags unless the user explicitly asks for stronger determinism.
 - In this repo, avoid coupling `jekyll_site` to `docker_checks` unless there is a concrete breakage it prevents; independent workflows are easier to maintain here.
+- For workflow work in this hobby repo, prefer the simplest reliable orchestration over perfect determinism, and document any accepted race or trade-off in `AGENTS.md` when it is an intentional choice.
