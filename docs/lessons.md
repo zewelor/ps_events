@@ -6,3 +6,4 @@
 - For CI/workflow refactors in this repo, use subagents early and do not report back until workflow YAML is linted, logic is locally simulated for the critical paths, and the required repo verification commands have completed.
 - For workflow changes in this repo, avoid adding fallback branches for speculative edge cases unless the user explicitly wants that extra resilience; prefer the simplest deterministic flow first.
 - For this repo's CI, prefer a single moving `:ci` image tag over per-commit CI image tags unless the user explicitly asks for stronger determinism.
+- In this repo, avoid coupling `jekyll_site` to `docker_checks` unless there is a concrete breakage it prevents; independent workflows are easier to maintain here.

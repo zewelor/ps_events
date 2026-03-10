@@ -4,7 +4,7 @@ This document tracks the trigger and dependency flow between the repository's Gi
 
 Update this chart whenever a workflow trigger, cross-workflow dependency, concurrency rule, or auto-commit path changes.
 
-Solid arrows mean "can trigger / leads to a new workflow or job path". Dotted arrows mean "waits for / depends on" and do not trigger a new workflow.
+Solid arrows mean "can trigger / leads to a new workflow or job path". Dotted arrows are informational links and do not trigger a new workflow.
 
 ```mermaid
 flowchart TD
@@ -19,7 +19,6 @@ flowchart TD
     regen_commit -. no push-triggered workflows .-> token_note["GITHUB_TOKEN commits<br/>do not trigger push workflows"]
 
     push_events["push(main)<br/>events.csv"] --> jekyll
-    push_events --> docker_checks["docker_checks.yml<br/>Docker Checks"]
 
     push_site["push(main)<br/>events_listing/**<br/>or jekyll_site.yml"] --> jekyll
     schedule_site["schedule / workflow_dispatch"] --> jekyll
@@ -32,6 +31,4 @@ flowchart TD
     docker_checks --> docker_changes["changes job"]
     docker_tests --> docker_production["push_production job"]
     docker_changes --> docker_production
-
-    jekyll -. push only: waits for tests job<br/>on the same commit .-> docker_tests
 ```

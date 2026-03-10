@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths-ignore:
+      - 'events.csv'
       - 'images/**'
       - 'events_listing/**'
   pull_request:
     paths-ignore:
+      - 'events.csv'
       - 'images/**'
       - 'events_listing/**'
 
@@ -34,10 +36,8 @@ jobs:
       - name: Detect production deployment changes
         id: detect
         env:
-          BEFORE_SHA: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
-          ZERO_SHA: 0000000000000000000000000000000000000000
         run: |
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "production=true" >> "$GITHUB_OUTPUT"
@@ -47,10 +47,8 @@ jobs:
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             git fetch --no-tags origin "${BASE_REF}"
             changed_files="$(git diff --name-only "origin/${BASE_REF}"...HEAD)"
-          elif [ "${BEFORE_SHA}" = "${ZERO_SHA}" ]; then
-            changed_files="$(git ls-tree -r --name-only HEAD)"
           else
-            changed_files="$(git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}")"
+            changed_files="$(jq -r '[.commits[]? | (.added[]?, .modified[]?, .removed[]?)] | unique | .[]' "$GITHUB_EVENT_PATH")"
           fi
 
           production=false
