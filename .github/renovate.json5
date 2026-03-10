@@ -47,6 +47,15 @@
       matchManagers: [
         'bundler',
       ],
+      matchPackageNames: [
+        'ruby_llm',
+      ],
+      enabled: false,
+    },
+    {
+      matchManagers: [
+        'bundler',
+      ],
       matchUpdateTypes: [
         'patch',
       ],
