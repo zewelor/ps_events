@@ -5,17 +5,11 @@ on:
   push:
     paths-ignore:
       - 'images/**'
-      - '.github/workflows/**'
-      - 'bin/server.rb'
       - 'events_listing/**'
-      - '!.github/workflows/docker_checks.yml'
   pull_request:
     paths-ignore:
       - 'images/**'
-      - '.github/workflows/**'
-      - 'bin/server.rb'
       - 'events_listing/**'
-      - '!.github/workflows/docker_checks.yml'
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
@@ -28,6 +22,51 @@ permissions:
   packages: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      production: ${{ steps.detect.outputs.production }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect production deployment changes
+        id: detect
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          ZERO_SHA: 0000000000000000000000000000000000000000
+        run: |
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "production=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            git fetch --no-tags origin "${BASE_REF}"
+            changed_files="$(git diff --name-only "origin/${BASE_REF}"...HEAD)"
+          elif [ "${BEFORE_SHA}" = "${ZERO_SHA}" ]; then
+            changed_files="$(git ls-tree -r --name-only HEAD)"
+          else
+            changed_files="$(git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}")"
+          fi
+
+          production=false
+          while IFS= read -r path; do
+            case "$path" in
+              Dockerfile|Gemfile|Gemfile.lock|bin/server.rb|lib/server/*|.github/workflows/docker_checks.yml)
+                production=true
+                break
+                ;;
+            esac
+          done <<EOF
+          ${changed_files}
+          EOF
+
+          echo "production=${production}" >> "$GITHUB_OUTPUT"
+
   tests:
     runs-on: ubuntu-latest
     env:
@@ -39,15 +78,6 @@ jobs:
         with:
           dockerfile: Dockerfile
           config: .hadolint.yaml
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            # full length sha
-            type=raw,enable=true,priority=300,prefix=,suffix=,value=dev
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -69,8 +99,8 @@ jobs:
           cache-from: type=gha,scope=ci
           cache-to: type=gha,mode=max,scope=ci
           target: ci
-          # Used by docker-compose.ci
-          tags: ${{ steps.meta.outputs.tags }}
+          # Used by docker-compose.ci and Jekyll workflows.
+          tags: ghcr.io/${{ github.repository }}:ci
 
       - name: Run Rubocop
         run: |
@@ -83,3 +113,77 @@ jobs:
       - name: Jekyll doctor
         run: |
           docker compose run --rm -e JEKYLL_ENV=production -e COMMIT_SHA=${{ github.sha }} -e BACKEND_HOST=http://sinatra:4567 app bundle exec jekyll doctor --source /app/events_listing
+
+  push_production:
+    if: >
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        needs.changes.outputs.production == 'true'
+      )
+    needs:
+      - changes
+      - tests
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-docker
+      cancel-in-progress: true
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # full length sha
+            type=sha,format=long,prefix=
+          flavor: |
+            latest=true
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          builder: ${{ steps.buildx.outputs.name }}
+          target: live
+          platforms: linux/amd64
+          cache-from: |
+            type=gha,scope=live
+            type=gha,scope=ci
+          cache-to: type=gha,mode=max,scope=live
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_CODE_VERSION=${{ github.sha }}
+
+      - name: Delete old images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: "container"
+          min-versions-to-keep: ${{ env.OLD_VERSIONS_TO_KEEP }}
+
+      - name: Deploy via webhook
+        env:
+          deploy_url: ${{ secrets.DEPLOY_HOOK_URL }}
+        run: |
+          curl --fail --silent --show-error "$deploy_url"

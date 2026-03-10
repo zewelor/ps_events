@@ -24,8 +24,7 @@ permissions:
   id-token: write
   packages: read
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Allow only one Pages deployment workflow at a time.
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -33,58 +32,122 @@ concurrency:
 jobs:
   # Build job
   build:
-    runs-on: ubuntu-latest
-    # Skip if triggered by failed workflow_run (e.g., Docker Checks failed)
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Wait for Docker Checks if running
+      - name: Resolve checkout ref
+        id: resolve_checkout
+        env:
+          DEFAULT_REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          TARGET_SHA: ${{ github.sha }}
+          WORKFLOW_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          checkout_ref="${DEFAULT_REF}"
+
+          if [ "${EVENT_NAME}" = "push" ]; then
+            checkout_ref="${TARGET_SHA}"
+          elif [ "${EVENT_NAME}" = "workflow_run" ]; then
+            checkout_ref="refs/heads/${WORKFLOW_BRANCH:-${DEFAULT_BRANCH}}"
+          fi
+
+          echo "checkout_ref=${checkout_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.resolve_checkout.outputs.checkout_ref }}
+          fetch-depth: 0
+
+      - name: Detect Docker Checks dependency
+        id: detect_dependency
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          ZERO_SHA: 0000000000000000000000000000000000000000
+        run: |
+          should_wait=false
+
+          if [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${BEFORE_SHA}" = "${ZERO_SHA}" ]; then
+              changed_files="$(git ls-tree -r --name-only HEAD)"
+            else
+              changed_files="$(git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}")"
+            fi
+
+            while IFS= read -r path; do
+              [ -n "$path" ] || continue
+              case "$path" in
+                events_listing/*)
+                  ;;
+                *)
+                  should_wait=true
+                  break
+                  ;;
+              esac
+            done <<EOF
+          ${changed_files}
+          EOF
+          fi
+
+          echo "should_wait=${should_wait}" >> "$GITHUB_OUTPUT"
+
+      - name: Capture build SHA
+        id: build_sha
+        run: echo "value=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for Docker Checks tests
+        if: ${{ github.event_name == 'push' && steps.detect_dependency.outputs.should_wait == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
         run: |
-          # Check if Docker Checks workflow is running for this commit and wait for it
           MAX_WAIT=600  # 10 minutes max
           POLL_INTERVAL=15
 
           for i in $(seq 1 $((MAX_WAIT / POLL_INTERVAL))); do
-            # Check for running/queued workflows
-            RUNNING=$(gh api repos/${{ github.repository }}/actions/workflows/docker_checks.yml/runs \
-              --jq ".workflow_runs[] | select(.head_sha == \"${{ github.sha }}\" and (.status == \"in_progress\" or .status == \"queued\")) | .id" \
+            RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/docker_checks.yml/runs" \
+              --jq ".workflow_runs[] | select(.head_sha == \"${TARGET_SHA}\" and .event == \"push\") | .id" \
               | head -1)
 
-            if [ -z "$RUNNING" ]; then
-              echo "No Docker Checks running for this commit."
+            if [ -z "$RUN_ID" ]; then
+              echo "No Docker Checks run found yet for commit ${TARGET_SHA}. Waiting ${POLL_INTERVAL}s... (attempt $i)"
+              sleep $POLL_INTERVAL
+              continue
+            fi
 
-              # Check if there was a completed run and if it succeeded
-              CONCLUSION=$(gh api repos/${{ github.repository }}/actions/workflows/docker_checks.yml/runs \
-                --jq ".workflow_runs[] | select(.head_sha == \"${{ github.sha }}\") | .conclusion" \
-                | head -1)
+            TEST_STATE=$(gh api "repos/${{ github.repository }}/actions/runs/${RUN_ID}/jobs" \
+              --jq '.jobs[] | select(.name == "tests") | [.status, (.conclusion // "")] | @tsv' \
+              | head -1)
 
-              if [ "$CONCLUSION" = "failure" ]; then
-                echo "Docker Checks failed for this commit. Aborting deploy."
+            IFS=$'\t' read -r TEST_STATUS TEST_CONCLUSION <<<"$TEST_STATE"
+
+            if [ "$TEST_STATUS" = "completed" ]; then
+              if [ "$TEST_CONCLUSION" != "success" ]; then
+                echo "Docker Checks tests failed for commit ${TARGET_SHA}. Aborting deploy."
                 exit 1
               fi
 
-              echo "Proceeding with Jekyll build."
+              echo "Docker Checks tests passed for commit ${TARGET_SHA}. Proceeding with Jekyll build."
               exit 0
             fi
 
-            echo "Docker Checks is running (run ID: $RUNNING). Waiting ${POLL_INTERVAL}s... (attempt $i)"
+            echo "Docker Checks tests status is '${TEST_STATUS:-pending}' for run ${RUN_ID}. Waiting ${POLL_INTERVAL}s... (attempt $i)"
             sleep $POLL_INTERVAL
           done
 
-          echo "Timeout waiting for Docker Checks. Proceeding anyway."
-
-      - name: Checkout
-        uses: actions/checkout@v6
+          echo "Timeout waiting for Docker Checks tests for commit ${TARGET_SHA}. Aborting deploy."
+          exit 1
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
       - name: Build Jekyll site
-        run: docker compose run -e JEKYLL_ENV=production -e BACKEND_HOST=${{ secrets.BACKEND_HOST }} -e COMMIT_SHA=${{ github.sha }} app bundle exec jekyll build --source /app/events_listing --destination /app/_site --baseurl "${{ steps.pages.outputs.base_path }}"
+        run: docker compose run -e JEKYLL_ENV=production -e BACKEND_HOST=${{ secrets.BACKEND_HOST }} -e COMMIT_SHA=${{ steps.build_sha.outputs.value }} app bundle exec jekyll build --source /app/events_listing --destination /app/_site
         env:
           COMPOSE_FILE: docker-compose.ci.yml
-          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_SHA: ${{ steps.build_sha.outputs.value }}
 
       # Breaks some CSS styles
       - name: Minify HTML, CSS, and JS

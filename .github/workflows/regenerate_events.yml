@@ -79,6 +79,7 @@ jobs:
       # Give the default GITHUB_TOKEN write permission to commit and push the
       # added or changed files to the repository.
       contents: write
+      packages: read
 
     steps:
       - name: Set up Docker
@@ -107,6 +108,12 @@ jobs:
 
       - name: Pull latest changes before commit
         run: git pull --rebase --autostash
+
+      - name: Validate regenerated Jekyll build
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+        run: |
+          docker compose run --rm -e JEKYLL_ENV=production -e BACKEND_HOST=${{ secrets.BACKEND_HOST }} -e COMMIT_SHA=${{ github.sha }} app bundle exec jekyll build --source /app/events_listing --destination /app/_site
 
       - name: Auto-commit updated events files
         uses: stefanzweifel/git-auto-commit-action@v7

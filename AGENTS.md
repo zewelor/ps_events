@@ -86,6 +86,12 @@ Used in this project
 
 ## Workflow Orchestration
 
+### Workflow Diagram Maintenance
+- Keep the GitHub Actions dependency diagram in `.github/workflows/README.md` up to date whenever any workflow trigger, `workflow_run` link, concurrency rule, auto-commit behavior, or cross-workflow dependency changes.
+- The Mermaid chart must stay embedded in a fenced code block using ```` ```mermaid ````.
+- After editing that chart, validate the Mermaid syntax before finishing the task.
+- When GitHub workflow logic changes, update both the workflow files and the diagram in the same task so the documentation does not drift.
+
 ### 1. Plan Mode Default
 - Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
 - If something goes sideways, STOP and re-plan immediately - don't keep pushing
@@ -99,7 +105,7 @@ Used in this project
 - One task per subagent for focused execution
 
 ### 3. Self-Improvement Loop
-- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- After ANY correction from the user: update `docs/lessons.md` with the pattern
 - Write rules for yourself that prevent the same mistake
 - Ruthlessly iterate on these lessons until mistake rate drops
 - Review lessons at session start for relevant project
