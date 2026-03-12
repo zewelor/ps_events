@@ -84,10 +84,12 @@
       automergeType: 'branch',
       matchPackageNames: [
         'lefthook',
+        'json-schema',
         'rubocop-performance',
         'ruby-lsp',
         'amazing_print',
         'standard',
+        'tzinfo-data',
       ],
     },
     {
