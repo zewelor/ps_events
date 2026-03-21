@@ -5,6 +5,6 @@ pre-commit:
       run: docker run --rm -i -v "$PWD":/repo -w /repo hadolint/hadolint:latest hadolint {files}
     rubocop:
       exclude: "application.rb|routes.rb"
-      run: rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}
+      run: bash -c 'source dockerized.sh && rubocop --parallel --force-exclusion --autocorrect --fail-level A {staged_files}'
     tests:
-      run: rake test
+      run: bash -c 'source dockerized.sh && rake test'
