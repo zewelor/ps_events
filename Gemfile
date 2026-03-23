@@ -7,7 +7,7 @@ gem "zeitwerk"
 gem "sinatra", require: false
 gem "dry-validation", "~> 1.11"
 gem "json-schema", "~> 6.0"
-gem "activesupport", "~> 8.0"
+gem "activesupport", "~> 8.1"
 
 group :development, :test do
   gem "debug", platforms: %i[mri]
