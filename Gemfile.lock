@@ -222,7 +222,7 @@ GEM
       date
       stringio
     public_suffix (7.0.5)
-    puma (7.2.0)
+    puma (8.0.0)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.2.6)
@@ -373,7 +373,7 @@ DEPENDENCIES
   lefthook
   mini_magick (~> 5.2)
   minitest (~> 6.0)
-  puma (~> 7.0)
+  puma (~> 8.0)
   rack-test (~> 2.2)
   rackup (~> 2.2)
   retryable (~> 3.0)
