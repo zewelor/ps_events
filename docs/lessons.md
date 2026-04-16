@@ -10,3 +10,5 @@
 - For workflow work in this hobby repo, prefer the simplest reliable orchestration over perfect determinism, and document any accepted race or trade-off in `AGENTS.md` when it is an intentional choice.
 - In GitHub Actions YAML for this repo, quote sentinel SHAs like the all-zero hash; otherwise YAML can coerce them to numeric `0`, which breaks first-push branch detection and can silently block Renovate branch automerge.
 - When investigating why Renovate PRs here did not auto-merge, always check both the PR body for `Automerge: Enabled/Disabled by config` and the first branch `push` workflow run, because policy mismatches and first-push CI bugs can stack.
+- In this repo's Dockerfile, keep moving build metadata like `GIT_CODE_VERSION` out of shared or early `ENV` blocks; scope it to the narrow build/runtime stages and export it as late as possible so SHA changes do not blow away reusable cache layers.
+- For narrow Dockerfile cache fixes in this repo, do not rename or reshape stages unless an external caller requires it; keep the diff focused on the cache-invalidating instruction itself.
