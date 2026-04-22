@@ -90,6 +90,7 @@
         'amazing_print',
         'standard',
         'tzinfo-data',
+        'irb'
       ],
     },
     {
