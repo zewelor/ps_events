@@ -44,7 +44,7 @@ config/credentials/*.key
 Dockerfile
 docker-compose.*
 dockerized*
-Justfile
+justfile
 **/*.md
 .*
 .ruby-lsp
