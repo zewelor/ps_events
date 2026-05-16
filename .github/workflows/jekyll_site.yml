@@ -43,29 +43,10 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve checkout ref
-        id: resolve_checkout
-        env:
-          DEFAULT_REF: ${{ github.ref }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          EVENT_NAME: ${{ github.event_name }}
-          TARGET_SHA: ${{ github.sha }}
-          WORKFLOW_BRANCH: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          checkout_ref="${DEFAULT_REF}"
-
-          if [ "${EVENT_NAME}" = "push" ]; then
-            checkout_ref="${TARGET_SHA}"
-          elif [ "${EVENT_NAME}" = "workflow_run" ]; then
-            checkout_ref="refs/heads/${WORKFLOW_BRANCH:-${DEFAULT_BRANCH}}"
-          fi
-
-          echo "checkout_ref=${checkout_ref}" >> "$GITHUB_OUTPUT"
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.resolve_checkout.outputs.checkout_ref }}
+          ref: main
 
       - name: Capture build SHA
         id: build_sha
@@ -94,5 +75,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./_site --project-name=pxopulse # Directory of output assets
+          command: pages deploy ./_site --project-name=pxopulse --branch=main --commit-dirty=true # Directory of output assets
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
