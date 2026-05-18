@@ -88,7 +88,7 @@ GEM
     erb (6.0.4)
     event_stream_parser (1.0.0)
     eventmachine (1.2.7)
-    faraday (2.14.1)
+    faraday (2.14.2)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -172,7 +172,7 @@ GEM
       tailwindcss-ruby
     jekyll-watch (2.2.1)
       listen (~> 3.0)
-    json (2.19.4)
+    json (2.19.5)
     json-schema (6.2.0)
       addressable (~> 2.8)
       bigdecimal (>= 3.1, < 5)
