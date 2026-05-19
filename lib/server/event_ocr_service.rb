@@ -20,7 +20,7 @@ class EventOcrService
   PDF_DENSITY = 200
 
   def self.call(*args, **kwargs)
-    new = self.new()
+    new = self.new
     new.analyze(*args, **kwargs)
   rescue => e
     raise "Erro ao analisar imagem: #{e.message}"
@@ -64,7 +64,6 @@ class EventOcrService
         parse_and_validate_response(llm_output)
       end
     end
-
   rescue EventValidationError => e
     raise "Erro ao analisar imagem: #{e.message}"
   end
