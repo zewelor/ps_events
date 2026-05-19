@@ -3,6 +3,7 @@ require "fileutils"
 require "mini_magick"
 require "retryable"
 require "tmpdir"
+
 require_relative "event_validation"
 require_relative "event_validation_error"
 require "active_support/core_ext/hash/keys"
@@ -15,11 +16,11 @@ RubyLLM.configure do |config|
 end
 
 class EventOcrService
-  MODEL = "gemini-3-flash-preview"
+  MODEL = "gemini-flash-latest"
   PDF_DENSITY = 200
 
   def self.call(*args, **kwargs)
-    new = self.new
+    new = self.new()
     new.analyze(*args, **kwargs)
   rescue => e
     raise "Erro ao analisar imagem: #{e.message}"
@@ -50,12 +51,12 @@ class EventOcrService
       parse_and_validate_response(llm_output)
     rescue EventValidationError => first_error
       # If first attempt fails, retry with error feedback
-      puts "🔄 Retrying due to validation error: #{first_error.message}"
+      puts("🔄 Retrying due to validation error: #{first_error.message}")
       Retryable.retryable(tries: 5, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
-        puts "🔄 Retry attempt #{retries}"
+        puts("🔄 Retry attempt #{retries}")
 
         current_error = exception || first_error
-        puts "📋 Original error message: #{current_error.message}"
+        puts("📋 Original error message: #{current_error.message}")
         error_message = build_retry_message(current_error)
         llm_output = chat.ask(error_message, with: image_path).content
 
@@ -63,6 +64,7 @@ class EventOcrService
         parse_and_validate_response(llm_output)
       end
     end
+
   rescue EventValidationError => e
     raise "Erro ao analisar imagem: #{e.message}"
   end
@@ -202,10 +204,12 @@ class EventOcrService
       if result.success?
         valid_events << result.to_h
       else
-        raise EventValidationError.new(
-          "Erro de validação no evento #{idx + 1}: #{result.errors.inspect}",
-          validation_errors: result.errors,
-          event_data: data
+        raise(
+          EventValidationError.new(
+            "Erro de validação no evento #{idx + 1}: #{result.errors.inspect}",
+            validation_errors: result.errors,
+            event_data: data
+          )
         )
       end
     end
