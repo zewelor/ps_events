@@ -1,0 +1,359 @@
+#!dockerized.sh ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+
+Bundler.require(:development)
+
+require "json"
+require "ruby_llm"
+require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/array/wrap"
+require "active_support/core_ext/enumerable"
+require "active_support/core_ext/object/deep_dup"
+require "active_support/core_ext/string/exclude"
+
+require_relative "../lib/server/event_ocr_service"
+require_relative "../lib/server/event_validation"
+require_relative "../lib/server/event_validation_error"
+require_relative "../lib/server/llm_schema"
+
+GO_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1"
+GO_ANTHROPIC_BASE_URL = "https://opencode.ai/zen/go"
+
+MODELS = [
+  {id: "kimi-k2.6", provider: :openai, input_price: 0.95, output_price: 4.00},
+  {id: "kimi-k2.5", provider: :openai, input_price: 0.60, output_price: 3.00},
+  {id: "glm-5.1", provider: :openai, input_price: 1.40, output_price: 4.40},
+  {id: "glm-5", provider: :openai, input_price: 1.00, output_price: 3.20},
+  {id: "mimo-v2.5-pro", provider: :openai, input_price: 1.74, output_price: 3.48},
+  {id: "mimo-v2.5", provider: :openai, input_price: 0.14, output_price: 0.28},
+  {id: "mimo-v2-pro", provider: :openai, input_price: 1.74, output_price: 3.48},
+  {id: "mimo-v2-omni", provider: :openai, input_price: 0.50, output_price: 1.50},
+  {id: "deepseek-v4-pro", provider: :openai, input_price: 1.74, output_price: 3.48},
+  {id: "deepseek-v4-flash", provider: :openai, input_price: 0.14, output_price: 0.28},
+  {id: "minimax-m3", provider: :anthropic, input_price: 0.30, output_price: 1.20},
+  {id: "minimax-m2.7", provider: :anthropic, input_price: 0.30, output_price: 1.20},
+  {id: "minimax-m2.5", provider: :anthropic, input_price: 0.30, output_price: 1.20},
+  {id: "qwen3.7-max", provider: :anthropic, input_price: 2.50, output_price: 7.50},
+  {id: "qwen3.7-plus", provider: :anthropic, input_price: 0.40, output_price: 1.60},
+  {id: "qwen3.6-plus", provider: :anthropic, input_price: 0.50, output_price: 3.00},
+  {id: "qwen3.5-plus", provider: :anthropic, input_price: 0.40, output_price: 1.60},
+  {id: "hy3-preview", provider: :anthropic, input_price: 0.30, output_price: 0.60}
+].freeze
+
+DEFAULT_PROVIDER_FILTER = :openai
+
+EVENT_SCHEMA = JSON.parse(File.read(File.expand_path("../lib/event_schema.json", __dir__)))
+SCHEMA_WRAPPER = {
+  "type" => "array",
+  "items" => EVENT_SCHEMA
+}.freeze
+CATEGORY_ENUM = EVENT_SCHEMA.dig("properties", "category", "enum") || []
+ALLOWED_PRICE_TYPES = %w[Gratuito Pago Desconhecido].freeze
+PROMPT_TEXT = "Extrair evento(s) desta imagem e devolver em JSON conforme schema."
+
+def parse_args(argv)
+  positional = []
+  model_ids = nil
+  provider_filter = DEFAULT_PROVIDER_FILTER
+  sanitize_mode = :problematic
+
+  argv.each do |arg|
+    case arg
+    when /\A--model=(.+)\z/
+      model_ids = Regexp.last_match(1).split(",").map(&:strip).reject(&:empty?)
+    when /\A--provider=(.+)\z/
+      value = Regexp.last_match(1).strip.to_sym
+      unless %i[openai anthropic].include?(value)
+        raise "Invalid --provider value '#{value}'. Use 'openai' or 'anthropic'."
+      end
+      provider_filter = value
+    when /\A--sanitize=(.+)\z/
+      value = Regexp.last_match(1).strip.to_sym
+      unless %i[problematic grammar all none].include?(value)
+        raise "Invalid --sanitize value '#{value}'. Use 'problematic', 'grammar', 'all', or 'none'."
+      end
+      sanitize_mode = value
+    when /\A--?\w+/
+      raise "Unknown flag: #{arg}"
+    else
+      positional << arg
+    end
+  end
+
+  raise "Image path is required." if positional.empty?
+
+  CliArgs.new(image_path: positional.first, model_ids: model_ids, provider_filter: provider_filter, sanitize_mode: sanitize_mode)
+end
+
+CliArgs = Struct.new(:image_path, :model_ids, :provider_filter, :sanitize_mode, keyword_init: true)
+
+def usage
+  puts <<~USAGE
+    Usage: #{$0} <image_path> [options]
+
+    Options:
+      --model=ID1,ID2,...   Benchmark only the given model IDs (comma-separated)
+      --provider=openai     Override the endpoint (default: openai). Useful to
+                            test models on a different transport than the docs
+                            suggest (e.g. Qwen via /chat/completions).
+      --sanitize=MODE       Schema sanitization mode:
+                            problematic (default) | grammar | all | none
+                            - problematic: drop pattern with regex lookahead etc
+                            - grammar:      drop pattern with EBNF-unsafe chars (|)
+                            - all:          drop every pattern
+                            - none:         pass schema through unchanged
+
+    Examples:
+      #{$0} tmp/signal-2026-02-11-092650.jpeg
+      #{$0} tmp/signal-2026-02-11-092650.jpeg --model=qwen3.7-plus --sanitize=grammar
+  USAGE
+  exit 1
+end
+
+def resolve_models(args)
+  pool = MODELS.dup
+
+  if args.model_ids
+    by_id = pool.index_by { |m| m[:id] }
+    selected = args.model_ids.map { |id| by_id[id] or raise "Unknown model id: #{id}" }
+    pool = selected
+  end
+
+  if args.provider_filter
+    # Override the provider on each model — useful for testing models on a
+    # different endpoint than the docs suggest (e.g. Qwen on OpenAI-compat).
+    pool = pool.map { |m| m.merge(provider: args.provider_filter) }
+  end
+
+  raise "No models to benchmark after filtering." if pool.empty?
+
+  pool
+end
+
+def assert_single_provider(models)
+  providers = models.map { |m| m[:provider] }.uniq
+  return providers.first if providers.length == 1
+
+  raise "Mixed-provider run is not supported (got #{providers.join(", ")}). " \
+    "Run OpenAI-compatible and Anthropic-compatible benchmarks in separate invocations."
+end
+
+def configure_ruby_llm_for!(provider)
+  api_key = ENV.fetch("OPENCODE_GO_API_KEY", nil)
+  raise "OPENCODE_GO_API_KEY is not set in the environment." if api_key.to_s.strip.empty?
+
+  RubyLLM.configure do |config|
+    case provider
+    when :openai
+      config.openai_api_key = api_key
+      config.openai_api_base = GO_OPENAI_BASE_URL
+      config.openai_use_system_role = true
+    when :anthropic
+      config.anthropic_api_key = api_key
+      config.anthropic_api_base = GO_ANTHROPIC_BASE_URL
+    else
+      raise "Unsupported provider: #{provider}"
+    end
+  end
+end
+
+def image_baseline(path)
+  size_kb = (File.size(path).to_f / 1024).round(1)
+  "Image: #{File.basename(path)} (#{size_kb} KB)"
+end
+
+def compute_cost(model_spec, input_tokens, output_tokens)
+  in_cost = (input_tokens.to_i / 1_000_000.0) * model_spec[:input_price]
+  out_cost = (output_tokens.to_i / 1_000_000.0) * model_spec[:output_price]
+  in_cost + out_cost
+end
+
+def valid_time?(value)
+  return true if value.to_s.empty?
+  Time.parse(value.to_s)
+  true
+rescue ArgumentError
+  false
+end
+
+def valid_category?(category)
+  return false if category.to_s.empty?
+  CATEGORY_ENUM.include?(category.to_s)
+end
+
+def score_event(event_data)
+  return 0 if event_data.nil? || event_data.empty?
+
+  validator = EventValidation.new
+  result = validator.call(event_data)
+  score = 0
+  score += 30 if result.success?
+  score += 20 if event_data[:start_date].to_s.match?(/\A\d{2}\/\d{2}\/\d{4}\z/)
+  score += 10 if event_data[:end_date].to_s.empty? || event_data[:end_date].to_s.match?(/\A\d{2}\/\d{2}\/\d{4}\z/)
+  score += 5 if valid_time?(event_data[:start_time])
+  score += 5 if valid_time?(event_data[:end_time])
+  score += 5 if event_data[:location].to_s.length >= 3
+  score += 5 if ALLOWED_PRICE_TYPES.include?(event_data[:price_type].to_s)
+  score += 5 if valid_category?(event_data[:category])
+  score += 5 if event_data[:name].to_s.length >= 3
+  score += 5 if event_data[:location].to_s.exclude?("Porto Santo")
+  score += 5 if event_data[:description].to_s.length >= 10
+  score
+end
+
+def normalize_events(content)
+  data = content
+  data = JSON.parse(content.to_s) if data.is_a?(String)
+  Array.wrap(data).filter_map do |item|
+    next unless item.is_a?(Hash)
+    h = item.respond_to?(:deep_symbolize_keys) ? item.deep_symbolize_keys : item.transform_keys(&:to_sym)
+    h.compact_blank!
+    h[:responsibility_agreement] = "on"
+    h
+  end
+rescue JSON::ParserError
+  []
+end
+
+def run_model(model_spec, image_path, sanitize_mode:)
+  started = Time.now
+  sanitized_schema = LLMSchema.sanitize(SCHEMA_WRAPPER.deep_dup, mode: sanitize_mode)
+  chat = RubyLLM.chat(
+    model: model_spec[:id],
+    provider: model_spec[:provider],
+    assume_model_exists: true
+  ).with_schema(sanitized_schema)
+  chat.with_instructions(EventOcrService.build_instructions)
+
+  response = chat.ask(PROMPT_TEXT, with: image_path)
+  elapsed = Time.now - started
+  events = normalize_events(response.content)
+  first = events.first || {}
+  score = events.empty? ? 0 : score_event(first)
+  tokens_in = response.tokens&.input.to_i
+  tokens_out = response.tokens&.output.to_i
+  {
+    model: model_spec[:id],
+    provider: model_spec[:provider],
+    elapsed: elapsed,
+    tokens_in: tokens_in,
+    tokens_out: tokens_out,
+    cost: compute_cost(model_spec, tokens_in, tokens_out),
+    score: score,
+    valid_json: !events.empty?,
+    events_count: events.size,
+    first_event: first
+  }
+rescue => e
+  {
+    model: model_spec[:id],
+    provider: model_spec[:provider],
+    elapsed: Time.now - started,
+    error: "#{e.class}: #{e.message}"
+  }
+end
+
+def value_score(result)
+  return 0.0 if result[:error] || result[:cost].to_f.zero?
+  result[:score].to_f / result[:cost]
+end
+
+def fmt_row(result)
+  if result[:error]
+    format("%-20s | %4s | %5s | %7.1f | %15s | %9s | %s",
+      result[:model], "ERR", "-", result[:elapsed].round(1), "-", "-", "-")
+  else
+    format("%-20s | %4s | %5d | %7.1f | %7d/%-6d | %9.5f | %d",
+      result[:model],
+      result[:valid_json] ? "OK" : "X",
+      result[:score],
+      result[:elapsed],
+      result[:tokens_in], result[:tokens_out],
+      result[:cost],
+      value_score(result).round)
+  end
+end
+
+begin
+  args = parse_args(ARGV)
+rescue RuntimeError => e
+  puts "Argument error: #{e.message}"
+  usage
+end
+
+usage if args.image_path.nil?
+
+unless File.exist?(args.image_path)
+  puts "Error: File '#{args.image_path}' does not exist."
+  exit 1
+end
+
+if ENV["OPENCODE_GO_API_KEY"].to_s.strip.empty?
+  puts "Error: OPENCODE_GO_API_KEY is not set in the environment."
+  puts "Add it to .env (loaded by docker-compose) and re-run."
+  exit 1
+end
+
+begin
+  models = resolve_models(args)
+  provider = assert_single_provider(models)
+  configure_ruby_llm_for!(provider)
+rescue RuntimeError => e
+  puts "Configuration error: #{e.message}"
+  exit 2
+end
+
+puts image_baseline(args.image_path)
+puts "Provider: #{provider} (#{(provider == :anthropic) ? GO_ANTHROPIC_BASE_URL : GO_OPENAI_BASE_URL})"
+puts "Running #{models.length} model(s)..."
+puts
+
+results = models.map do |spec|
+  print "  -> #{spec[:id]} ... "
+  $stdout.flush
+  r = run_model(spec, args.image_path, sanitize_mode: args.sanitize_mode)
+  if r[:error]
+    puts "FAILED (#{r[:elapsed].round(1)}s) #{r[:error]}"
+  else
+    puts "OK (#{r[:elapsed].round(1)}s, score=#{r[:score]}, events=#{r[:events_count]})"
+  end
+  r
+end
+
+succeeded = results.reject { |r| r[:error] }
+ranked_by_value = succeeded.sort_by { |r| -value_score(r) }
+best_value = ranked_by_value.first
+best_quality = succeeded.max_by { |r| r[:score] }
+cheapest_valid = succeeded.min_by { |r| r[:cost] }
+
+puts
+puts "=" * 96
+puts " RESULTS"
+puts "=" * 96
+puts "MODEL                | JSON | SCORE | TIME(s) |  TOKENS(in/out) |   COST($) | VALUE"
+puts "-" * 96
+results.each { |r| puts fmt_row(r) }
+puts "=" * 96
+puts
+
+if best_value
+  puts "Best value (quality/price): #{best_value[:model]}" \
+    " (score=#{best_value[:score]}, cost=$#{format("%.5f", best_value[:cost])})"
+end
+if best_quality
+  puts "Best quality:               #{best_quality[:model]} (score=#{best_quality[:score]})"
+end
+if cheapest_valid
+  puts "Cheapest valid:             #{cheapest_valid[:model]} ($#{format("%.5f", cheapest_valid[:cost])})"
+end
+
+failed = results.select { |r| r[:error] }
+if failed.any?
+  puts
+  puts "Failed models:"
+  failed.each { |f| puts "  - #{f[:model]}: #{f[:error]}" }
+end
+
+exit failed.empty? ? 0 : 2

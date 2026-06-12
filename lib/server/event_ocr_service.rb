@@ -26,13 +26,45 @@ class EventOcrService
     raise "Erro ao analisar imagem: #{e.message}"
   end
 
+  def self.build_instructions
+    <<~INSTR
+      You are an expert in analyzing images and extracting information:
+
+      - Your task is to analyze the provided image and extract relevant text information in a structured format.
+      - Think extra hard to not miss any event on the image.
+      - Use only the information from the image, do not make assumptions or use external knowledge.
+      - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
+      - Current year is #{Time.now.year}.
+      - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order.
+      - If you cannot extract the information, return an empty JSON object {}.
+      - For location, skip writing / adding "Porto Santo". We always assume the location is somewhere on island Porto Santo.
+      - Directly return array with events, even if theres only one event.
+      - Focus on required fields, do not add any additional information, unless explicitly mentioned and contained in the image and json schema.
+      - If all of the events are in the same day AND same place / location, return only single event
+        - In description write hours and whats happening at what time. For example:
+          "10:00 - Abertura do evento, 11:00 - Palestra sobre tecnologia, 12:00 - Almoço"
+        - For start_time use hour from the first thing happening / listed.
+        - Unless there is a clear / explicit end or finish time, leave it empty. Do not assume end_time.
+      - Start date and time (assume current year)
+        - If the start time is not mentioned, leave it empty. If there are multiple events in the same day, AND place, use the first time mentioned.
+        - assume event time zone is Europe/Lisbon
+      - End date and time (assume current year)
+        - If the end / finish time is not explicitly mentioned, leave it empty.
+        - assume event time zone is Europe/Lisbon
+        - Only include end time if it is different from start time
+      - Price type (field 'price_type')
+        - If the price of an event is not specifically mentioned, use 'Desconhecido'
+        - If its more complex, like free till some hour, use 'Pago' and add a note in the description
+        - Be sure that price mentioned is price for attending the event, not for something else, like parking / extra menu / etc.
+    INSTR
+  end
+
   def initialize
     @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema).with_thinking(effort: :medium)
   end
 
   def analyze(input_path, retry_sleep: 0)
-    # Set initial instructions
-    chat.with_instructions(build_instructions)
+    chat.with_instructions(self.class.build_instructions)
 
     return analyze_pdf(input_path, retry_sleep: retry_sleep) if pdf_file?(input_path)
 
@@ -47,10 +79,8 @@ class EventOcrService
     llm_output = chat.ask(with: image_path).content
 
     begin
-      # Parse and validate JSON output - this may raise EventValidationError
       parse_and_validate_response(llm_output)
     rescue EventValidationError => first_error
-      # If first attempt fails, retry with error feedback
       puts("🔄 Retrying due to validation error: #{first_error.message}")
       Retryable.retryable(tries: 5, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
         puts("🔄 Retry attempt #{retries}")
@@ -60,7 +90,6 @@ class EventOcrService
         error_message = build_retry_message(current_error)
         llm_output = chat.ask(error_message, with: image_path).content
 
-        # Parse and validate JSON output - this may raise EventValidationError
         parse_and_validate_response(llm_output)
       end
     end
@@ -115,39 +144,6 @@ class EventOcrService
     }
   end
 
-  def build_instructions
-    <<~INSTR
-      You are an expert in analyzing images and extracting information:
-
-      - Your task is to analyze the provided image and extract relevant text information in a structured format.
-      - Think extra hard to not miss any event on the image.
-      - Use only the information from the image, do not make assumptions or use external knowledge.
-      - You will be provided with an image containing text, and you should focus on extracting concise and accurate details from it.
-      - Current year is #{Time.now.year}.
-      - Based on the photo / image, write concise information in European Portuguese (Portugal) about event(s), in order.
-      - If you cannot extract the information, return an empty JSON object {}.
-      - For location, skip writing / adding "Porto Santo". We always assume the location is somewhere on island Porto Santo.
-      - Directly return array with events, even if theres only one event.
-      - Focus on required fields, do not add any additional information, unless explicitly mentioned and contained in the image and json schema.
-      - If all of the events are in the same day AND same place / location, return only single event
-        - In description write hours and whats happening at what time. For example:
-          "10:00 - Abertura do evento, 11:00 - Palestra sobre tecnologia, 12:00 - Almoço"
-        - For start_time use hour from the first thing happening / listed.
-        - Unless there is a clear / explicit end or finish time, leave it empty. Do not assume end_time.
-      - Start date and time (assume current year)
-        - If the start time is not mentioned, leave it empty. If there are multiple events in the same day, AND place, use the first time mentioned.
-        - assume event time zone is Europe/Lisbon
-      - End date and time (assume current year)
-        - If the end / finish time is not explicitly mentioned, leave it empty.
-        - assume event time zone is Europe/Lisbon
-        - Only include end time if it is different from start time
-      - Price type (field 'price_type')
-        - If the price of an event is not specifically mentioned, use 'Desconhecido'
-        - If its more complex, like free till some hour, use 'Pago' and add a note in the description
-        - Be sure that price mentioned is price for attending the event, not for something else, like parking / extra menu / etc.
-    INSTR
-  end
-
   def build_retry_message(exception)
     message = "The previous response failed validation. Please correct the following issues and try again with a valid JSON response:\n\n"
 
@@ -174,7 +170,6 @@ class EventOcrService
     message
   end
 
-  # Parse and validate the LLM response, returning a result struct
   def parse_and_validate_response(response)
     if response.is_a?(Hash) || response.is_a?(Array)
       data = response
@@ -187,7 +182,6 @@ class EventOcrService
       end
     end
 
-    # We can get a single object or an array of objects
     data = Array.wrap(data).each do |item|
       item.compact_blank!
       item.symbolize_keys!
