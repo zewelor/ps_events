@@ -1,0 +1,109 @@
+#!/dockerized.sh ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+Bundler.require(:development)
+
+require "json"
+require "fileutils"
+require "securerandom"
+require_relative "../lib/server/google_sheets_service"
+require_relative "../lib/server/add_event_service"
+require_relative "../lib/server/image_service"
+require_relative "../lib/server/github_service"
+
+def usage
+  puts <<~USAGE
+    Usage: #{$0} <image_path> <event_json_or_file_path> [submitter_email]
+
+    Examples:
+      #{$0} tmp/poster.jpeg '{"name": "My Event", "start_date": "15/06/2026", "location": "Palco", "description": "Fun times!", "category": "Música", "organizer": "Me"}'
+      #{$0} tmp/poster.jpeg tmp/event.json submitter@email.com
+  USAGE
+  exit 1
+end
+
+image_path = ARGV[0]
+json_arg = ARGV[1]
+submitter_email = ARGV[2] || "pxopulse+helper@gmail.com"
+
+usage if image_path.nil? || json_arg.nil?
+
+unless File.exist?(image_path)
+  puts "Error: Image file '#{image_path}' does not exist."
+  exit 1
+end
+
+# Parse JSON input (either from file or string)
+event_data = nil
+begin
+  event_data = if File.exist?(json_arg)
+    JSON.parse(File.read(json_arg))
+  else
+    JSON.parse(json_arg)
+  end
+rescue JSON::ParserError => e
+  puts "Error: Failed to parse event JSON data: #{e.message}"
+  exit 1
+end
+
+# Normalize keys to symbols and handle array wrapping if needed
+event_data = event_data.first if event_data.is_a?(Array)
+event_data = event_data.transform_keys(&:to_sym)
+
+# Setup Google Sheets
+if ENV["GOOGLE_SPREADSHEET_ID"].to_s.strip.empty? || ENV["GOOGLE_SERVICE_ACCOUNT_JSON_BASE64"].to_s.strip.empty?
+  puts "Error: Google Sheet environment variables are missing."
+  exit 1
+end
+
+sheets_service = GoogleSheetsService.new
+add_service = AddEventService.new(
+  google_sheets: sheets_service,
+  spreadsheet_id: ENV.fetch("GOOGLE_SPREADSHEET_ID"),
+  events_range: ENV.fetch("EVENTS_SHEET_RANGE")
+)
+
+# 1. Process image
+puts "Processing image..."
+uploaded_file = {
+  tempfile: File.open(image_path),
+  type: "image/#{File.extname(image_path).delete(".").downcase}"
+}
+
+# ImageService.validate_and_process generates a UUID filename and saves to /tmp/UUID.webp
+processed_path = ImageService.validate_and_process(uploaded_file)
+uuid = File.basename(processed_path, ".*")
+puts "Image processed to WebP: #{processed_path} (UUID: #{uuid})"
+
+# 2. Save locally under assets/images
+local_dest = File.expand_path("../events_listing/assets/images/#{uuid}.webp", __dir__)
+FileUtils.mkdir_p(File.dirname(local_dest))
+FileUtils.cp(processed_path, local_dest)
+puts "Saved image locally to: #{local_dest}"
+
+# 3. Attempt GitHub API upload
+if ENV["GH_TOKEN"].to_s.strip.empty? || ENV["GH_REPO"].to_s.strip.empty?
+  puts "Warning: GH_TOKEN or GH_REPO not found. Skipping GitHub API upload."
+else
+  puts "Uploading image to GitHub..."
+  if GitHubService.upload_image(processed_path)
+    puts "Uploaded successfully to GitHub!"
+  else
+    puts "Warning: GitHub API upload failed. Image was still saved locally."
+  end
+end
+
+# 4. Append row to Google Sheets
+puts "Appending event row to Google Sheets..."
+result = add_service.add_event(event_data, submitter_email: submitter_email, image_path: processed_path)
+
+if result
+  puts "Success! Event successfully added."
+else
+  puts "Error: Failed to append row to Google Sheets."
+  exit 1
+end
+
+# Cleanup temporary file from /tmp
+File.delete(processed_path) if File.exist?(processed_path)

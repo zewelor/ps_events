@@ -52,6 +52,34 @@ Used in this project
 
 - When using playwright, use localhost:4000 as host
 
+### Helper scripts
+
+- `bin/add_event <image_path> <event_json_or_file_path> [submitter_email]`
+  - Helper script to process a local flyer image (webp conversion, resizing, stripping metadata) and save it to `events_listing/assets/images/UUID.webp`.
+  - Attempts to upload the image to GitHub using `GitHubService` (if credentials are set).
+  - Appends the event metadata row to the Google Sheet configured in `.env`.
+  - **JSON Format**: The event JSON can be passed as a string or path to a JSON file. It should contain the following fields:
+    ```json
+    {
+      "name": "Nome do Evento",
+      "start_date": "15/06/2026",
+      "start_time": "21:00",
+      "end_date": "15/06/2026",
+      "end_time": "23:59",
+      "location": "Localização",
+      "description": "Descrição do evento",
+      "category": "Música",
+      "organizer": "Organizador",
+      "contact_email": "contacto@email.com",
+      "contact_tel": "912345678",
+      "price_type": "Grátis",
+      "event_link1": "https://...",
+      "event_link2": "",
+      "event_link3": "",
+      "event_link4": ""
+    }
+    ```
+
 ## UI and Styling
 
 - Use Shadcn UI, Radix, and Tailwind and its plugins, for components and styling.
