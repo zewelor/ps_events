@@ -22,6 +22,8 @@ GO_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1"
 GO_ANTHROPIC_BASE_URL = "https://opencode.ai/zen/go"
 
 MODELS = [
+  {id: "gemini-flash-latest", provider: :gemini, input_price: 0.075, output_price: 0.30},
+  {id: "kimi-k2.7-code", provider: :openai, input_price: 0.95, output_price: 4.00},
   {id: "kimi-k2.6", provider: :openai, input_price: 0.95, output_price: 4.00},
   {id: "kimi-k2.5", provider: :openai, input_price: 0.60, output_price: 3.00},
   {id: "glm-5.1", provider: :openai, input_price: 1.40, output_price: 4.40},
@@ -65,8 +67,8 @@ def parse_args(argv)
       model_ids = Regexp.last_match(1).split(",").map(&:strip).reject(&:empty?)
     when /\A--provider=(.+)\z/
       value = Regexp.last_match(1).strip.to_sym
-      unless %i[openai anthropic].include?(value)
-        raise "Invalid --provider value '#{value}'. Use 'openai' or 'anthropic'."
+      unless %i[openai anthropic gemini].include?(value)
+        raise "Invalid --provider value '#{value}'. Use 'openai', 'anthropic', or 'gemini'."
       end
       provider_filter = value
     when /\A--sanitize=(.+)\z/
@@ -141,18 +143,23 @@ def assert_single_provider(models)
 end
 
 def configure_ruby_llm_for!(provider)
-  api_key = ENV.fetch("OPENCODE_GO_API_KEY", nil)
-  raise "OPENCODE_GO_API_KEY is not set in the environment." if api_key.to_s.strip.empty?
-
   RubyLLM.configure do |config|
     case provider
     when :openai
+      api_key = ENV.fetch("OPENCODE_GO_API_KEY", nil)
+      raise "OPENCODE_GO_API_KEY is not set in the environment." if api_key.to_s.strip.empty?
       config.openai_api_key = api_key
       config.openai_api_base = GO_OPENAI_BASE_URL
       config.openai_use_system_role = true
     when :anthropic
+      api_key = ENV.fetch("OPENCODE_GO_API_KEY", nil)
+      raise "OPENCODE_GO_API_KEY is not set in the environment." if api_key.to_s.strip.empty?
       config.anthropic_api_key = api_key
       config.anthropic_api_base = GO_ANTHROPIC_BASE_URL
+    when :gemini
+      gemini_key = ENV.fetch("GEMINI_API_KEY", nil)
+      raise "GEMINI_API_KEY is not set in the environment." if gemini_key.to_s.strip.empty?
+      config.gemini_api_key = gemini_key
     else
       raise "Unsupported provider: #{provider}"
     end
@@ -225,6 +232,18 @@ def run_model(model_spec, image_path, sanitize_mode:)
     provider: model_spec[:provider],
     assume_model_exists: true
   ).with_schema(sanitized_schema)
+  chat = chat.with_thinking(effort: :low) if model_spec[:provider] == :gemini
+  params = {}
+  if model_spec[:provider] == :openai
+    if model_spec[:id].include?("k2.7") || model_spec[:id].include?("o1") || model_spec[:id].include?("o3")
+      params[:max_completion_tokens] = 4096
+    else
+      params[:max_tokens] = 4096
+    end
+  elsif model_spec[:provider] == :anthropic
+    params[:max_tokens] = 4096
+  end
+  chat = chat.with_params(**params) unless params.empty?
   chat.with_instructions(EventOcrService.build_instructions)
 
   response = chat.ask(PROMPT_TEXT, with: image_path)
