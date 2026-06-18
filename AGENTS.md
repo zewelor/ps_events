@@ -80,6 +80,7 @@ Used in this project
     }
     ```
   - **Manual Reading Requirement**: When requested to add an event from a flyer image/PDF, do not run the OCR tools or scripts (`bin/ocr`, etc.) to analyze it. Instead, read the file directly yourself using the appropriate file viewing tool, extract the event details manually, create the JSON payload, and then run `bin/add_event`.
+  - **Approval Reminder Requirement**: After successfully running the `bin/add_event` script, always remind the user that they need to approve/accept the added event in the Google Spreadsheet.
 
 ## UI and Styling
 
