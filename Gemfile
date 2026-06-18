@@ -18,7 +18,6 @@ end
 
 group :development do
   gem "standard"
-  gem "lefthook"
   gem "ruby-lsp", require: false
   gem "amazing_print"
 

@@ -184,7 +184,6 @@ GEM
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     language_server-protocol (3.17.0.5)
-    lefthook (2.1.9)
     lint_roller (1.1.0)
     liquid (4.0.4)
     listen (3.10.0)
@@ -370,7 +369,6 @@ DEPENDENCIES
   jekyll-sitemap (~> 1.4)
   jekyll-tailwindcss
   json-schema (~> 6.0)
-  lefthook
   mini_magick (~> 5.2)
   minitest (~> 6.0)
   puma (~> 8.0)

@@ -30,7 +30,7 @@ dockerized_run() {
 }
 
 # Declare functions for each name
-names=("ruby" "rails" "bundle" "rake" "gem" "standardrb" "rubocop" "rspec" "lefthook" "jekyll")
+names=("ruby" "rails" "bundle" "rake" "gem" "standardrb" "rubocop" "rspec" "jekyll")
 
 # If script is executed with arguments, run the command directly
 if [ $# -gt 0 ]; then
