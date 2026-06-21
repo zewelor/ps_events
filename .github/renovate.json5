@@ -100,5 +100,16 @@
       automerge: true,
       automergeType: 'branch'
     },
+    {
+      matchManagers: [
+        'bundler',
+      ],
+      matchPackageNames: [
+        '/^google-/',
+        '/^googleauth/',
+      ],
+      automerge: true,
+      automergeType: 'branch'
+    },
   ],
 }
