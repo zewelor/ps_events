@@ -1,0 +1,67 @@
+#!/dockerized.sh ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+Bundler.require(:development)
+
+require "fileutils"
+require "securerandom"
+require_relative "../lib/server/image_service"
+require_relative "../lib/server/github_service"
+
+def usage
+  puts <<~USAGE
+    Usage: #{$0} <image_path>
+
+    Examples:
+      #{$0} tmp/poster.jpeg
+  USAGE
+  exit 1
+end
+
+image_path = ARGV[0]
+usage if image_path.nil?
+
+unless File.exist?(image_path)
+  puts "Error: Image file '#{image_path}' does not exist."
+  exit 1
+end
+
+begin
+  puts "Processing image..."
+  uploaded_file = {
+    tempfile: File.open(image_path),
+    type: "image/#{File.extname(image_path).delete(".").downcase}"
+  }
+
+  # ImageService.validate_and_process generates a UUID filename and saves to /tmp/UUID.webp
+  processed_path = ImageService.validate_and_process(uploaded_file)
+  uuid = File.basename(processed_path, ".*")
+  puts "Image processed to WebP: #{processed_path} (UUID: #{uuid})"
+
+  # Save locally under assets/images
+  local_dest = File.expand_path("../events_listing/assets/images/#{uuid}.webp", __dir__)
+  FileUtils.mkdir_p(File.dirname(local_dest))
+  FileUtils.cp(processed_path, local_dest)
+  puts "Saved image locally to: #{local_dest}"
+
+  # Attempt GitHub API upload
+  if ENV["GH_TOKEN"].to_s.strip.empty? || ENV["GH_REPO"].to_s.strip.empty?
+    puts "Warning: GH_TOKEN or GH_REPO not found. Skipping GitHub API upload."
+  else
+    puts "Uploading image to GitHub..."
+    if GitHubService.upload_image(processed_path)
+      puts "Uploaded successfully to GitHub!"
+    else
+      puts "Warning: GitHub API upload failed. Image was still saved locally."
+    end
+  end
+
+  # Cleanup temporary file from /tmp
+  File.delete(processed_path) if File.exist?(processed_path)
+
+  puts "Success! Image UUID: #{uuid}"
+rescue => e
+  puts "Error: #{e.message}"
+  exit 1
+end

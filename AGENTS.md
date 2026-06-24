@@ -82,6 +82,17 @@ Used in this project
   - **Manual Reading Requirement**: When requested to add an event from a flyer image/PDF, do not run the OCR tools or scripts (`bin/ocr`, etc.) to analyze it. Instead, read the file directly yourself using the appropriate file viewing tool, extract the event details manually, create the JSON payload, and then run `bin/add_event`.
   - **Approval Reminder Requirement**: After successfully running the `bin/add_event` script, always remind the user that they need to approve/accept the added event in the Google Spreadsheet.
 
+- `bin/convert_image <image_path>`
+  - Standalone helper script to process, optimize, and upload a local flyer image (converting to WebP, resizing, stripping metadata). Saves the optimized file to `events_listing/assets/images/UUID.webp` and returns the generated UUID.
+
+### Recurring Events Guidelines
+
+- **Efficient Recurring Event Workflow**: When adding multiple occurrences of a recurring event (e.g. weekly events) that share the same flyer/poster, do not run `bin/add_event` multiple times with the raw image. Instead:
+  1. Process the image once using `bin/convert_image <image_path>` to obtain a single image UUID.
+  2. Write a scratch script to append the multiple event rows to Google Sheets (using `AddEventService#add_event`) referencing that single image UUID.
+  3. This ensures only a single WebP file is stored in git and prevents redundant API requests.
+
+
 ## UI and Styling
 
 - Use Shadcn UI, Radix, and Tailwind and its plugins, for components and styling.
