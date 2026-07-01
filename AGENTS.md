@@ -89,12 +89,12 @@ Used in this project
 
 - **Efficient Recurring/Shared Event Workflow**: When adding multiple occurrences of a recurring event (e.g. weekly events) or multiple distinct events listed on the same flyer/poster, do not run `bin/add_event` multiple times with the raw image. Instead:
   1. Process the image once using `bin/convert_image <image_path>` to obtain a single image UUID.
-  2. Write a scratch script to append the multiple event rows to Google Sheets (using `AddEventService#add_event`) referencing that single image UUID.
+  2. Write a scratch script to append the multiple event rows to Google Sheets (using `AddEventService#add_event`) and pass the generated UUID as the shared `image_path` value for each row.
   3. This ensures only a single WebP file is stored in git and prevents redundant API requests.
 
-- **Check for Duplicates**: Always check the existing events in the database (`events.csv`) before adding new ones. Cross-reference by name, date, and location. Do not add events that are already registered.
+- **Check for Duplicates**: Always check the existing events in `events_listing/_data/events.csv` before converting/uploading the image or adding new rows. Cross-reference by name, date, and location. Do not add events that are already registered.
 
-- **Event Granularity**: When a flyer contains a list of sub-events under a generic heading (e.g. multiple individual golf tournaments on different days, or different daily concerts in an animation cycle), treat them as **separate, individual events** rather than a single long-running/aggregated event. Give each sub-event its correct individual date, time, and specific name, and link them all to the shared flyer image UUID.
+- **Event Granularity**: When a flyer contains separately named/date-specific sub-events under a generic heading (e.g. multiple individual golf tournaments on different days, or different daily concerts in an animation cycle), add **one row per sub-event** rather than one long-running/aggregated event. Give each sub-event its correct individual date, time, and specific name, and link them all to the shared flyer image UUID. If the flyer advertises one named event with a date range (e.g. an expo or festival running from one date to another), add one row with the correct `start_date` and `end_date` instead.
 
 
 ## UI and Styling

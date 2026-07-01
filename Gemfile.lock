@@ -40,7 +40,6 @@ GEM
       bigdecimal
       rexml
     csv (3.3.5)
-    date (3.5.1)
     debug (1.11.1)
       irb (~> 1.10)
       reline (>= 0.3.8)
@@ -102,7 +101,7 @@ GEM
       faraday (~> 2.0)
     ffi (1.17.4-x86_64-linux-gnu)
     forwardable-extended (2.6.0)
-    google-apis-core (1.2.3)
+    google-apis-core (1.2.4)
       addressable (~> 2.9)
       faraday (~> 2.13)
       faraday-follow_redirects (~> 0.3)
@@ -130,7 +129,7 @@ GEM
       signet (>= 0.16, < 2.a)
     hashdiff (1.2.1)
     http_parser.rb (0.8.1)
-    i18n (1.15.1)
+    i18n (1.15.2)
       concurrent-ruby (~> 1.0)
     icalendar (2.12.3)
       base64
@@ -173,7 +172,7 @@ GEM
       tailwindcss-ruby
     jekyll-watch (2.2.1)
       listen (~> 3.0)
-    json (2.19.9)
+    json (2.20.0)
     json-schema (6.2.0)
       addressable (~> 2.8)
       bigdecimal (>= 3.1, < 5)
@@ -213,14 +212,11 @@ GEM
       racc
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
-    pp (0.6.3)
+    pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
     prism (1.9.0)
     pstore (0.2.1)
-    psych (5.4.0)
-      date
-      stringio
     public_suffix (7.0.5)
     puma (8.0.2)
       nio4r (~> 2.0)
@@ -246,9 +242,10 @@ GEM
       logger
       prism (>= 1.6.0)
       tsort
-    rdoc (7.2.0)
+    rdoc (8.0.0)
       erb
-      psych (>= 4.0.0)
+      prism (>= 1.6.0)
+      rbs (>= 4.0.0)
       tsort
     regexp_parser (2.12.0)
     reline (0.6.3)
@@ -328,7 +325,6 @@ GEM
     standard-performance (1.9.0)
       lint_roller (~> 1.1)
       rubocop-performance (~> 1.26.0)
-    stringio (3.2.0)
     tailwindcss-ruby (4.3.1-x86_64-linux-gnu)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
