@@ -2,7 +2,7 @@ FROM ghcr.io/zewelor/ruby:4.0.5-slim AS base
 
 ARG RUNTIME_PACKAGES="imagemagick ghostscript"
 ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
-ARG WATCHEXEC_VERSION="2.3.3"
+ARG WATCHEXEC_VERSION="2.4.3"
 
 # We mount whole . dir into app, so vendor/bundle would get overwritten
 ENV BUNDLE_PATH=/bundle \
