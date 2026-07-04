@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "csv"
+require "set"
+require "fileutils"
+
+csv_path = "events.csv"
+images_dir = "events_listing/assets/images"
+
+unless File.exist?(csv_path)
+  puts "CSV file not found"
+  exit 1
+end
+
+referenced = CSV.foreach(csv_path, headers: true).map { |r| r["image"] }.compact.map(&:strip).to_set
+
+Dir.glob(File.join(images_dir, "*.webp")).each do |file|
+  uuid = File.basename(file, ".webp")
+  next if referenced.include?(uuid)
+
+  if system("git rm -f \"#{file}\"")
+    puts "Removed via git: #{file}"
+  else
+    FileUtils.rm_f(file)
+    puts "Removed via FileUtils: #{file}"
+  end
+end

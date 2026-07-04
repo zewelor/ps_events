@@ -8,11 +8,11 @@ Solid arrows mean "can trigger / leads to a new workflow or job path". Dotted ar
 
 ```mermaid
 flowchart TD
-    push_regen["push(main)<br/>bin/spreadsheet_to_ical<br/>or regenerate_events.yml"] --> regenerate["regenerate_events.yml<br/>download CSV"]
+    push_regen["push(main)<br/>bin/spreadsheet_to_ical<br/>or regenerate_events.yml"] --> regenerate["regenerate_events.yml<br/>download CSV & prune images"]
     schedule_regen["schedule / workflow_dispatch / repository_dispatch"] --> regenerate
 
     regenerate --> regen_validate["validate regenerated Jekyll build<br/>with :ci image"]
-    regen_validate --> regen_commit["auto-commit events.csv<br/>via GITHUB_TOKEN"]
+    regen_validate --> regen_commit["auto-commit CSV & assets<br/>via GITHUB_TOKEN"]
     regen_validate --> regen_complete["workflow_run completed<br/>(success only)"]
     regen_complete --> jekyll["jekyll_site.yml<br/>Build and deploy site"]
 

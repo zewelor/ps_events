@@ -101,6 +101,10 @@ jobs:
         run: |
           curl -Lo events.csv "${{ secrets.CSV_ENDPOINT}}"
 
+      - name: Prune unreferenced images
+        run: |
+          ruby bin/clean_old_images
+
       # - name: Generate events.ics
       #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
       #   env:
@@ -118,5 +122,5 @@ jobs:
       - name: Auto-commit updated events files
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "Regenerate events files"
-          file_pattern: "events.csv"
+          commit_message: "Regenerate events files and prune unreferenced images"
+          file_pattern: "events.csv events_listing/assets/images/*.webp"
