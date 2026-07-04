@@ -14,11 +14,12 @@ unless File.exist?(csv_path)
 end
 
 referenced = CSV.foreach(csv_path, headers: true).map { |r| r["image"] }.compact.map(&:strip).to_set
+existing = Dir.glob(File.join(images_dir, "*.webp")).map { |f| File.basename(f, ".webp") }.to_set
 
-Dir.glob(File.join(images_dir, "*.webp")).each do |file|
-  uuid = File.basename(file, ".webp")
-  next if referenced.include?(uuid)
+unreferenced = existing - referenced
 
+unreferenced.each do |uuid|
+  file = File.join(images_dir, "#{uuid}.webp")
   if system("git rm -f \"#{file}\"")
     puts "Removed via git: #{file}"
   else
