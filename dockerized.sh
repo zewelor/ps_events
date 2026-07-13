@@ -56,6 +56,5 @@ else
     "
   done
 
-  export LEFTHOOK_BIN="bin/lefthook" # Set the lefthook bin path
   echo "Dockerized aliasses set"
 fi
