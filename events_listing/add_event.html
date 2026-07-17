@@ -43,13 +43,13 @@ sitemap: false
 {% endif %}
 
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
-  <h1 class="page-title">Adicionar um Novo Evento</h1>
+  <h1 class="page-title">Adicionar um novo evento</h1>
 
   <!-- Google Sign-In Section - Top of page -->
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
       <h3 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
-      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu email é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu email do Google será utilizado como email de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
+      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu e-mail é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu e-mail do Google será utilizado como e-mail de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -218,7 +218,7 @@ sitemap: false
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label for="contact_email" class="form-label">
-          Email de contacto
+          E-mail de contacto
         </label>
         <input
           type="email"
@@ -228,12 +228,12 @@ sitemap: false
           maxlength="100"
           class="form-input"
         />
-        <p class="form-help">Email de contacto para o evento. Por defeito, será o seu email do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</p>
+        <p class="form-help">E-mail de contacto para o evento. Por defeito, será o seu e-mail do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</p>
       </div>
 
       <div>
         <label for="contact_tel" class="form-label">
-          Telefone de Contacto / Whatsapp
+          Telefone de contacto / WhatsApp
         </label>
         <input
           type="tel"
@@ -249,7 +249,7 @@ sitemap: false
     <!-- Price Type -->
     <div>
       <label for="price_type" class="form-label">
-        Tipo de Preço
+        Tipo de preço
       </label>
       <select name="price_type" id="price_type" class="form-input">
         <option value="Gratuito" {% if test_price_type == 'Gratuito' %}selected{% endif %}>Gratuito</option>
@@ -262,7 +262,7 @@ sitemap: false
     <!-- Event Image -->
     <div>
       <label for="event_image" class="form-label">
-        Imagem do Evento
+        Imagem do evento
       </label>
       <input
         type="file"
@@ -368,7 +368,7 @@ sitemap: false
         aria-live="polite"
       >
         <span class="default-text transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-0 group-[.is-loading]:pointer-events-none">
-          Adicionar Evento
+          Adicionar evento
         </span>
         <span class="loading-state absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-[.is-loading]:opacity-100 group-[.is-loading]:pointer-events-auto">
           <svg class="animate-spin mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

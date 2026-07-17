@@ -251,4 +251,43 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<!-- Event Schema JSON-LD -->
+{% assign start_iso = page.start_date | to_iso_datetime: page.start_time %}
+{% assign end_iso = page.start_date | to_iso_end_datetime: page.start_time, page.end_date, page.end_time %}
+{% if start_iso %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": {{ page._name | jsonify }},
+  "startDate": "{{ start_iso }}",
+  {% if end_iso and end_iso != "" and end_iso != start_iso %}
+  "endDate": "{{ end_iso }}",
+  {% endif %}
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "eventStatus": "https://schema.org/EventScheduled",
+  "location": {
+    "@type": "Place",
+    "name": {{ page.location | jsonify }},
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Porto Santo",
+      "addressRegion": "Madeira",
+      "addressCountry": "PT"
+    }
+  },
+  {% if page.image and page.image != "" %}
+  "image": [
+    "{{ page.image | absolute_url }}"
+  ],
+  {% endif %}
+  "description": {{ page.description | jsonify }},
+  "organizer": {
+    "@type": "Organization",
+    "name": {{ page.organizer | default: 'PXO Pulse' | jsonify }}
+  }
+}
+</script>
+{% endif %}
+
 {% include aviso.html %}

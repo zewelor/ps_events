@@ -22,6 +22,9 @@ When writing / translating text, for pages etc, use the following guidelines:
 
 - Use clear, concise language.
 - Write text visibile in the html etc in portuguese from portugal
+- Write the brand name as `PXO Pulse`; keep lowercase `pxopulse` only in technical identifiers such as URLs, email addresses, and social handles.
+- In public-facing pt-PT copy, follow local Porto Santo usage: write `no Porto Santo`, `do Porto Santo`, and `ao Porto Santo`. Also use sentence case for UI labels and prefer `respetiva` over ambiguous possessives such as `sua` when referring back to an item.
+- After changing user-visible pt-PT copy, run `source dockerized.sh; ruby bin/linguistic_audit [changed_file ...]`. With no arguments it audits `events_listing/index.html` and `events_listing/about_us.html`. Review its suggestions before applying them and treat a non-zero status as a failed audit.
 
 ## Testing
 

@@ -9,7 +9,7 @@ require "icalendar/tzinfo"
 
 class SpreadsheetToIcalGenerator
   CSV_FILE = "events.csv"
-  CALENDAR_NAME = "PXOPulse"
+  CALENDAR_NAME = "PXO Pulse"
 
   attr_reader :skipped, :tzid
 

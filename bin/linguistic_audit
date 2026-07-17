@@ -1,0 +1,200 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+Bundler.require(:development)
+
+require "json"
+require "ruby_llm"
+require "securerandom"
+require "net/http"
+require "uri"
+
+# Automatyczne wczytywanie pliku .env z głównego katalogu (jeśli istnieje)
+ENV_FILE = File.expand_path("../.env", __dir__)
+if File.exist?(ENV_FILE)
+  File.readlines(ENV_FILE).each do |line|
+    line = line.strip
+    next if line.empty? || line.start_with?("#")
+
+    key, val = line.split("=", 2)
+    next unless key && val
+
+    # Usuń ewentualne cudzysłowy wokół wartości
+    val = val.gsub(/\A['"]|['"]\z/, "").strip
+    ENV[key.strip] = val
+  end
+end
+
+FILES_TO_AUDIT = [
+  "events_listing/index.html",
+  "events_listing/about_us.html"
+].freeze
+PROJECT_ROOT = File.expand_path("..", __dir__)
+
+def clean_html(content)
+  text = content.gsub(/\{%.*?%\}/m, "")
+  text = text.gsub(/\{\{.*?\}\}/m, "")
+  text = text.gsub(/<!--.*?-->/m, "")
+  text = text.gsub(/<script.*?<\/script>/m, "")
+  text = text.gsub(/<style.*?<\/style>/m, "")
+  text = text.gsub(/<[^>]*>/, " ")
+  text = text.squeeze(" ").strip
+  text.gsub(/\s+([,.;:!?])/, "\\1")
+end
+
+ChatResponse = Struct.new(:content)
+
+class GradioAmaliaChat
+  def ask(prompt)
+    output = query_amalia_sse(prompt)
+    raise "Erro na comunicação com o Gradio Space" if output.nil?
+    ChatResponse.new(output)
+  end
+
+  private
+
+  def query_amalia_sse(prompt)
+    space_url = "https://dukaturbo-amalia-gptuga.hf.space/gradio_api"
+    hf_token = ENV["AMALIA_API_KEY"] || ENV["HF_TOKEN"] || ""
+    session_hash = SecureRandom.hex(16)
+
+    # Krok 1: Zapisanie się do kolejki
+    join_uri = URI.parse("#{space_url}/queue/join")
+    join_req = Net::HTTP::Post.new(join_uri)
+    join_req["Content-Type"] = "application/json"
+    join_req["Authorization"] = "Bearer #{hf_token}" unless hf_token.empty?
+    join_req.body = {
+      data: [prompt, nil],
+      fn_index: 7,
+      session_hash: session_hash
+    }.to_json
+
+    join_res = Net::HTTP.start(join_uri.hostname, join_uri.port, use_ssl: true) do |http|
+      http.request(join_req)
+    end
+
+    return nil if join_res.code != "200"
+
+    # Krok 2: Odsłuch strumienia SSE
+    data_uri = URI.parse("#{space_url}/queue/data?session_hash=#{session_hash}")
+    data_req = Net::HTTP::Get.new(data_uri)
+    data_req["Accept"] = "text/event-stream"
+    data_req["Authorization"] = "Bearer #{hf_token}" unless hf_token.empty?
+
+    final_output = nil
+
+    begin
+      Net::HTTP.start(data_uri.hostname, data_uri.port, use_ssl: true) do |http|
+        http.request(data_req) do |response|
+          response.read_body do |chunk|
+            chunk.force_encoding("UTF-8").each_line do |line|
+              next unless line.start_with?("data: ")
+              json_str = line.sub("data: ", "").strip
+              next if json_str.empty?
+
+              begin
+                event = JSON.parse(json_str)
+                case event["msg"]
+                when "process_completed"
+                  if event["success"]
+                    final_output = event["output"]["data"][0]
+                  else
+                    puts "Erro do modelo: #{event["output"]["error"]}"
+                  end
+                when "close_stream"
+                  throw :done
+                end
+              rescue JSON::ParserError
+                # ignoruj
+              end
+            end
+          end
+        end
+      end
+    rescue
+      :done
+    end
+
+    final_output
+  end
+end
+
+def build_chat
+  api_url = ENV["AMALIA_API_URL"]
+
+  if api_url.to_s.strip.empty? || api_url.include?("hf.space")
+    GradioAmaliaChat.new
+  else
+    api_key = ENV["AMALIA_API_KEY"] || ENV["HF_TOKEN"] || "dummy"
+    model_id = ENV["AMALIA_MODEL_ID"] || "amalia-llm/AMALIA-9B-0626-SFT"
+
+    RubyLLM.configure do |config|
+      config.openai_api_key = api_key
+      config.openai_api_base = api_url
+      config.openai_use_system_role = true
+    end
+
+    RubyLLM.chat(
+      model: model_id,
+      provider: :openai,
+      assume_model_exists: true
+    )
+  end
+end
+
+def run_audit(files: FILES_TO_AUDIT, chat_factory: -> { build_chat })
+  success = true
+
+  files.each do |file|
+    full_path = File.expand_path(file, PROJECT_ROOT)
+    unless File.exist?(full_path)
+      puts "Ficheiro não encontrado: #{file}"
+      success = false
+      next
+    end
+
+    puts "\n--- A analisar o ficheiro #{file} com AMÁLIA LLM via RubyLLM ---"
+    text = clean_html(File.read(full_path))
+
+    prompt = <<~PROMPT
+      És um revisor linguístico sénior especializado em Português de Portugal (pt-PT).
+      Analisa o seguinte texto extraído do website PXO Pulse (um portal de eventos no Porto Santo) e identifica quaisquer erros ortográficos, gramaticais ou termos inadequados (como brasileirismos ou termos demasiado informais).
+
+      Apresenta o teu relatório em formato Markdown com as seguintes secções:
+      1. **Erros Identificados**: (Descreve o erro e a sugestão de correção)
+      2. **Melhorias de Fluidez**: (Como soar mais natural em pt-PT)
+      3. **Versão Corrigida**: (Apenas as frases corrigidas)
+
+      Texto a auditar do ficheiro #{file}:
+      ---
+      #{text}
+      ---
+    PROMPT
+
+    chat = chat_factory.call
+
+    begin
+      response = chat.ask(prompt)
+      puts "\n--- Relatório de Auditoria para #{file} ---"
+      puts response.content
+      puts "-------------------------------------------\n"
+    rescue => e
+      puts "Erro na comunicação com a API da Amália: #{e.message}"
+      success = false
+    end
+  end
+
+  success
+end
+
+if $PROGRAM_NAME == __FILE__
+  api_key = ENV["AMALIA_API_KEY"] || ENV["HF_TOKEN"]
+  if api_key.to_s.strip.empty?
+    puts "Erro: AMALIA_API_KEY ou HF_TOKEN não está definida no ambiente."
+    exit 1
+  end
+
+  files = ARGV.empty? ? FILES_TO_AUDIT : ARGV
+  exit(run_audit(files: files) ? 0 : 1)
+end

@@ -8,7 +8,7 @@
     if (!toggleBtn || !calendarWrapper) return;
 
     function updateText() {
-      toggleBtn.textContent = calendarWrapper.classList.contains('hidden') ? 'Mostrar Calendário' : 'Esconder Calendário';
+      toggleBtn.textContent = calendarWrapper.classList.contains('hidden') ? 'Mostrar calendário' : 'Esconder calendário';
     }
 
     toggleBtn.addEventListener('click', () => {

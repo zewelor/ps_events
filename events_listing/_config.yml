@@ -1,7 +1,7 @@
 title: PXO Pulse
 url: "https://pxopulse.com" # the base hostname & protocol for your site
 logo: /assets/logo180.webp
-description: "PXO Pulse é a agenda de eventos do Porto Santo, com concertos, workshops, desporto, cultura e atividades para residentes e visitantes."
+description: "O PXO Pulse é a agenda de eventos do Porto Santo, com concertos, workshops, desporto, cultura e atividades para residentes e visitantes."
 lang: pt-PT
 locale: pt_PT
 data_dir: _data

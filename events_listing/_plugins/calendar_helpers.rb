@@ -50,7 +50,7 @@ module Jekyll
       is_full_day = is_full_day_event?(event)
 
       cal = Icalendar::Calendar.new
-      cal.append_custom_property("X-WR-CALNAME", "PXOPulse Event")
+      cal.append_custom_property("X-WR-CALNAME", "Evento PXO Pulse")
       ev = Icalendar::Event.new
 
       if is_full_day

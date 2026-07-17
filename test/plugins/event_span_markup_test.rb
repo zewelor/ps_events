@@ -21,7 +21,28 @@ class EventSpanMarkupTest < Minitest::Test
     end
   end
 
+  def test_event_schema_uses_effective_end_date
+    build_site do |destination|
+      with_end_time = event_page(destination, "Concerto com hora final")
+      without_end_time = event_page(destination, "Concerto sem hora final")
+
+      assert_match(/"startDate": "2099-04-19T18:00"/, with_end_time)
+      assert_match(/"endDate": "2099-04-19T20:00"/, with_end_time)
+      assert_match(/"startDate": "2099-04-20T18:00"/, without_end_time)
+      refute_match(/"endDate":/, without_end_time)
+    end
+  end
+
   private
+
+  def event_page(destination, name)
+    path = Dir.glob(File.join(destination, "events", "*.html")).find do |candidate|
+      File.read(candidate).include?(name)
+    end
+    assert path, "Expected a generated event page for #{name}"
+
+    File.read(path)
+  end
 
   def build_site
     Dir.mktmpdir do |source_root|

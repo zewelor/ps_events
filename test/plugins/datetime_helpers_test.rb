@@ -246,4 +246,32 @@ class TestDatetimeHelpers < Minitest::Test
     }
     assert_equal "05/09/2025 (until 23:59)", format_event_datetime(event)
   end
+
+  def test_to_iso_datetime_with_date_only
+    assert_equal "2025-12-01", to_iso_datetime("01/12/2025")
+    assert_equal "2026-02-22", to_iso_datetime("22/2/2026")
+  end
+
+  def test_to_iso_datetime_with_date_and_time
+    assert_equal "2025-12-01T14:30", to_iso_datetime("01/12/2025", "14:30")
+    assert_equal "2026-02-22T17:30", to_iso_datetime("22/2/2026", "17:30")
+  end
+
+  def test_to_iso_datetime_with_invalid_date
+    assert_nil to_iso_datetime(nil)
+    assert_nil to_iso_datetime("")
+    assert_nil to_iso_datetime("invalid-date")
+  end
+
+  def test_to_iso_end_datetime_uses_start_date_when_only_end_time_is_present
+    assert_equal "2026-04-19T20:00", to_iso_end_datetime("19/04/2026", "18:00", nil, "20:00")
+  end
+
+  def test_to_iso_end_datetime_omits_unknown_end_on_same_day
+    assert_nil to_iso_end_datetime("19/04/2026", "18:00", "19/04/2026", nil)
+  end
+
+  def test_to_iso_end_datetime_keeps_distinct_end_date_without_time
+    assert_equal "2026-04-20", to_iso_end_datetime("19/04/2026", "18:00", "20/04/2026", nil)
+  end
 end

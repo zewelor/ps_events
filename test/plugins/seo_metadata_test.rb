@@ -9,9 +9,9 @@ class SeoMetadataTest < Minitest::Test
 
       assert_match(/<html[^>]+lang="pt-PT"/, html)
       assert_match(/<title>[^<]*PXO Pulse[^<]*<\/title>/, html)
-      assert_match(/<meta name="description" content="[^"]*pxopulse[^"]*"/i, html)
+      assert_match(/<meta name="description" content="[^"]*PXO Pulse[^"]*"/, html)
       assert_match(/<meta name="keywords" content="[^"]*pxopulse[^"]*"/i, html)
-      assert_match(/<p[^>]*>\s*O <strong>pxopulse<\/strong> é a agenda do Porto Santo/m, html)
+      assert_match(/<p[^>]*>\s*O <strong>PXO Pulse<\/strong> é a agenda do Porto Santo/m, html)
     end
   end
 

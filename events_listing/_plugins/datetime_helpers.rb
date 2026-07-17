@@ -1,3 +1,5 @@
+require "date"
+
 # Helper filters for datetime formatting in Jekyll
 # Place this file in the _plugins directory of your Jekyll site
 module Jekyll
@@ -89,6 +91,42 @@ module Jekyll
 
       # Fallback case - should not reach here with valid data
       start_date_formatted
+    end
+
+    # Convert date (DD/MM/YYYY) and optional time (HH:MM) to ISO 8601 string
+    def to_iso_datetime(date_str, time_str = nil)
+      return nil if date_str.nil? || date_str.to_s.strip.empty?
+
+      begin
+        parsed_date = Date.strptime(date_str.to_s.strip, "%d/%m/%Y")
+        if time_str.nil? || time_str.to_s.strip.empty?
+          parsed_date.strftime("%Y-%m-%d")
+        else
+          time_part = time_str.to_s.strip
+          "#{parsed_date.strftime("%Y-%m-%d")}T#{time_part}"
+        end
+      rescue ArgumentError
+        nil
+      end
+    end
+
+    # Derive a valid schema.org endDate from the event's effective end date.
+    def to_iso_end_datetime(start_date, start_time, end_date, end_time)
+      end_time_present = !end_time.nil? && !end_time.to_s.strip.empty?
+      effective_end_date = if !end_date.nil? && !end_date.to_s.strip.empty?
+        end_date
+      elsif end_time_present
+        start_date
+      end
+      return nil unless effective_end_date
+
+      return to_iso_datetime(effective_end_date, end_time) if end_time_present
+
+      start_iso = to_iso_datetime(start_date, start_time)
+      end_iso = to_iso_datetime(effective_end_date)
+      return nil if start_iso&.include?("T") && end_iso == to_iso_datetime(start_date)
+
+      end_iso
     end
   end
 end

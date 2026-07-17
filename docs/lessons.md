@@ -14,3 +14,4 @@
 - For narrow Dockerfile cache fixes in this repo, do not rename or reshape stages unless an external caller requires it; keep the diff focused on the cache-invalidating instruction itself.
 - When the user requests adding an event from a flyer image/PDF, read the file directly using the appropriate file viewing tool and run `bin/add_event` manually rather than using the OCR tools/scripts to analyze it.
 - After successfully running the event adding script, remind the user that they need to approve/accept the added event in the Google Spreadsheet.
+- For copy aimed at local residents, follow the usage of Porto Santo institutions and residents: write `no Porto Santo`, `do Porto Santo`, and `ao Porto Santo`; do not replace these mechanically with `em`, `de`, or `a`. Also use sentence case in UI labels, preserve the official `PXO Pulse` spelling, and prefer `respetiva` over an ambiguous `sua` reference.

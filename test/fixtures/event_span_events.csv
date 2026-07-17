@@ -1,2 +1,4 @@
 added_at,submitted_by,name,start_date,start_time,end_date,end_time,location,description,category,organizer,email,phone,price,image,link_1,link_2,link_3,link_4
 01/01/2099 09:00,test@example.com,Férias de Páscoa,30/03/2099,08:30,10/04/2099,18:00,Escola da Ponta,Programa de férias de Páscoa para crianças.,Comunidade & Cultura,Casa do Voluntário,,,Gratuito,,,,
+01/01/2099 09:00,test@example.com,Concerto com hora final,19/04/2099,18:00,,20:00,Largo do Pelourinho,Concerto com hora final no mesmo dia.,Música,Organização teste,,,Gratuito,,,,
+01/01/2099 09:00,test@example.com,Concerto sem hora final,20/04/2099,18:00,20/04/2099,,Largo do Pelourinho,Concerto sem hora final conhecida.,Música,Organização teste,,,Gratuito,,,,
