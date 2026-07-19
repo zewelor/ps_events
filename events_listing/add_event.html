@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "Adicionar um Evento"
+title: "Adicionar um evento"
 description: "Envie um evento para o PXO Pulse e partilhe atividades e iniciativas com a comunidade do Porto Santo."
 permalink: /add_event/
 sitemap: false
@@ -49,7 +49,7 @@ sitemap: false
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
       <h3 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
-      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Isto serve para verificar que o seu e-mail é válido e correto, garantindo que conseguimos entrar em contacto consigo sobre o seu evento. O seu e-mail do Google será utilizado como e-mail de contacto por defeito. Isto é também uma medida de segurança para prevenir que bots utilizem o formulário.</p>
+      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Assim, confirmamos o endereço de e-mail associado à conta, conseguimos entrar em contacto consigo sobre o evento e protegemos o formulário contra utilizações automatizadas. Por predefinição, utilizaremos esse endereço como contacto do evento.</p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -86,7 +86,7 @@ sitemap: false
         maxlength="100"
         class="form-input"
       />
-      <p class="form-help">Nome / Título do evento (máx. 100 caracteres)</p>
+      <p class="form-help">Nome ou título do evento (máx. 100 caracteres)</p>
     </div>
 
     <!-- Description -->
@@ -122,10 +122,10 @@ sitemap: false
         <option value="Comida" {% if test_category == 'Comida' %}selected{% endif %}>Comida</option>
         <option value="Arte" {% if test_category == 'Arte' %}selected{% endif %}>Arte</option>
         <option value="Natureza" {% if test_category == 'Natureza' %}selected{% endif %}>Natureza</option>
-        <option value="Saúde & Bem-Estar" {% if test_category == 'Saúde & Bem-Estar' %}selected{% endif %}>Saúde & Bem-Estar</option>
+        <option value="Saúde & Bem-Estar" {% if test_category == 'Saúde & Bem-Estar' %}selected{% endif %}>Saúde e bem-estar</option>
         <option value="Desporto" {% if test_category == 'Desporto' %}selected{% endif %}>Desporto</option>
-        <option value="Aprendizagem & Workshops" {% if test_category == 'Aprendizagem & Workshops' %}selected{% endif %}>Aprendizagem & Workshops</option>
-        <option value="Comunidade & Cultura" {% if test_category == 'Comunidade & Cultura' %}selected{% endif %}>Comunidade & Cultura</option>
+        <option value="Aprendizagem & Workshops" {% if test_category == 'Aprendizagem & Workshops' %}selected{% endif %}>Aprendizagem e workshops</option>
+        <option value="Comunidade & Cultura" {% if test_category == 'Comunidade & Cultura' %}selected{% endif %}>Comunidade e cultura</option>
       </select>
     </div>
 
@@ -186,13 +186,13 @@ sitemap: false
           value="{{ test_start_time }}"
           class="form-input"
         />
-        <p class="form-help">As datas são obrigatórias, as horas são opcionais</p>
+        <p class="form-help">A data de início é obrigatória; a data de fim e as horas são opcionais</p>
       </div>
 
       <!-- End date -->
       <div>
         <label for="end_date" class="form-label">
-          Data de fim <span class="text-red-500">*</span>
+          Data de fim
         </label>
         <input
           type="date"
@@ -271,7 +271,7 @@ sitemap: false
         accept="image/*"
         class="form-input file-input-button"
       />
-      <p class="form-help">Carregue uma imagem para o seu evento (opcional). Formatos suportados: JPEG, PNG, GIF, WebP, BMP, TIFF. Tamanho máximo: 10MB.</p>
+      <p class="form-help">Carregue uma imagem para o seu evento (opcional). Formatos suportados: JPEG, PNG, GIF, WebP, BMP, TIFF. Tamanho máximo: 10 MB.</p>
       <div id="image-preview" class="mt-3 hidden">
         <img id="preview-img" src="" alt="Pré-visualização da imagem" class="max-w-xs max-h-48 rounded-lg border border-gray-200" />
         <button type="button" id="remove-image" class="mt-2 text-sm text-red-600 hover:text-red-800">Remover imagem</button>
@@ -342,7 +342,7 @@ sitemap: false
     <div class="our-section">
       <h3 class="section-subtitle">Declaração de responsabilidade</h3>
       <p class="muted-text">
-        Confirmo que as informações fornecidas são verdadeiras e corretas, segundo o meu melhor conhecimento. Comprometo-me a mantê-las atualizadas e a solicitar quaisquer correções ou alterações, se necessário, através do e-mail pxopulse@gmail.com.
+        Confirmo que, tanto quanto sei, as informações fornecidas são verdadeiras e corretas. Comprometo-me a mantê-las atualizadas e a solicitar quaisquer correções ou alterações, se necessário, através do e-mail pxopulse@gmail.com.
       </p>
       <div class="flex items-start space-x-3">
         <input
@@ -468,9 +468,9 @@ sitemap: false
     imageInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
-        // Validate file size (10MB)
+        // Validate file size (10 MB)
         if (file.size > 10 * 1024 * 1024) {
-          PXOForms.showToast('Tamanho do ficheiro muito grande. Tamanho máximo é 10MB.', 'error');
+          PXOForms.showToast('O ficheiro é demasiado grande. O tamanho máximo é 10 MB.', 'error');
           imageInput.value = '';
           return;
         }
