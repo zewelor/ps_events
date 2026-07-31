@@ -10,6 +10,9 @@ ENV BUNDLE_PATH=/bundle \
   GEM_HOME=/bundle \
   PATH="/bundle/bin:${PATH}"
 
+# The Ruby base image creates app as UID/GID 1000:1000.
+# Keep ownership numeric so bind-mounted files have predictable host ownership.
+
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
 RUN apt-get update && \
@@ -49,9 +52,9 @@ ENV BUNDLE_AUTO_INSTALL=true \
     BUNDLE_CLEAN=true
 
 RUN mkdir -p "$BUNDLE_PATH" && \
-    chown -R app:app "$BUNDLE_PATH"
+    chown -R 1000:1000 "$BUNDLE_PATH"
 
-USER app
+USER 1000:1000
 
 # https://code.visualstudio.com/remote/advancedcontainers/avoid-extension-reinstalls
 RUN mkdir -p "$HOME/.vscode-server/"
@@ -60,13 +63,13 @@ FROM basedev AS baseliveci
 
 # Workdir set in base image
 # hadolint ignore=DL3045
-COPY --chown=app:app Gemfile Gemfile.lock ./
+COPY --chown=1000:1000 Gemfile Gemfile.lock ./
 
 FROM baseliveci AS ci
 
 # hadolint ignore=SC2086
 RUN mkdir -p $BUNDLE_PATH && \
-    chown -R app $BUNDLE_PATH
+    chown -R 1000:1000 $BUNDLE_PATH
 
 RUN bundle install "-j$(nproc)" --retry 3 && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
@@ -89,11 +92,11 @@ ENV BUNDLE_DEPLOYMENT="1" \
 
 # Workdir set in base image
 # hadolint ignore=DL3045
-COPY --chown=app:app --from=live_builder $BUNDLE_PATH $BUNDLE_PATH
+COPY --chown=1000:1000 --from=live_builder $BUNDLE_PATH $BUNDLE_PATH
 # hadolint ignore=DL3045
-COPY --chown=app:app . ./
+COPY --chown=1000:1000 . ./
 
-USER app
+USER 1000:1000
 
 # Always refresh and save new llm model info on container start
 # hadolint ignore=SC1072 # Ruby inline command, not a shell script
