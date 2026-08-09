@@ -71,13 +71,18 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_successful_ocr
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
+    ocr_call = nil
     out, _err = capture_io do
-      EventOcrService.stub :call, [valid_event] do
+      EventOcrService.stub :call, lambda { |path, **options|
+        ocr_call = [path, options]
+        [valid_event]
+      } do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
             post "/events_ocr", {
               google_token: "token",
               event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
+              event_text: "Entrada gratuita até às 20:00.",
               use_event_image: "on"
             }
           end
@@ -93,6 +98,47 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "OCR Event", row[2]
     assert_includes row[1], "+ocr@"
     assert_equal "test", row[14]
+    assert_equal ["/tmp/test.webp", {retry_sleep: 5, additional_text: "Entrada gratuita até às 20:00."}], ocr_call
+  end
+
+  def test_ocr_ignores_blank_additional_text
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
+    ocr_call = nil
+
+    capture_io do
+      EventOcrService.stub :call, lambda { |path, **options|
+        ocr_call = [path, options]
+        [valid_event]
+      } do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
+            post "/events_ocr", {
+              google_token: "token",
+              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
+              event_text: "  "
+            }
+          end
+        end
+      end
+    end
+
+    assert last_response.ok?
+    assert_equal ["/tmp/test.webp", {retry_sleep: 5, additional_text: nil}], ocr_call
+  end
+
+  def test_ocr_rejects_additional_text_over_limit
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
+
+    AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
+      post "/events_ocr", {
+        google_token: "token",
+        event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
+        event_text: "a" * (EventOcrService::ADDITIONAL_TEXT_MAX_LENGTH + 1)
+      }
+    end
+
+    assert_equal 422, last_response.status
+    assert_includes JSON.parse(last_response.body)["message"], "5000 caracteres"
   end
 
   def test_ocr_without_event_image

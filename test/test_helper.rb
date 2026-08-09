@@ -42,3 +42,4 @@ module TestHelper
     RubyLLM.stub(:chat, dummy_chat) { yield }
   end
 end
+# PR trigger
