@@ -43,7 +43,9 @@ class TestEventOcrPrompt < Minitest::Test
     assert_includes INSTRUCTIONS, "Desconhecido"
   end
 
-  def test_instructs_to_use_only_image_information
+  def test_instructs_to_use_image_and_additional_text
     assert_match(/do not make assumptions/i, INSTRUCTIONS)
+    assert_match(/image and additional text/i, INSTRUCTIONS)
+    assert_match(/prefer the information shown in the image/i, INSTRUCTIONS)
   end
 end

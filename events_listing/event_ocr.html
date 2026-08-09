@@ -22,6 +22,18 @@ sitemap: false
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
       <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
     </div>
+    <div>
+      <label for="event_text" class="form-label">Informações adicionais</label>
+      <textarea
+        name="event_text"
+        id="event_text"
+        rows="5"
+        maxlength="5000"
+        class="form-input resize-none"
+        placeholder="Cole aqui o texto da publicação ou outras informações sobre o evento"
+      ></textarea>
+      <p class="form-help">Opcional. Inclua informações que não estejam visíveis no cartaz.</p>
+    </div>
     <div class="flex items-center space-x-2">
       <input type="checkbox" name="use_event_image" id="use_event_image" checked class="form-checkbox" />
       <label for="use_event_image" class="form-label m-0">Usar esta imagem nos eventos</label>

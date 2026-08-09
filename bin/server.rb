@@ -251,8 +251,13 @@ post "/events_ocr" do
 
   begin
     use_image = params[:use_event_image]
+    additional_text = params[:event_text].to_s.strip.presence
+    if additional_text&.length.to_i > EventOcrService::ADDITIONAL_TEXT_MAX_LENGTH
+      return json_error("As informações adicionais não podem exceder 5000 caracteres")
+    end
+
     image_path = validate_event_image(params[:event_image])
-    events = EventOcrService.call(image_path, retry_sleep: 5)
+    events = EventOcrService.call(image_path, retry_sleep: 5, additional_text: additional_text)
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
     service = AddEventService.new(

@@ -143,6 +143,28 @@ class TestEventOcrService < Minitest::Test
     end
   end
 
+  def test_sends_additional_text_with_image
+    with_stubbed_llm do
+      @service = EventOcrService.new
+      request = nil
+
+      @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |message, with:|
+        request = [message, with]
+        OpenStruct.new(content: [{name: "Evento Teste", start_date: "15/06/2025", end_date: "15/06/2025", location: "Porto", description: "Um evento de teste válido para os nossos testes", category: "Música", organizer: "Organizador Teste"}])
+      end
+
+      @service.analyze(
+        "/fake/image/path",
+        retry_sleep: 0,
+        additional_text: "Inscrições através do número 912 345 678."
+      )
+
+      assert_equal "/fake/image/path", request.last
+      assert_includes request.first, "Inscrições através do número 912 345 678."
+      assert_includes request.first, "additional_event_information"
+    end
+  end
+
   def test_no_network_requests_made_during_tests
     # This test verifies that our mocking is working and no real network calls are made
     with_stubbed_llm do
@@ -170,15 +192,15 @@ class TestEventOcrService < Minitest::Test
       @service = EventOcrService.new
       called_with = nil
 
-      @service.define_singleton_method(:analyze_pdf) do |path, retry_sleep:|
-        called_with = [path, retry_sleep]
+      @service.define_singleton_method(:analyze_pdf) do |path, retry_sleep:, additional_text:|
+        called_with = [path, retry_sleep, additional_text]
         [{name: "Evento PDF"}]
       end
 
-      result = @service.analyze("/tmp/events.pdf", retry_sleep: 3)
+      result = @service.analyze("/tmp/events.pdf", retry_sleep: 3, additional_text: "Texto do post")
 
       assert_equal [{name: "Evento PDF"}], result
-      assert_equal ["/tmp/events.pdf", 3], called_with
+      assert_equal ["/tmp/events.pdf", 3, "Texto do post"], called_with
     end
   end
 
@@ -187,15 +209,15 @@ class TestEventOcrService < Minitest::Test
       @service = EventOcrService.new
       called_with = nil
 
-      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:|
-        called_with = [path, retry_sleep]
+      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:, additional_text:|
+        called_with = [path, retry_sleep, additional_text]
         [{name: "Evento Imagem"}]
       end
 
-      result = @service.analyze("/tmp/events.png", retry_sleep: 2)
+      result = @service.analyze("/tmp/events.png", retry_sleep: 2, additional_text: "Texto do post")
 
       assert_equal [{name: "Evento Imagem"}], result
-      assert_equal ["/tmp/events.png", 2], called_with
+      assert_equal ["/tmp/events.png", 2, "Texto do post"], called_with
     end
   end
 
@@ -212,16 +234,17 @@ class TestEventOcrService < Minitest::Test
         [[page_one, page_two], temp_dir]
       end
 
-      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:|
-        [{name: "Evento de #{File.basename(path)}", retry_sleep: retry_sleep}]
+      @service.define_singleton_method(:analyze_image) do |path, retry_sleep:, additional_text:|
+        [{name: "Evento de #{File.basename(path)}", retry_sleep: retry_sleep, additional_text: additional_text}]
       end
 
-      result = @service.send(:analyze_pdf, "/tmp/sample.pdf", retry_sleep: 1)
+      result = @service.send(:analyze_pdf, "/tmp/sample.pdf", retry_sleep: 1, additional_text: "Texto do post")
 
       assert_equal 2, result.length
       assert_equal "Evento de page-0001.png", result[0][:name]
       assert_equal "Evento de page-0002.png", result[1][:name]
       assert_equal 1, result[0][:retry_sleep]
+      assert_equal "Texto do post", result[0][:additional_text]
       refute Dir.exist?(temp_dir)
     end
   end
