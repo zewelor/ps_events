@@ -94,6 +94,7 @@ ENV BUNDLE_DEPLOYMENT="1" \
 # hadolint ignore=DL3045
 COPY --chown=1000:1000 --from=live_builder $BUNDLE_PATH $BUNDLE_PATH
 # hadolint ignore=DL3045
+# droast ignore=DF077 reason="Production image intentionally copies the filtered Docker context"
 COPY --chown=1000:1000 . ./
 
 USER 1000:1000
@@ -105,5 +106,4 @@ RUN ["ruby", "-e", "require 'bundler/setup'; Bundler.require(:default) ; RubyLLM
 ARG GIT_CODE_VERSION="unknown"
 ENV GIT_CODE_VERSION="${GIT_CODE_VERSION}"
 
-ENTRYPOINT ["/usr/bin/catatonit", "--"]
 CMD ["ruby", "bin/server.rb"]
