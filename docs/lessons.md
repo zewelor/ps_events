@@ -12,6 +12,7 @@
 - When investigating why Renovate PRs here did not auto-merge, always check both the PR body for `Automerge: Enabled/Disabled by config` and the first branch `push` workflow run, because policy mismatches and first-push CI bugs can stack.
 - In this repo's Dockerfile, keep moving build metadata like `GIT_CODE_VERSION` out of shared or early `ENV` blocks; scope it to the narrow build/runtime stages and export it as late as possible so SHA changes do not blow away reusable cache layers.
 - For narrow Dockerfile cache fixes in this repo, do not rename or reshape stages unless an external caller requires it; keep the diff focused on the cache-invalidating instruction itself.
+- Keep `show_dockerignore` as a small diagnostic command: use Docker's own context filtering and print files plus symlinks, without duplicating Dockerfile input checks or asserting individual assets.
 - When Hadolint flags a named non-root user, inspect the base image first; if it defines a stable UID/GID, use those numeric values consistently in `USER`, `chown`, and `COPY --chown`.
 - When the user requests adding an event from a flyer image/PDF, read the file directly using the appropriate file viewing tool and run `bin/add_event` manually rather than using the OCR tools/scripts to analyze it.
 - After successfully running the event adding script, remind the user that they need to approve/accept the added event in the Google Spreadsheet.

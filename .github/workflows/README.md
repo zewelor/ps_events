@@ -30,10 +30,14 @@ flowchart TD
 
     docker_checks --> docker_tests["tests job<br/>builds local :ci image"]
     docker_checks --> docker_changes["changes job"]
+    docker_checks --> docker_lint["docker_lint job<br/>Docker files only"]
     docker_tests --> docker_ci["publish_ci job<br/>pushes :ci"]
     docker_changes --> docker_ci
+    docker_lint --> docker_ci
     docker_ci --> docker_production["push_production job"]
     docker_changes --> docker_production
+    docker_tests --> docker_production
+    docker_lint --> docker_production
 ```
 
 Design notes:
