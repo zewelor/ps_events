@@ -93,8 +93,8 @@ ENV BUNDLE_DEPLOYMENT="1" \
 # Workdir set in base image
 # hadolint ignore=DL3045
 COPY --chown=1000:1000 --from=live_builder $BUNDLE_PATH $BUNDLE_PATH
-# hadolint ignore=DL3045
 # droast ignore=DF077 reason="Production image intentionally copies the filtered Docker context"
+# hadolint ignore=DL3045
 COPY --chown=1000:1000 . ./
 
 USER 1000:1000
