@@ -95,7 +95,7 @@ jobs:
           config: .hadolint.yaml
 
       - name: Run droast (Dockerfile linter)
-        uses: immanuwell/dockerfile-roast@1.5.0
+        uses: immanuwell/dockerfile-roast@1.5.1
 
   tests:
     runs-on: ubuntu-latest
