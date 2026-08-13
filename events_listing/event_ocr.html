@@ -94,7 +94,7 @@ sitemap: false
       form,
       submitBtn,
       onSuccess: (result) => {
-        ocrText.value = result.text;
+        ocrText.value = JSON.stringify(result.events, null, 2);
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         form.reset();

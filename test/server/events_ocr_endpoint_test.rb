@@ -93,6 +93,8 @@ class EventsOcrEndpointTest < Minitest::Test
     assert last_response.ok?, out
     body = JSON.parse(last_response.body)
     assert_equal "ok", body["status"]
+    assert_equal 1, body["events"].length
+    assert_equal "OCR Event", body["events"].first["name"]
     assert_equal 1, app.settings.google_sheets.rows.length
     row = app.settings.google_sheets.rows.first
     assert_equal "OCR Event", row[2]

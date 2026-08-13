@@ -283,7 +283,7 @@ post "/events_ocr" do
 
     events_count = appended_ranges.size
     range_info = appended_ranges.any? ? " → #{appended_ranges.join(", ")}" : ""
-    json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {text: JSON.pretty_generate(events)})
+    json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {events: events})
   rescue => e
     pp events
     puts "❌ Error processing OCR: #{e.message}"
