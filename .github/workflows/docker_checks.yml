@@ -241,6 +241,7 @@ jobs:
         with:
           keep-n-tagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
           keep-n-untagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
+          exclude-tags: latest
           delete-partial-images: true
 
       - name: Deploy via webhook
