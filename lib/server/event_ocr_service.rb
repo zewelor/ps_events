@@ -25,6 +25,8 @@ class EventOcrService
   def self.call(*args, **kwargs)
     new = self.new
     new.analyze(*args, **kwargs)
+  rescue RubyLLM::RateLimitError
+    raise
   rescue => e
     raise "Erro ao analisar imagem: #{e.message}"
   end

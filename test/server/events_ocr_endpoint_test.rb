@@ -180,4 +180,26 @@ class EventsOcrEndpointTest < Minitest::Test
     row = app.settings.google_sheets.rows.first
     assert_includes row[1], "+ocr@"
   end
+
+  def test_rate_limit_error
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
+    _out, _err = capture_io do
+      EventOcrService.stub :call, ->(*_args, **_kwargs) { raise RubyLLM::RateLimitError, "Quota exceeded" } do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
+            post "/events_ocr", {
+              google_token: "token",
+              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+            }
+          end
+        end
+      end
+    end
+
+    assert_equal 429, last_response.status
+    body = JSON.parse(last_response.body)
+    assert_equal "error", body["status"]
+    assert_equal "rate_limit_exceeded", body["error_code"]
+    assert_includes body["message"], "Quota exceeded"
+  end
 end

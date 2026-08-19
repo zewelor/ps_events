@@ -37,11 +37,12 @@ helpers do
     data.to_json
   end
 
-  def json_error(message, status_code = 422, errors = nil)
+  def json_error(message, status_code = 422, errors = nil, error_code: nil)
     response_data = {
       status: "error",
       message: message
     }
+    response_data[:error_code] = error_code if error_code
     response_data[:errors] = errors if errors
     json_response(response_data, status_code)
   end
@@ -284,6 +285,9 @@ post "/events_ocr" do
     events_count = appended_ranges.size
     range_info = appended_ranges.any? ? " → #{appended_ranges.join(", ")}" : ""
     json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {events: events})
+  rescue RubyLLM::RateLimitError => e
+    puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
+    json_error("Limite de pedidos/quota do modelo LLM excedido: #{e.message}", 429, error_code: "rate_limit_exceeded")
   rescue => e
     pp events
     puts "❌ Error processing OCR: #{e.message}"
