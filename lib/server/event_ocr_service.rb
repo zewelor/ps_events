@@ -51,6 +51,7 @@ class EventOcrService
           "10:00 - Abertura do evento, 11:00 - Palestra sobre tecnologia, 12:00 - Almoço"
         - For start_time use hour from the first thing happening / listed.
         - Unless there is a clear / explicit end or finish time, leave it empty. Do not assume end_time.
+      - If you include times/hours in description, always use HH:mm format (e.g. 21:30, never 21h30). Good: "21:30 - Duo M&S, 22:30 - Marotos da Concertina" / Bad: "21h30 - Duo M&S, 22h30 - Marotos da Concertina".
       - Start date and time (assume current year)
         - If the start time is not mentioned, leave it empty. If there are multiple events in the same day, AND place, use the first time mentioned.
         - assume event time zone is Europe/Lisbon

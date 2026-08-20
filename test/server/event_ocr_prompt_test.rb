@@ -48,4 +48,10 @@ class TestEventOcrPrompt < Minitest::Test
     assert_match(/image and additional text/i, INSTRUCTIONS)
     assert_match(/prefer the information shown in the image/i, INSTRUCTIONS)
   end
+
+  def test_instructs_to_format_times_as_hh_mm_in_description
+    assert_match(/HH:mm/i, INSTRUCTIONS)
+    assert_includes INSTRUCTIONS, "21:30"
+    assert_includes INSTRUCTIONS, "21h30"
+  end
 end
