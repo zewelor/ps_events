@@ -62,7 +62,7 @@ jobs:
           docker_lint=false
           while IFS= read -r path; do
             case "$path" in
-              Dockerfile|Gemfile|Gemfile.lock|bin/server.rb|lib/server/*|.github/workflows/docker_checks.yml)
+              Dockerfile|.dockerignore|Gemfile|Gemfile.lock|bin/server.rb|lib/server/*|.github/workflows/docker_checks.yml)
                 production=true
                 ;;
             esac
@@ -130,6 +130,50 @@ jobs:
         run: |
           docker compose run --rm -e JEKYLL_ENV=production -e COMMIT_SHA=${{ github.sha }} -e BACKEND_HOST=http://sinatra:4567 app bundle exec jekyll doctor --source /app/events_listing
 
+  production_smoke:
+    if: >
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.tests.result == 'success' &&
+      (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped') &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        needs.changes.outputs.production == 'true'
+      )
+    needs:
+      - changes
+      - docker_lint
+      - tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build production image
+        uses: docker/build-push-action@v7
+        with:
+          push: false
+          load: true
+          target: live
+          tags: ps_events:live-smoke
+          cache-from: |
+            type=gha,scope=live
+            type=gha,scope=ci
+
+      - name: Smoke test production image
+        run: |
+          docker run --rm --user 1000:1000 -e APP_ENV=test ps_events:live-smoke \
+            bundle exec ruby -rrack/mock -e '
+              require_relative "bin/server"
+              response = Rack::MockRequest.new(Sinatra::Application).get("/health")
+              abort response.body unless response.status == 200 && JSON.parse(response.body).fetch("status") == "ok"
+              puts response.body
+            '
+
   publish_ci:
     if: >
       always() &&
@@ -175,6 +219,7 @@ jobs:
       needs.tests.result == 'success' &&
       (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped') &&
       needs.publish_ci.result == 'success' &&
+      needs.production_smoke.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request' &&
       (
@@ -186,6 +231,7 @@ jobs:
       - docker_lint
       - tests
       - publish_ci
+      - production_smoke
     runs-on: ubuntu-latest
     concurrency:
       group: production-docker

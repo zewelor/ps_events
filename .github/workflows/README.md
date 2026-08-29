@@ -34,7 +34,11 @@ flowchart TD
     docker_tests --> docker_ci["publish_ci job<br/>pushes :ci"]
     docker_changes --> docker_ci
     docker_lint --> docker_ci
+    docker_tests --> docker_smoke["production_smoke job<br/>builds & runs local live image"]
+    docker_changes --> docker_smoke
+    docker_lint --> docker_smoke
     docker_ci --> docker_production["push_production job"]
+    docker_smoke --> docker_production
     docker_changes --> docker_production
     docker_tests --> docker_production
     docker_lint --> docker_production
@@ -45,4 +49,5 @@ Design notes:
 - `jekyll_site.yml` intentionally stays independent from `docker_checks.yml`; the site deploy should not wait on backend-oriented checks unless a concrete breakage proves that coupling is needed.
 - When the same push also triggers `regenerate_events.yml`, the push-triggered Jekyll deploy is skipped and the `workflow_run` path from `Regenerate events` becomes the canonical deploy path.
 - `tests` builds a local `:ci` image without package write access. `publish_ci` is the only Docker Checks job that pushes the shared `:ci` tag.
+- `production_smoke` builds and runs the final `live` image without package write access; production publication depends on that runtime proof.
 - `regenerate_events.yml` intentionally validates against the moving `:ci` image for a simpler and faster daily workflow. A same-push race with a fresh `docker_checks` publish is an accepted trade-off in this hobby project.

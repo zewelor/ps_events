@@ -7,6 +7,7 @@ ARG WATCHEXEC_VERSION="2.4.3"
 # We mount whole . dir into app, so vendor/bundle would get overwritten
 ENV BUNDLE_PATH=/bundle \
   BUNDLE_BIN=/bundle/bin \
+  BUNDLE_VERSION=system \
   GEM_HOME=/bundle \
   PATH="/bundle/bin:${PATH}"
 
