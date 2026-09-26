@@ -194,3 +194,5 @@ image: /assets/index_image.png
 {% include aviso.html %}
 <script src="{{ '/assets/js/event-filter.js' | relative_url }}" defer></script>
 <script src="{{ '/assets/js/calendar-toggle.js' | relative_url }}" defer></script>
+<script type="application/json" id="webmcp-events">{{ future_events | webmcp_events_json }}</script>
+<script src="{{ '/assets/js/webmcp.js' | relative_url }}" defer></script>
