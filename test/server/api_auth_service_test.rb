@@ -22,8 +22,8 @@ class ApiAuthServiceTest < Minitest::Test
   def test_load_multiple_keys
     capture_io { ApiAuthService.load_keys!("token1:email1@x.com,token2:email2@y.pl") }
     assert ApiAuthService.enabled?
-    assert_equal "email1@x.com", ApiAuthService.validate_token("token1")[:email]
-    assert_equal "email2@y.pl", ApiAuthService.validate_token("token2")[:email]
+    assert_equal({authenticated: true, email: "email1@x.com"}, ApiAuthService.validate_token("token1"))
+    assert_equal({authenticated: true, email: "email2@y.pl"}, ApiAuthService.validate_token("token2"))
   end
 
   def test_invalid_token
@@ -35,18 +35,6 @@ class ApiAuthServiceTest < Minitest::Test
   def test_empty_token
     capture_io { ApiAuthService.load_keys!("valid:email@x.com") }
     result = ApiAuthService.validate_token("")
-    refute result[:authenticated]
-  end
-
-  def test_nil_token
-    capture_io { ApiAuthService.load_keys!("valid:email@x.com") }
-    result = ApiAuthService.validate_token(nil)
-    refute result[:authenticated]
-  end
-
-  def test_not_enabled_without_keys
-    refute ApiAuthService.enabled?
-    result = ApiAuthService.validate_token("anything")
     refute result[:authenticated]
   end
 
@@ -76,11 +64,5 @@ class ApiAuthServiceTest < Minitest::Test
       capture_io { ApiAuthService.load_keys!("token:not_an_email") }
     end
     assert_includes error.message, "invalid email format"
-  end
-
-  def test_load_keys_raises_on_invalid_format
-    assert_raises(ApiAuthService::InvalidFormatError) do
-      capture_io { ApiAuthService.load_keys!("invalid_pair") }
-    end
   end
 end

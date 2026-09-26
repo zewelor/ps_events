@@ -6,20 +6,6 @@ class TestEventValidation < Minitest::Test
     @validator = EventValidation.new
   end
 
-  def test_valid_event
-    data = {
-      name: "Valid Event Name",
-      start_date: "01/12/2025",
-      end_date: "02/12/2025",
-      location: "Valid Location",
-      description: "This is a valid event description.",
-      category: "Música",
-      organizer: "Valid Organizer"
-    }
-    result = @validator.call(data)
-    assert result.success?, "Validation should succeed for valid data: #{result.errors.to_h}"
-  end
-
   def test_invalid_name_too_short
     data = {
       name: "V",

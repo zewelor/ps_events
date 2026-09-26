@@ -58,14 +58,16 @@ class AddEventEndpointTest < Minitest::Test
   end
 
   def test_successful_event_creation
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
-        post "/add_event", valid_params.merge(google_token: "token")
+        post "/add_event", valid_params.merge(google_token: "token", contact_email: "contact@example.com")
       end
     end
     assert last_response.ok?
     assert_equal 1, app.settings.google_sheets.rows.length
-    assert_includes out, "Event successfully added"
+    row = app.settings.google_sheets.rows.first
+    assert_equal "user@example.com", row[1]
+    assert_equal "contact@example.com", row[11]
   end
 
   def test_google_auth_failure
@@ -91,39 +93,27 @@ class AddEventEndpointTest < Minitest::Test
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 
-  def test_contact_email_logged_when_different
-    params = valid_params.merge(contact_email: "contact@example.com")
-    out, _err = capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "submit@example.com"} do
-        post "/add_event", params.merge(google_token: "token")
-      end
-    end
-    assert last_response.ok?
-    assert_equal 1, app.settings.google_sheets.rows.length
-    assert_includes out, "Event submitted by submit@example.com for contact contact@example.com"
-  end
-
   def test_invalid_contact_email
     params = valid_params.merge(contact_email: "bad-email")
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
     assert_equal 422, last_response.status
-    assert_includes out, "contact_email"
+    assert_includes JSON.parse(last_response.body)["message"], "contact_email"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 
   def test_invalid_event_link
     params = valid_params.merge(event_link1: "ftp://foo")
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
     assert_equal 422, last_response.status
-    assert_includes out, "event_link1"
+    assert_includes JSON.parse(last_response.body)["message"], "event_link1"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 
@@ -134,25 +124,25 @@ class AddEventEndpointTest < Minitest::Test
       start_time: "10:00",
       end_time: "09:00"
     )
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
     assert_equal 422, last_response.status
-    assert_includes out, "end_time"
+    assert_includes JSON.parse(last_response.body)["message"], "end_time"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 
   def test_invalid_price_type
     params = valid_params.merge(price_type: "Expensive")
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
     assert_equal 422, last_response.status
-    assert_includes out, "price_type"
+    assert_includes JSON.parse(last_response.body)["message"], "price_type"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 

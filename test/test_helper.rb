@@ -36,10 +36,4 @@ module TestHelper
   def self.reset_network_mocks
     WebMock.reset!
   end
-
-  def with_stubbed_llm
-    dummy_chat = Object.new
-    RubyLLM.stub(:chat, dummy_chat) { yield }
-  end
 end
-# PR trigger

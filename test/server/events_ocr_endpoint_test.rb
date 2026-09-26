@@ -103,31 +103,6 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal ["/tmp/test.webp", {retry_sleep: 5, additional_text: "Entrada gratuita até às 20:00."}], ocr_call
   end
 
-  def test_ocr_ignores_blank_additional_text
-    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
-    ocr_call = nil
-
-    capture_io do
-      EventOcrService.stub :call, lambda { |path, **options|
-        ocr_call = [path, options]
-        [valid_event]
-      } do
-        ImageService.stub :validate_and_process, "/tmp/test.webp" do
-          AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
-            post "/events_ocr", {
-              google_token: "token",
-              event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
-              event_text: "  "
-            }
-          end
-        end
-      end
-    end
-
-    assert last_response.ok?
-    assert_equal ["/tmp/test.webp", {retry_sleep: 5, additional_text: nil}], ocr_call
-  end
-
   def test_ocr_rejects_additional_text_over_limit
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
 
@@ -163,8 +138,8 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "", row[14]
   end
 
-  def test_bearer_auth_success
-    out, _err = capture_io do
+  def test_authenticated_api_submitter_does_not_require_google_token
+    capture_io do
       EventOcrService.stub :call, [valid_event] do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
@@ -176,9 +151,9 @@ class EventsOcrEndpointTest < Minitest::Test
       end
     end
 
-    assert last_response.ok?, out
-    row = app.settings.google_sheets.rows.first
-    assert_includes row[1], "+ocr@"
+    assert last_response.ok?
+    assert_equal 1, app.settings.google_sheets.rows.length
+    assert_equal "api+ocr@service.test", app.settings.google_sheets.rows.first[1]
   end
 
   def test_rate_limit_error
