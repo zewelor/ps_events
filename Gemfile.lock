@@ -86,7 +86,7 @@ GEM
     erb (6.0.7)
     event_stream_parser (1.0.0)
     eventmachine (1.2.7)
-    faraday (2.14.3)
+    faraday (2.14.4)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -115,10 +115,10 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-logging-utils (0.2.0)
-    google-protobuf (4.35.1-x86_64-linux-gnu)
+    google-protobuf (4.36.2-x86_64-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    googleauth (1.17.3)
+    googleauth (1.17.4)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
       google-logging-utils (~> 0.1)
@@ -136,7 +136,7 @@ GEM
       logger
       ostruct
     ice_cube (0.17.0)
-    io-console (0.9.2)
+    io-console (0.9.4)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -175,7 +175,7 @@ GEM
     json-schema (6.2.0)
       addressable (~> 2.8)
       bigdecimal (>= 3.1, < 5)
-    jwt (3.2.0)
+    jwt (3.3.0)
       base64
     kramdown (2.5.2)
       rexml (>= 3.4.4)
@@ -189,7 +189,7 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
-    marcel (1.2.1)
+    marcel (2.1.0)
     mercenary (0.4.0)
     mini_magick (5.4.0)
       logger
@@ -197,7 +197,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
-    multi_json (1.21.1)
+    multi_json (1.21.2)
     multipart-post (2.4.1)
     mustermann (3.1.1)
     net-http (0.9.1)
@@ -205,7 +205,7 @@ GEM
     nio4r (2.7.5)
     os (1.1.4)
     ostruct (0.6.3)
-    parallel (2.1.0)
+    parallel (2.2.0)
     parser (3.3.12.0)
       ast (~> 2.4.1)
       racc
@@ -237,7 +237,7 @@ GEM
     rb-fsevent (0.11.2)
     rb-inotify (0.11.1)
       ffi (~> 1.0)
-    rbs (4.1.3)
+    rbs (4.2.0)
       logger
       prism (>= 1.6.0)
       tsort
@@ -246,10 +246,10 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    regexp_parser (2.12.0)
+    regexp_parser (2.13.0)
     reline (0.7.0)
       io-console (~> 0.5)
-    representable (3.2.0)
+    representable (3.3.0)
       declarative (< 0.1.0)
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
@@ -280,20 +280,21 @@ GEM
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
-    ruby_llm (1.16.0)
+    ruby_llm (2.0.0)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
-      marcel (~> 1)
-      ruby_llm-schema (~> 0)
+      json (< 3)
+      marcel (>= 1.0, < 3)
+      schematist (~> 1.1)
       zeitwerk (~> 2)
-    ruby_llm-schema (0.4.0)
     safe_yaml (1.0.5)
-    sass-embedded (1.102.0-x86_64-linux-gnu)
+    sass-embedded (1.105.0-x86_64-linux-gnu)
       google-protobuf (~> 4.31)
+    schematist (1.1.0)
     securerandom (0.4.1)
     signet (0.22.0)
       addressable (~> 2.8)
@@ -365,7 +366,7 @@ DEPENDENCIES
   rackup (~> 2.2)
   retryable (~> 3.0)
   ruby-lsp
-  ruby_llm (~> 1.9)
+  ruby_llm (~> 2.0)
   sinatra
   standard
   tzinfo (~> 2.0)
@@ -374,4 +375,4 @@ DEPENDENCIES
   zeitwerk
 
 BUNDLED WITH
-  4.0.10
+  4.0.16

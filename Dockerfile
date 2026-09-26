@@ -99,9 +99,9 @@ COPY --chown=1000:1000 . ./
 
 USER 1000:1000
 
-# Always refresh and save new llm model info on container start
+# Refresh and persist the model registry while building the live image.
 # hadolint ignore=SC1072 # Ruby inline command, not a shell script
-RUN ["ruby", "-e", "require 'bundler/setup'; Bundler.require(:default) ; RubyLLM.models.refresh! ; RubyLLM.models.save_to_json"]
+RUN ["ruby", "-e", "require 'bundler/setup'; Bundler.require(:default); RubyLLM.models.refresh"]
 
 ARG GIT_CODE_VERSION="unknown"
 ENV GIT_CODE_VERSION="${GIT_CODE_VERSION}"

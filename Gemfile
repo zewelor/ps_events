@@ -53,4 +53,4 @@ gem "retryable", "~> 3.0"
 # Image processing gem
 gem "mini_magick", "~> 5.2"
 
-gem "ruby_llm", "~> 1.9"
+gem "ruby_llm", "~> 2.0"

@@ -151,6 +151,7 @@ def configure_ruby_llm_for!(provider)
       config.openai_api_key = api_key
       config.openai_api_base = GO_OPENAI_BASE_URL
       config.openai_use_system_role = true
+      config.openai_protocol = :chat_completions
     when :anthropic
       api_key = ENV.fetch("OPENCODE_GO_API_KEY", nil)
       raise "OPENCODE_GO_API_KEY is not set in the environment." if api_key.to_s.strip.empty?
@@ -243,7 +244,7 @@ def run_model(model_spec, image_path, sanitize_mode:)
   elsif model_spec[:provider] == :anthropic
     params[:max_tokens] = 4096
   end
-  chat = chat.with_params(**params) unless params.empty?
+  chat = chat.with_provider_options(**params) unless params.empty?
   chat.with_instructions(EventOcrService.build_instructions)
 
   response = chat.ask(PROMPT_TEXT, with: image_path)

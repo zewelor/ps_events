@@ -138,6 +138,7 @@ def build_chat
     RubyLLM.chat(
       model: model_id,
       provider: :openai,
+      protocol: :chat_completions,
       assume_model_exists: true
     )
   end
