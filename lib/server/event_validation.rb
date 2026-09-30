@@ -5,6 +5,7 @@ require "time"
 class EventValidation
   SCHEMA_PATH = File.expand_path("../event_schema.json", __dir__)
   SCHEMA = JSON.parse(File.read(SCHEMA_PATH))
+  DATE_PATTERN = /\A\d{1,2}\/\d{1,2}\/\d{4}\z/
 
   def self.call(params)
     new.call(params)
@@ -49,7 +50,9 @@ class EventValidation
 
   def validate_relations(params, errors)
     begin
-      Date.strptime(params[:start_date], "%d/%m/%Y")
+      raise ArgumentError unless DATE_PATTERN.match?(params[:start_date])
+
+      start_date = Date.strptime(params[:start_date], "%d/%m/%Y")
     rescue ArgumentError
       (errors[:start_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 01/12/2025)"
     end
@@ -57,7 +60,9 @@ class EventValidation
     # Only validate end_date if provided (it's optional, defaults to start_date)
     if params[:end_date] && !params[:end_date].to_s.strip.empty?
       begin
-        Date.strptime(params[:end_date], "%d/%m/%Y")
+        raise ArgumentError unless DATE_PATTERN.match?(params[:end_date])
+
+        end_date = Date.strptime(params[:end_date], "%d/%m/%Y")
       rescue ArgumentError
         (errors[:end_date] ||= []) << "must be a valid date in dd/mm/yyyy format (e.g., 02/12/2025)"
       end
@@ -82,21 +87,13 @@ class EventValidation
     # Only validate end_date >= start_date if end_date is provided
     end_date_present = params[:end_date] && !params[:end_date].to_s.strip.empty?
 
-    if end_date_present && !errors[:end_date] && !errors[:start_date]
-      begin
-        end_date = Date.strptime(params[:end_date], "%d/%m/%Y")
-        start_date = Date.strptime(params[:start_date], "%d/%m/%Y")
-        if end_date < start_date
-          (errors[:end_date] ||= []) << "must be on or after start date"
-        end
-      rescue ArgumentError
-      end
+    if end_date && start_date && end_date < start_date
+      (errors[:end_date] ||= []) << "must be on or after start date"
     end
 
     # For same-day events, validate end_time > start_time
     # If end_date is empty, treat as same-day event (fallback to start_date)
-    effective_end_date = end_date_present ? params[:end_date] : params[:start_date]
-    is_same_day = params[:start_date] == effective_end_date
+    is_same_day = start_date && (!end_date_present || start_date == end_date)
 
     if is_same_day &&
         params[:start_time] && params[:end_time] &&

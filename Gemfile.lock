@@ -344,6 +344,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport (~> 8.0)
+  addressable (~> 2.9)
   amazing_print
   bigdecimal (~> 4.0)
   csv

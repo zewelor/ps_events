@@ -47,7 +47,7 @@ class EventsOcrEndpointTest < Minitest::Test
       start_date: "01/12/2025",
       end_date: "01/12/2025",
       location: "Lisboa",
-      description: "Desc",
+      description: "Descrição válida do evento de teste.",
       category: "Música",
       organizer: "Org"
     }

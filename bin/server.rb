@@ -24,6 +24,7 @@ require_relative "../lib/server/event_ocr_service"
 require_relative "../lib/server/add_event_service"
 require_relative "../lib/server/auth_registry"
 require_relative "../lib/server/api_auth_service"
+require_relative "../lib/server/auth_guard"
 require_relative "../lib/server/param_utils"
 
 set :bind, "0.0.0.0"
@@ -77,6 +78,20 @@ helpers do
     image_path = validate_event_image(event_image)
     upload_image_if_production(image_path)
     image_path
+  end
+
+  # DRY guard for Google OAuth + whitelist. Halts with the proper
+  # status on failure, returns the authorized email on success.
+  def require_whitelisted_google_user!(missing_message: "Google authentication required")
+    google_token = ParamUtils.fetch(params, :google_token)
+    result = AuthGuard.authenticate_google_token(google_token, missing_message: missing_message)
+    unless result[:authenticated]
+      puts "❌ #{result[:error]}"
+      halt result[:status_code], json_error(result[:error], result[:status_code])
+    end
+
+    puts "✅ Google auth validated for: #{result[:email]}"
+    result[:email]
   end
 
   # Convert HTML5 date input (yyyy-mm-dd) to dd/mm/YYYY expected by the
@@ -134,24 +149,10 @@ configure do
 
     params = request.params
     google_token = ParamUtils.fetch(params, :google_token)
-    unless google_token && !google_token.strip.empty?
-      return {authenticated: false}
-    end
+    # No token: silent miss so another strategy (e.g. API Bearer) can try.
+    return {authenticated: false} if google_token.nil? || google_token.strip.empty?
 
-    auth = GoogleAuthService.validate_token(google_token)
-    unless auth[:success]
-      return {
-        authenticated: false,
-        error: "Google authentication failed: #{auth[:error] || "Invalid token"}",
-        status_code: 401
-      }
-    end
-
-    unless SecurityService.is_valid?(auth[:email])
-      return {authenticated: false, error: "Email not authorized", status_code: 403}
-    end
-
-    {authenticated: true, email: auth[:email]}
+    AuthGuard.authenticate_google_token(google_token)
   end)
 
   # API Bearer token - only if API_KEYS configured
@@ -212,21 +213,7 @@ get "/health" do
 end
 
 post "/event_image" do
-  unless settings.environment == :development
-    google_token = ParamUtils.fetch(params, :google_token)
-    unless google_token && !google_token.strip.empty?
-      return json_error("Google authentication required", 401)
-    end
-
-    auth = GoogleAuthService.validate_token(google_token)
-    unless auth[:success]
-      return json_error("Google authentication failed: #{auth[:error]}", 401)
-    end
-
-    unless SecurityService.is_valid?(auth[:email])
-      return json_error("Email not authorized", 403)
-    end
-  end
+  require_whitelisted_google_user! unless settings.environment == :development
 
   begin
     image_path = process_event_image(params[:event_image])
@@ -299,22 +286,9 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
-  # Require Google token
-  google_token = ParamUtils.fetch(params, :google_token)
-  unless google_token && !google_token.strip.empty?
-    puts "❌ No Google token provided"
-    return json_error("Google authentication is required to submit an event", 401)
-  end
-
-  # Validate Google token (now required)
-  auth_result = GoogleAuthService.validate_token(google_token)
-  unless auth_result[:success]
-    puts "❌ Google auth failed: #{auth_result[:error]}"
-    return json_error("Google authentication failed: #{auth_result[:error]}", 401)
-  end
-
-  google_user_email = auth_result[:email]
-  puts "✅ Google auth validated for: #{google_user_email}"
+  google_user_email = require_whitelisted_google_user!(
+    missing_message: "Google authentication is required to submit an event"
+  )
 
   # Remove the file upload from params for validation
   validation_params = params.dup

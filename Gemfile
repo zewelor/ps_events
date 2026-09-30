@@ -2,6 +2,7 @@ source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "zeitwerk"
+gem "addressable", "~> 2.9"
 # Manually require this gem to avoid issues with autoloading and some args auto parsing
 # --name is a Minitest flag. Something in your app is require-ing sinatra during test boot, and Sinatra (via Rack) is trying to parse ARGV as if it were launching a server. When Rack’s OptionParser sees --name, it blows up → invalid option: --name. That’s why Bundler reports the failure while “trying to load the gem 'sinatra'”.
 gem "sinatra", require: false

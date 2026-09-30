@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "optparse"
+require "date"
+require_relative "../lib/server/sheets_config"
+require_relative "../lib/server/sheet_investigator"
+require_relative "../lib/server/sheet_report"
+
+DEFAULT_LIMIT = 50
+
+options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: investigate_sheet [options]"
+  opts.separator ""
+  opts.separator "Read-only inspection of the events spreadsheet. Fetches the rows currently"
+  opts.separator "published and reports them, plus duplicate and schema problems."
+  opts.separator ""
+
+  opts.on("--image UUID", "Only events using this flyer image UUID") { |v| options[:image] = v }
+  opts.on("--search TEXT", "Filter on name/location/description/organizer/category") { |v| options[:search] = v }
+  opts.on("--date DD/MM/YYYY", "Only events running on that date (spans included)") { |v| options[:date] = v }
+  opts.on("--range RANGE", "Spreadsheet range to read") { |v| options[:range] = v }
+  opts.on("--limit N", Integer, "Show at most N events (default #{DEFAULT_LIMIT})") do |v|
+    abort "Invalid --limit #{v}, expected a positive integer" unless v.positive?
+
+    options[:limit] = v
+  end
+  opts.on("--duplicates", "Report duplicate events") { options[:duplicates] = true }
+  opts.on("--invalid", "Report schema violations") { options[:invalid] = true }
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end
+parser.parse!
+
+def parse_date(value)
+  raise ArgumentError unless EventValidation::DATE_PATTERN.match?(value)
+
+  Date.strptime(value, SheetInvestigator::DATE_FORMAT)
+rescue ArgumentError
+  abort "Invalid --date '#{value}', expected DD/MM/YYYY"
+end
+
+options[:date] = parse_date(options[:date]) if options[:date]
+
+missing_env = SheetsConfig.missing_env_keys
+
+if missing_env.any?
+  abort "Error: missing #{missing_env.join(", ")} in the environment. They are loaded from .env via dockerized.sh."
+end
+
+investigator = begin
+  SheetInvestigator.from_spreadsheet(range: options[:range])
+rescue RuntimeError => e
+  abort e.message
+end
+
+events = investigator.select(
+  image: options[:image],
+  text: options[:search],
+  date: options[:date]
+)
+
+report = SheetReport.new(investigator)
+
+sections = []
+sections << report.duplicates_section(events) if options[:duplicates]
+sections << report.invalid_section(events) if options[:invalid]
+sections << report.events_table(events, limit: options[:limit] || DEFAULT_LIMIT)
+
+puts sections.join("\n\n")

@@ -36,6 +36,25 @@ class TestEventValidation < Minitest::Test
     refute_empty result.errors[:start_date]
   end
 
+  def test_same_day_time_order_uses_dates_instead_of_their_text_format
+    data = {
+      name: "Event Name",
+      start_date: "9/10/2026",
+      start_time: "18:00",
+      end_date: "09/10/2026",
+      end_time: "17:00",
+      location: "Valid Location",
+      description: "This is a valid event description.",
+      category: "Música",
+      organizer: "Valid Organizer"
+    }
+
+    result = @validator.call(data)
+
+    assert result.failure?
+    refute_empty result.errors[:end_time]
+  end
+
   def test_end_date_before_start_date
     data = {
       name: "Event Name",

@@ -2,6 +2,7 @@ require "fileutils"
 require "test_helper"
 require "open3"
 require "tmpdir"
+require "cgi"
 
 class EventSpanMarkupTest < Minitest::Test
   def test_multi_day_event_card_renders_start_and_end_dates
@@ -18,6 +19,8 @@ class EventSpanMarkupTest < Minitest::Test
         html,
         "Expected every event card to expose a non-empty data-end-date attribute"
       )
+      assert_includes html, "30/3/2099 08:30 - 10/4/2099 18:00"
+      assert_includes event_page(destination, "Férias de Páscoa"), "30/3/2099 08:30 - 10/4/2099 18:00"
     end
   end
 
@@ -33,7 +36,31 @@ class EventSpanMarkupTest < Minitest::Test
     end
   end
 
+  def test_event_links_only_render_http_urls_with_a_host
+    build_site do |destination|
+      with_links = event_page(destination, "Férias de Páscoa")
+      links = event_links(with_links)
+
+      assert_equal [
+        'HTTPS://EXAMPLE.com/Booking?token=AbC%2f&label="ticket"',
+        "hTtP://example.com/Event"
+      ], links
+      assert_includes with_links, "Espreita também!"
+
+      ["Concerto com hora final", "Concerto sem hora final"].each do |name|
+        without_links = event_page(destination, name)
+
+        assert_empty event_links(without_links)
+        refute_includes without_links, "Espreita também!"
+      end
+    end
+  end
+
   private
+
+  def event_links(html)
+    html.scan(/<a href="([^"]*)"[^>]*class="block /).flatten.map { |url| CGI.unescapeHTML(url) }
+  end
 
   def event_page(destination, name)
     path = Dir.glob(File.join(destination, "events", "*.html")).find do |candidate|

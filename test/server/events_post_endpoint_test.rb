@@ -50,41 +50,53 @@ class AddEventEndpointTest < Minitest::Test
   end
 
   def test_missing_google_token
-    out, _err = capture_io do
+    capture_io do
       post "/add_event", {}
     end
     assert_equal 401, last_response.status
-    assert_includes out, "No Google token provided"
+    assert_includes JSON.parse(last_response.body)["message"], "Google authentication is required"
   end
 
   def test_successful_event_creation
+    whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: whitelisted_email} do
         post "/add_event", valid_params.merge(google_token: "token", contact_email: "contact@example.com")
       end
     end
     assert last_response.ok?
     assert_equal 1, app.settings.google_sheets.rows.length
     row = app.settings.google_sheets.rows.first
-    assert_equal "user@example.com", row[1]
+    assert_equal whitelisted_email, row[1]
     assert_equal "contact@example.com", row[11]
   end
 
+  def test_non_whitelisted_email_rejected
+    capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+        post "/add_event", valid_params.merge(google_token: "token")
+      end
+    end
+    assert_equal 403, last_response.status
+    assert_includes JSON.parse(last_response.body)["message"], "Email not authorized"
+    assert_equal 0, app.settings.google_sheets.rows.length
+  end
+
   def test_google_auth_failure
-    out, _err = capture_io do
+    capture_io do
       GoogleAuthService.stub :validate_token, {success: false, error: "Invalid token"} do
         post "/add_event", valid_params.merge(google_token: "bad")
       end
     end
     assert_equal 401, last_response.status
-    assert_includes out, "Google auth failed: Invalid token"
+    assert_includes JSON.parse(last_response.body)["message"], "Google authentication failed"
     assert_equal 0, app.settings.google_sheets.rows.length
   end
 
   def test_validation_error
     params = valid_params.merge(start_date: "01/13/2025")
     out, _err = capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -96,7 +108,7 @@ class AddEventEndpointTest < Minitest::Test
   def test_invalid_contact_email
     params = valid_params.merge(contact_email: "bad-email")
     capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -108,7 +120,7 @@ class AddEventEndpointTest < Minitest::Test
   def test_invalid_event_link
     params = valid_params.merge(event_link1: "ftp://foo")
     capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -125,7 +137,7 @@ class AddEventEndpointTest < Minitest::Test
       end_time: "09:00"
     )
     capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -137,7 +149,7 @@ class AddEventEndpointTest < Minitest::Test
   def test_invalid_price_type
     params = valid_params.merge(price_type: "Expensive")
     capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -152,7 +164,7 @@ class AddEventEndpointTest < Minitest::Test
       end_date: "2025-12-02"
     )
     out, _err = capture_io do
-      GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
         post "/add_event", params.merge(google_token: "token")
       end
     end
@@ -160,5 +172,17 @@ class AddEventEndpointTest < Minitest::Test
     row = app.settings.google_sheets.rows.first
     assert_equal "01/12/2025", row[3]
     assert_equal "02/12/2025", row[5]
+  end
+
+  def test_single_digit_dates_are_accepted_and_preserved
+    params = valid_params.merge(start_date: "1/2/2026", end_date: "2/2/2026")
+    capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
+        post "/add_event", params.merge(google_token: "token")
+      end
+    end
+
+    assert last_response.ok?
+    assert_equal ["1/2/2026", "2/2/2026"], app.settings.google_sheets.rows.first.values_at(3, 5)
   end
 end

@@ -7,8 +7,7 @@ Bundler.require(:development)
 require "json"
 require "fileutils"
 require "securerandom"
-require_relative "../lib/server/google_sheets_service"
-require_relative "../lib/server/add_event_service"
+require_relative "../lib/server/sheets_config"
 require_relative "../lib/server/image_service"
 require_relative "../lib/server/github_service"
 
@@ -51,18 +50,18 @@ end
 event_data = event_data.first if event_data.is_a?(Array)
 event_data = event_data.transform_keys(&:to_sym)
 
+validation = EventValidation.call(event_data)
+abort "Error: invalid event: #{validation.errors.inspect}" if validation.failure?
+
 # Setup Google Sheets
-if ENV["GOOGLE_SPREADSHEET_ID"].to_s.strip.empty? || ENV["GOOGLE_SERVICE_ACCOUNT_JSON_BASE64"].to_s.strip.empty?
-  puts "Error: Google Sheet environment variables are missing."
+missing_env = SheetsConfig.missing_env_keys
+
+unless missing_env.empty?
+  puts "Error: missing #{missing_env.join(", ")} in the environment."
   exit 1
 end
 
-sheets_service = GoogleSheetsService.new
-add_service = AddEventService.new(
-  google_sheets: sheets_service,
-  spreadsheet_id: ENV.fetch("GOOGLE_SPREADSHEET_ID"),
-  events_range: ENV.fetch("EVENTS_SHEET_RANGE")
-)
+add_service = SheetsConfig.add_event_service
 
 # 1. Process image
 puts "Processing image..."

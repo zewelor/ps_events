@@ -1,4 +1,6 @@
 require "active_support/time"
+require_relative "event_validation"
+require_relative "event_validation_error"
 
 class AddEventService
   def initialize(google_sheets:, spreadsheet_id:, events_range:)
@@ -8,6 +10,11 @@ class AddEventService
   end
 
   def add_event(event, submitter_email:, image_path: "")
+    validation = EventValidation.call(event)
+    if validation.failure?
+      raise EventValidationError.new("Invalid event", validation_errors: validation.errors)
+    end
+
     row = build_row(event, submitter_email, image_path)
     log_event(row)
 

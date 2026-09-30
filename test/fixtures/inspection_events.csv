@@ -1,0 +1,7 @@
+added_at,submitted_by,name,start_date,start_time,end_date,end_time,location,description,category,organizer,email,phone,price,image,link_1,link_2,link_3,link_4
+,test@example.com,Festa,3/10/2026,,,,Praça,Descrição válida da festa.,Música,Organização,,,Gratuito,,,,,
+,,,,,,,,,,,,,,,,,,
+,test@example.com,Festa,03/10/2026,,,,Praça,Descrição válida da festa.,Música,Organização,,,Gratuito,,,,,
+,test@example.com,Preço inválido,3/10/2026,,,,Praia,Descrição válida do evento.,Arte,Organização,,,Grátis,,,,,
+,test@example.com,Outro dia,4/10/2026,,,,Praia,Descrição válida do evento.,Arte,Organização,,,Gratuito,,,,,
+,test@example.com,Mostra,2/10/2026,,5/10/2026,,Casa,Descrição válida da mostra.,Arte,Organização,,,Gratuito,,,,,

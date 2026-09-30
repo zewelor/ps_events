@@ -75,7 +75,7 @@ Used in this project
       "organizer": "Organizador",
       "contact_email": "contacto@email.com",
       "contact_tel": "912345678",
-      "price_type": "Grátis",
+      "price_type": "Gratuito",
       "event_link1": "https://...",
       "event_link2": "",
       "event_link3": "",
@@ -87,6 +87,60 @@ Used in this project
 
 - `bin/convert_image <image_path>`
   - Standalone helper script to process, optimize, and upload a local flyer image (converting to WebP, resizing, stripping metadata). Saves the optimized file to `events_listing/assets/images/UUID.webp` and returns the generated UUID.
+
+- `bin/investigate_sheet [options]`
+  - Read-only inspection of the events spreadsheet. Use it as the source of truth about what is currently published, instead of grepping `events.csv`, which is a downloaded snapshot and lags behind the sheet.
+  - Options: `--image UUID`, `--search TEXT`, `--date DD/MM/YYYY`, `--range RANGE`, `--limit N`, `--duplicates`, `--invalid`, `--help`.
+  - Run it with `./dockerized.sh ruby bin/investigate_sheet ...` so the gems and `.env` are loaded for you. The other `bin/*` scripts carry a `#!/dockerized.sh ruby` shebang that does not resolve, so they only run through this wrapper too.
+  - Filters apply to the whole output, including the `--duplicates` and `--invalid` sections.
+  - See the dedicated section below for the workflow it supports.
+
+### Investigating the spreadsheet
+
+`events_listing/_data/events.csv` is a symlink to the root `events.csv`, and both are refreshed
+from the Google Sheet by CI. That makes them a stale mirror: rows you just appended, or edits the
+user made in the spreadsheet, will not be visible there. Always inspect the sheet directly.
+
+| Command | Use it to |
+|---|---|
+| `./dockerized.sh ruby bin/investigate_sheet --image UUID` | List every event sharing one flyer, which is how you confirm a batch landed and spot duplicates |
+| `./dockerized.sh ruby bin/investigate_sheet --date 03/10/2026` | See everything running on a day, multi-day spans included, to sanity-check date concentration |
+| `./dockerized.sh ruby bin/investigate_sheet --search "golf"` | Find events by name, location, description, organizer or category |
+| `./dockerized.sh ruby bin/investigate_sheet --duplicates` | Report exact duplicates and same-day/same-place/same-category lookalikes |
+| `./dockerized.sh ruby bin/investigate_sheet --invalid` | Report rows that fail `lib/server/event_validation.rb` |
+
+Notes on interpreting the output:
+
+- **Row numbers are spreadsheet row numbers**, so they can be used to locate and delete a row in the
+  spreadsheet, including custom ranges whose header starts below row 1. They are not CSV line numbers.
+- `--date` accepts one or two digits for day/month and exactly four digits for the year. Malformed
+  or impossible filter dates fail before the spreadsheet is read.
+- `--invalid` validates dates exactly as read from the sheet. Both dates accept one or two digits
+  for day/month and exactly four digits for the year, so `3/10/2026` and `03/10/2026` are valid.
+  Malformed and impossible dates are reported without correcting them. `AddEventService` validates
+  every event before appending it; `bin/add_event` also validates before processing or uploading the
+  flyer. Valid date text is preserved. `Event#canonical_start_date` only pads valid dates for
+  duplicate grouping, because `5/6/2026` and `05/06/2026` represent the same day.
+- `--invalid` runs the full `EventValidation` check, which is the JSON schema in
+  `lib/event_schema.json` plus relational rules (end date not before start date, end time after
+  start time on same-day events), so a row can be reported for a reason that is not in the schema
+  itself.
+- `--duplicates` mixes two checks. *Exact duplicates* share a name and start date. *Suspicious
+  duplicates* share a day, place and category but differ in name, which is the heuristic that
+  catches the same tourney added twice under different wording. It is a prompt to look, not a
+  verdict: two genuinely different events can share a venue and date (e.g. two golf tournaments on
+  the same day at the same course). Expect false positives here and judge each hit by eye.
+- `price_type` must be exactly `Gratuito`, `Pago` or `Desconhecido`. The value `Grátis` is common
+  in the sheet and is reported as a violation. Likewise `contact_tel` accepts only digits, spaces,
+  dashes, brackets and `+`, so a combined number like `291 985 289 / 924 366 168` is flagged.
+
+**Adding several events from one flyer**: `bin/add_event` handles a single event per call and
+re-processes the image every time. For recurring or multi-event flyers, run `bin/convert_image`
+once, then write a scratch script that loops over the events and calls
+`SheetsConfig.add_event_service.add_event(event, submitter_email:, image_path:)` with the shared
+UUID. `SheetsConfig` (in `lib/server/sheets_config.rb`) is where new bin scripts should get the
+spreadsheet ID, the range and the services from, so use it instead of re-reading `ENV` yourself.
+`bin/server.rb` still wires its own, because it swaps in a nil service under `APP_ENV=test`.
 
 ### Recurring & Shared Flyer Events Guidelines
 

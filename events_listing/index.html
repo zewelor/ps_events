@@ -23,8 +23,9 @@ image: /assets/index_image.png
       <select id="category-select" class="form-input w-full">
         <option value="all" data-label="Todas as categorias">Todas as categorias ({{ future_events | size }})</option>
         {% for group in sorted_groups %}
-          <option value="{{ group.name | default: 'Evento' }}" data-label="{{ group.name | default: 'Evento' }}">
-            {{ group.name | default: 'Evento' }} ({{ group.items | size }})
+          {% assign group_label = group.name | default: 'Evento' | escape %}
+          <option value="{{ group_label }}" data-label="{{ group_label }}">
+            {{ group_label }} ({{ group.items | size }})
           </option>
         {% endfor %}
       </select>
@@ -51,24 +52,24 @@ image: /assets/index_image.png
     {% assign sorted_events = future_events %}
     {% for event in sorted_events %}
     {% assign meta = event.category | category_metadata %}
-    <div class="event-card" data-date="{{ event['start_date'] | date: '%Y-%m-%d' }}" data-end-date="{{ event['end_date'] | default: event['start_date'] | date: '%Y-%m-%d' }}" data-category="{{ event.category | default: 'Evento' }}" data-category-color="{{ meta.color }}">
+    <div class="event-card" data-date="{{ event['start_date'] | date: '%Y-%m-%d' }}" data-end-date="{{ event['end_date'] | default: event['start_date'] | date: '%Y-%m-%d' }}" data-category="{{ event.category | default: 'Evento' | escape }}" data-category-color="{{ meta.color }}">
       <div class="p-6 flex flex-col flex-grow">
         <div> <!-- Content wrapper -->
-          <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape_once }}">
-            <a href="{{ '/events/' | append: event.page_slug }}" class="hover:text-[var(--color-text-muted)] line-clamp-2">
-              {{ event["name"] }}
+          <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-2 h-14" title="{{ event['name'] | escape }}">
+            <a href="{{ '/events/' | append: event.page_slug | escape }}" class="hover:text-[var(--color-text-muted)] line-clamp-2">
+              {{ event["name"] | escape }}
             </a>
           </h2>
           <div class="flex items-center text-sm text-[var(--color-text-muted)] mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
-            <span>{{ event | format_event_datetime }}</span>
+            <span>{{ event | format_event_datetime | escape }}</span>
           </div>
           <div class="flex items-center text-sm text-[var(--color-text-muted)] mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" class="mr-2 h-4 w-4 flex-shrink-0"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"/></svg>
-            <span>{{ event["location"] }}</span>
+            <span>{{ event["location"] | escape }}</span>
           </div>
         </div>
-        <a href="{{ '/events/' | append: event.page_slug }}" class="navigation-button w-full sm:w-auto py-3">Saiba mais</a>
+        <a href="{{ '/events/' | append: event.page_slug | escape }}" class="navigation-button w-full sm:w-auto py-3">Saiba mais</a>
       </div>
       <div style="background-color: {{ meta.color }};" class="h-2"></div>
     </div>

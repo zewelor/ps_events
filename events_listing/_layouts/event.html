@@ -3,14 +3,14 @@ layout: default
 ---
 
 <article class="card p-6 max-w-4xl mx-auto">
-  <h1 class="page-title text-center">{{ page._name }}</h1>
+  <h1 class="page-title text-center">{{ page._name | escape }}</h1>
   <div class="text-center mb-6">
     {% if page.image and page.image != "" %}
-      <a href="{{ page.image | relative_url }}" target="_blank" id="event-image-link" class="inline-block relative group">
+      <a href="{{ page.image | relative_url | escape }}" target="_blank" id="event-image-link" class="inline-block relative group">
         <img
           id="event-image"
-          src="{{ page.image | relative_url }}"
-          alt="{{ page._name | escape_once }}"
+          src="{{ page.image | relative_url | escape }}"
+          alt="{{ page._name | escape }}"
           class="max-w-full h-auto mx-auto rounded-lg cursor-pointer"
           style="max-height: 400px; object-fit: contain;"
           width="896"
@@ -33,8 +33,8 @@ layout: default
           <button id="close-image-modal" class="navigation-button mb-2 self-end">Fechar</button>
           <img
             id="modal-image"
-            src="{{ page.image | relative_url }}"
-            alt="{{ page._name | escape_once }}"
+            src="{{ page.image | relative_url | escape }}"
+            alt="{{ page._name | escape }}"
             class="rounded-lg max-h-[95vh] max-w-[95vw] mx-auto object-contain"
           />
         </div>
@@ -46,40 +46,39 @@ layout: default
       <span class="text-3xl mr-3">ℹ️</span>
       Detalhes do Evento
     </h2>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Quando:</strong> <span class="text-[var(--color-text-muted)]">{{ page | format_event_datetime }}</span></p>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ page.location }}</span></p>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Organizador:</strong> <span class="text-[var(--color-text-muted)]">{{ page.organizer }}
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Quando:</strong> <span class="text-[var(--color-text-muted)]">{{ page | format_event_datetime | escape }}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ page.location | escape }}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Organizador:</strong> <span class="text-[var(--color-text-muted)]">{{ page.organizer | escape }}
       {% if page.email or page.phone %}
         (
         {% if page.email %}
-          <a href="mailto:{{ page.email }}" class="text-blue-600 hover:underline">{{ page.email }}</a>{% if page.phone %}, {{ page.phone }}{% endif %}
+          <a href="mailto:{{ page.email | escape }}" class="text-blue-600 hover:underline">{{ page.email | escape }}</a>{% if page.phone %}, {{ page.phone | escape }}{% endif %}
         {% else %}
-          {{ page.phone }}
+          {{ page.phone | escape }}
         {% endif %}
         )
       {% endif %}
     </span></p>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Preço:</strong> <span class="text-[var(--color-text-muted)]">{% if page.price == "" or page.price == nil %}Sem informação disponível{% else %}{{ page.price }}{% endif %}</span></p>
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Preço:</strong> <span class="text-[var(--color-text-muted)]">{% if page.price == "" or page.price == nil %}Sem informação disponível{% else %}{{ page.price | escape }}{% endif %}</span></p>
   </div>
   <div class="bg-green-50 p-6 rounded-xl shadow-md mb-6">
     <h2 class="event-details-section-title">
       <span class="text-3xl mr-3">🎉</span>
        O que vai acontecer?
     </h2>
-    <p class="body-text">{{ page.description | newline_to_br }}</p>
+    <p class="body-text">{{ page.description | escape | newline_to_br }}</p>
   </div>
 
-  {% comment %} Display links if any are available {% endcomment %}
+  {% comment %} Display links if any http(s) link is available {% endcomment %}
   {% assign has_links = false %}
-  {% if page["link_1"] and page["link_1"] != "" %}
-    {% assign has_links = true %}
-  {% elsif page["link_2"] and page["link_2"] != "" %}
-    {% assign has_links = true %}
-  {% elsif page["link_3"] and page["link_3"] != "" %}
-    {% assign has_links = true %}
-  {% elsif page["link_4"] and page["link_4"] != "" %}
-    {% assign has_links = true %}
-  {% endif %}
+  {% assign link_keys = "link_1,link_2,link_3,link_4" | split: "," %}
+  {% for link_key in link_keys %}
+    {% assign link_url = page[link_key] | http_url %}
+    {% if link_url %}
+      {% assign has_links = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 
   {% if has_links %}
   <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl shadow-md mb-6">
@@ -88,14 +87,12 @@ layout: default
       Espreita também!
     </h2>
     <div class="space-y-2">
-      {% assign link_array = "link_1,link_2,link_3,link_4" | split: "," %}
-      {% for link_key in link_array %}
-        {% if page[link_key] and page[link_key] != "" %}
-          {% assign link_url = page[link_key] %}
-
-          <a href="{{ link_url }}" target="_blank" rel="noopener noreferrer" class="block p-2 rounded-lg hover:bg-orange-100 transition-colors duration-200 group">
+      {% for link_key in link_keys %}
+        {% assign link_url = page[link_key] | http_url %}
+        {% if link_url %}
+          <a href="{{ link_url | escape }}" target="_blank" rel="noopener noreferrer" class="block p-2 rounded-lg hover:bg-orange-100 transition-colors duration-200 group">
             <div class="text-blue-600 hover:text-blue-800 transition-colors duration-200 break-all">
-              {{ link_url }}
+              {{ link_url | escape }}
             </div>
           </a>
         {% endif %}

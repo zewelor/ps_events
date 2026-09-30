@@ -20,7 +20,7 @@ unreferenced = existing - referenced
 
 unreferenced.each do |uuid|
   file = File.join(images_dir, "#{uuid}.webp")
-  if system("git rm -f \"#{file}\"")
+  if system("git", "rm", "-f", "--", file)
     puts "Removed via git: #{file}"
   else
     FileUtils.rm_f(file)
