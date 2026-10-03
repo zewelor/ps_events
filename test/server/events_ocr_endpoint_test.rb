@@ -156,6 +156,78 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "api+ocr@service.test", app.settings.google_sheets.rows.first[1]
   end
 
+  class UnavailableChat
+    def initialize(error)
+      @error = error
+    end
+
+    def with_schema(_schema)
+      self
+    end
+
+    def with_thinking(**_options)
+      self
+    end
+
+    def with_instructions(_instructions)
+      self
+    end
+
+    def ask(*_args, **_options)
+      raise @error
+    end
+  end
+
+  def test_transient_ocr_errors_are_retryable_before_any_event_is_saved
+    TestHelper.setup_network_blocking
+
+    [RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError].each do |error_class|
+      chat = UnavailableChat.new(error_class.new("Model temporarily unavailable"))
+      capture_io do
+        RubyLLM.stub :chat, chat do
+          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+            AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+              post "/events_ocr", {
+                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+              }
+            end
+          end
+        end
+      end
+
+      assert_equal 503, last_response.status, error_class.name
+      body = JSON.parse(last_response.body)
+      assert_equal "error", body["status"]
+      assert_equal "ocr_temporarily_unavailable", body["error_code"]
+      assert_includes body["message"], "Model temporarily unavailable"
+      assert_empty app.settings.google_sheets.rows
+    end
+  ensure
+    TestHelper.reset_network_mocks
+  end
+
+  def test_failure_while_saving_events_does_not_claim_ocr_can_be_retried
+    capture_io do
+      EventOcrService.stub :call, [valid_event] do
+        app.settings.google_sheets.stub :append_row, ->(*) { raise RubyLLM::ServiceUnavailableError, "Write failed" } do
+          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+            AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+              post "/events_ocr", {
+                event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")
+              }
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 422, last_response.status
+    body = JSON.parse(last_response.body)
+    assert_equal "error", body["status"]
+    refute body.key?("error_code")
+    assert_includes body["message"], "Write failed"
+  end
+
   def test_rate_limit_error
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     _out, _err = capture_io do

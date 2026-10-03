@@ -43,6 +43,17 @@ curl -X POST http://localhost:4567/events_ocr \
 ```
 
 
+### OCR failure responses
+
+`POST /events_ocr` returns HTTP 503 with `error_code: "ocr_temporarily_unavailable"`
+when the model is temporarily unavailable during analysis, before any events are
+saved. Clients may retry that explicit response with bounded backoff.
+
+Quota failures keep HTTP 429 with `rate_limit_exceeded`; validation and ordinary
+processing failures keep their existing responses. A generic 503, timeout, or lost
+response does not guarantee that nothing was saved. Do not automatically repeat
+those uploads without checking the persisted events.
+
 Generate an ICS file from the default Google Sheets CSV:
 
 ```bash
