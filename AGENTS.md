@@ -264,18 +264,10 @@ spreadsheet ID, the range and the services from, so use it instead of re-reading
 - Functions should be small and focused
 - If a function needs a comment to explain what it does, it should be split
 
-## API response and retry contracts
+## OCR error response
 
-- Keep API behavior and response contracts in this project's documentation. A caller's
-  workflow-specific retry budget, deployment steps, and recovery backlog belong to that
-  caller's project; do not encode them as service-wide rules.
-- Emit an explicitly retryable response only at a boundary that guarantees no event writes
-  occurred. Keep the rescue around that phase, not around appends or publication. Preserve
-  the typed error through service layers so the endpoint can make that decision.
-- A timeout, lost response, generic server error, or partial write does not prove that nothing
-  was saved. Do not promise safe replay without idempotency or reconciliation of persisted rows.
-- Regression checks must verify both the pre-write retry response and that later failures do
-  not receive it. Preserve authentication, quota, validation, and success-envelope contracts.
+- Return `ocr_temporarily_unavailable` only for OCR failures before any events are saved;
+  see [OCR failure responses](README.md#ocr-failure-responses) for the API contract.
 
 ## Testing Guidelines
 

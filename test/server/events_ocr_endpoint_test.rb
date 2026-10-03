@@ -199,7 +199,7 @@ class EventsOcrEndpointTest < Minitest::Test
       body = JSON.parse(last_response.body)
       assert_equal "error", body["status"]
       assert_equal "ocr_temporarily_unavailable", body["error_code"]
-      assert_includes body["message"], "Model temporarily unavailable"
+      assert_equal "O serviço de análise está temporariamente indisponível. Tente novamente mais tarde.", body["message"]
       assert_empty app.settings.google_sheets.rows
     end
   ensure

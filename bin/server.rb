@@ -249,7 +249,8 @@ post "/events_ocr" do
       events = EventOcrService.call(image_path, retry_sleep: 5, additional_text: additional_text)
     rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError => e
       puts "⚠️ OCR temporarily unavailable: #{e.message}"
-      return json_error(e.message, 503, error_code: "ocr_temporarily_unavailable")
+      return json_error("O serviço de análise está temporariamente indisponível. Tente novamente mais tarde.", 503,
+        error_code: "ocr_temporarily_unavailable")
     end
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
