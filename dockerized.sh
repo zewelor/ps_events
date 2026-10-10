@@ -1,5 +1,22 @@
 #!/bin/bash
 
+dockerized_require_rootless() {
+  local docker_security_options
+  if ! docker_security_options="$(docker info --format '{{json .SecurityOptions}}')"; then
+    echo "Could not verify rootless Docker; refusing to start local containers." >&2
+    return 1
+  fi
+  if [[ "$docker_security_options" != *'"name=rootless"'* ]]; then
+    echo "Local containers require rootless Docker; refusing to start." >&2
+    return 1
+  fi
+}
+
+dockerized_compose() {
+  dockerized_require_rootless || return 1
+  docker compose --progress quiet "$@"
+}
+
 docker_compose_run() {
   local container_name="$1"
   shift
@@ -11,7 +28,7 @@ docker_compose_run() {
     tty_flags=(-T)
   fi
 
-  docker compose --progress quiet run --rm "${tty_flags[@]}" "$container_name" "$@"
+  dockerized_compose run --rm "${tty_flags[@]}" "$container_name" "$@"
 }
 
 dockerized_run() {
@@ -38,11 +55,13 @@ if [ $# -gt 0 ]; then
   shift
 
   # Check if the command is one of our supported dockerized commands
-  if [[ " ${names[@]} " =~ " ${command} " ]]; then
+  if [[ "$command" == compose ]]; then
+    dockerized_compose "$@"
+  elif [[ " ${names[@]} " =~ " ${command} " ]]; then
     dockerized_run app "$command" "$@"
   else
     echo "Error: '$command' is not a supported dockerized command."
-    echo "Supported commands: ${names[*]}"
+    echo "Supported commands: compose ${names[*]}"
     exit 1
   fi
 else

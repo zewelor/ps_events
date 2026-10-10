@@ -1,13 +1,13 @@
 set shell := ["bash", "-uc"]
 
 up: down
-  docker compose up --remove-orphans
+  ./dockerized.sh compose up --remove-orphans
 
 down:
-  docker compose down --remove-orphans
+  ./dockerized.sh compose down --remove-orphans
 
 docker_build:
-  docker compose build --no-cache
+  ./dockerized.sh compose build --no-cache
 
 # Show the files sent to Docker using Docker's own context filtering.
 show_dockerignore:
@@ -38,7 +38,7 @@ show_dockerignore:
 
 
 jekyll *args='':
-  docker compose run --rm --service-ports jekyll bundle exec jekyll server --force_polling -l -H 0.0.0.0 -s events_listing {{ args }}
+  ./dockerized.sh compose run --rm --service-ports jekyll bundle exec jekyll server --force_polling -l -H 0.0.0.0 -s events_listing {{ args }}
 
 # Run all tests
 test:

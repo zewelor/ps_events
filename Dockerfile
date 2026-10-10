@@ -12,7 +12,7 @@ ENV BUNDLE_PATH=/bundle \
   PATH="/bundle/bin:${PATH}"
 
 # The Ruby base image creates app as UID/GID 1000:1000.
-# Keep ownership numeric so bind-mounted files have predictable host ownership.
+# Local rootless Compose overrides this user to access host-owned bind mounts.
 
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008

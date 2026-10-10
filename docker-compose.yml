@@ -3,6 +3,8 @@ x-app: &x-app
     context: .
     target: dev
   tty: true
+  # Rootless Docker maps container root to the unprivileged host user.
+  user: "0:0"
   volumes:
     - .:/app:cached
     - bundler:/bundle
