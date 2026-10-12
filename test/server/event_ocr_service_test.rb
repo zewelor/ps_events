@@ -1,7 +1,6 @@
 require "bundler/setup"
 require "minitest/autorun"
 require "stringio"
-require "ostruct"
 require "tmpdir"
 require_relative "../test_helper"
 
@@ -11,6 +10,8 @@ require_relative "../../lib/server/event_ocr_service"
 
 class TestEventOcrService < Minitest::Test
   include TestHelper
+
+  LlmResponse = Struct.new(:content, keyword_init: true)
 
   def setup
     TestHelper.setup_network_blocking
@@ -50,7 +51,7 @@ class TestEventOcrService < Minitest::Test
         organizer: "Organizador Teste"
       }
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |_message = nil, with:|
-        OpenStruct.new(content: JSON.generate(event))
+        LlmResponse.new(content: JSON.generate(event))
       end
 
       result = @service.analyze("/fake/image/path", retry_sleep: 0)
@@ -85,7 +86,7 @@ class TestEventOcrService < Minitest::Test
       call_count = 0
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |_message = nil, with:|
         call_count += 1
-        OpenStruct.new(content: JSON.generate(events))
+        LlmResponse.new(content: JSON.generate(events))
       end
 
       error = nil
