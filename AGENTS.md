@@ -55,6 +55,17 @@ Used in this project
 
 - When using playwright, use localhost:4000 as host
 
+### Agent workflow for adding events
+
+Follow this workflow when asked to add events from an image, PDF, text, or a combination of sources.
+
+1. **Prepare the data**: Read every supplied source, viewing images/PDFs directly without OCR tools. Prepare the event JSON in pt-PT using the helper contract below and the event granularity rules under “Recurring & Shared Flyer Events Guidelines”. Use text supplied with a flyer as additional context. Do not invent missing facts; flag missing required details and contradictions between sources for the user to resolve.
+2. **Review and validate**: Re-open the original sources and compare every prepared event against them, especially names, dates/year, times, location, organizer, price, contacts, and links. Validate each JSON payload with `EventValidation.call` from `lib/server/event_validation.rb` through `./dockerized.sh ruby`; this checks both `lib/event_schema.json` and relational rules without saving events. Check the live spreadsheet for duplicates by name, date, and location with `bin/investigate_sheet`. Resolve validation errors and missing required facts before proceeding; if sources or the sheet cannot be read, report the blocker.
+3. **Request confirmation**: Show the reviewed event data, the image to be used (when supplied), duplicate findings, and any remaining uncertainty. Explicitly ask whether the user confirms adding these events and committing/pushing the associated image(s). Wait for an affirmative reply before running `bin/add_event`, `bin/convert_image`, appending rows, uploading images, or committing/pushing them. If the user changes the data, repeat review and validation and obtain confirmation of the revised preview.
+4. **Save the approved events**: After confirmation, use the helpers below through `./dockerized.sh ruby`. For shared flyers, convert once and reuse the UUID as described below. For text-only events, use `SheetsConfig.add_event_service.add_event` without an image. Record each successful append and its image UUID; if a call fails or its result is uncertain, inspect the live sheet before retrying so already saved events are not duplicated.
+5. **Commit and push the images immediately**: The confirmation above authorizes this step without another permission question. Inspect the worktree, index, branch/upstream, and outgoing commits; stage only the approved generated `events_listing/assets/images/UUID.webp` files, review `git --no-pager diff --staged`, commit only those files, and push. Preserve unrelated work, including pre-existing staged changes, and do not push unrelated commits or force-push. Helpers may already create a remote image commit via `GitHubService`; inspect and reconcile that commit before pushing, verifying the same path and content rather than creating a duplicate commit. If the image is already committed remotely and there is nothing left to push, report that verified commit. Report Git blockers without undoing successful sheet writes or rerunning ingestion.
+6. **Verify and report**: Read back the added rows from the live sheet and verify that the image files exist in the remote commit. Report saved events, image paths, commit/push status, and any partial failure separately. Remind the user in English: “Please approve/accept the added event(s) in the Google Spreadsheet.” This spreadsheet approval is separate from the confirmation before saving.
+
 ### Helper scripts
 
 - `bin/add_event <image_path> <event_json_or_file_path> [submitter_email]`
@@ -82,7 +93,7 @@ Used in this project
       "event_link4": ""
     }
     ```
-  - **Manual Reading Requirement**: When requested to add an event from a flyer image/PDF, do not run the OCR tools or scripts (`bin/ocr`, etc.) to analyze it. Instead, read the file directly yourself using the appropriate file viewing tool, extract the event details manually, create the JSON payload, and then run `bin/add_event`.
+  - **Manual Reading Requirement**: Follow “Agent workflow for adding events” above, including direct source reading without OCR and user confirmation before running this helper. The helper takes prepared JSON; it does not analyze the flyer or accept supplemental post text itself.
   - **Approval Reminder Requirement**: After successfully running the `bin/add_event` script, always remind the user in English (not in Portuguese) that they need to approve/accept the added event in the Google Spreadsheet.
 
 - `bin/convert_image <image_path>`
@@ -149,7 +160,7 @@ spreadsheet ID, the range and the services from, so use it instead of re-reading
   2. Write a scratch script to append the multiple event rows to Google Sheets (using `AddEventService#add_event`) and pass the generated UUID as the shared `image_path` value for each row.
   3. This ensures only a single WebP file is stored in git and prevents redundant API requests.
 
-- **Check for Duplicates**: Always check the existing events in `events_listing/_data/events.csv` before converting/uploading the image or adding new rows. Cross-reference by name, date, and location. Do not add events that are already registered.
+- **Check for Duplicates**: Follow the live spreadsheet check in “Agent workflow for adding events” before converting/uploading the image or adding new rows. The CSV is a stale mirror. Do not add events that are already registered.
 
 - **Event Granularity**: When a flyer contains separately named/date-specific sub-events under a generic heading (e.g. multiple individual golf tournaments on different days, or different daily concerts in an animation cycle), add **one row per sub-event** rather than one long-running/aggregated event. Give each sub-event its correct individual date, time, and specific name, and link them all to the shared flyer image UUID. If the flyer advertises one named event with a date range (e.g. an expo or festival running from one date to another), add one row with the correct `start_date` and `end_date` instead.
 
