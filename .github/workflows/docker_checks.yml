@@ -27,6 +27,7 @@ jobs:
     outputs:
       production: ${{ steps.detect.outputs.production }}
       docker_lint: ${{ steps.detect.outputs.docker_lint }}
+      tests: ${{ steps.detect.outputs.tests }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -46,16 +47,17 @@ jobs:
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "production=true" >> "$GITHUB_OUTPUT"
             echo "docker_lint=true" >> "$GITHUB_OUTPUT"
+            echo "tests=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             git fetch --no-tags origin "${BASE_REF}"
-            changed_files="$(git diff --name-only "origin/${BASE_REF}"...HEAD)"
+            changed_files="$(git diff --name-only --no-renames "origin/${BASE_REF}"...HEAD)"
           elif [ "${BEFORE_SHA}" = "${ZERO_SHA}" ]; then
             changed_files="$(jq -r '[.commits[]? | (.added[]?, .modified[]?, .removed[]?)] | unique | .[]' "$GITHUB_EVENT_PATH")"
           else
-            changed_files="$(gh api "repos/${REPOSITORY}/compare/${BEFORE_SHA}...${TARGET_SHA}" --jq '.files[].filename')"
+            changed_files="$(gh api "repos/${REPOSITORY}/compare/${BEFORE_SHA}...${TARGET_SHA}" --jq '.files[] | .filename, .previous_filename? | select(. != null)')"
           fi
 
           production=false
@@ -76,8 +78,10 @@ jobs:
           ${changed_files}
           EOF
 
+          tests_required="$(printf '%s\n' "$changed_files" | bash .github/scripts/docker_checks_tests_required.sh)"
           echo "production=${production}" >> "$GITHUB_OUTPUT"
           echo "docker_lint=${docker_lint}" >> "$GITHUB_OUTPUT"
+          echo "tests=${tests_required}" >> "$GITHUB_OUTPUT"
 
   docker_lint:
     needs: changes
@@ -97,6 +101,8 @@ jobs:
         uses: immanuwell/dockerfile-roast@1.7.0
 
   tests:
+    needs: changes
+    if: ${{ needs.changes.outputs.tests == 'true' }}
     runs-on: ubuntu-latest
     env:
       COMPOSE_FILE: docker-compose.ci.yml
