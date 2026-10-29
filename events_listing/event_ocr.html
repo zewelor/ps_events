@@ -21,7 +21,8 @@ sitemap: false
     <div id="image-drop-zone" class="rounded-lg border-2 border-dashed border-gray-300 p-4">
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
       <input type="file" name="event_image" id="event_image" accept="image/*" required aria-describedby="image-help" class="form-input file-input-button" />
-      <p id="image-help" class="form-help">Escolha ou arraste uma imagem para aqui. Também pode colar uma imagem copiada.</p>
+      <p id="image-help" class="form-help">Escolha ou arraste uma imagem para aqui. Para colar uma imagem copiada, clique neste texto e prima Ctrl+V (⌘+V no Mac).</p>
+      <img id="image-preview" alt="Pré-visualização da imagem selecionada" class="hidden mt-4 max-h-48 max-w-full rounded-lg object-contain" />
     </div>
     <div>
       <label for="event_text" class="form-label">Informações adicionais</label>
@@ -78,6 +79,8 @@ sitemap: false
   const submitBtn = document.getElementById('submit-btn');
   const imageInput = document.getElementById('event_image');
   const dropZone = document.getElementById('image-drop-zone');
+  const imagePreview = document.getElementById('image-preview');
+  let previewUrl = null;
 
   function warmUpOcrBackend() {
     fetch(new URL('/health', form.action), {cache: 'no-store'})
@@ -93,6 +96,23 @@ sitemap: false
     imageInput.files = files.files;
     imageInput.dispatchEvent(new Event('change', {bubbles: true}));
   }
+
+  function clearPreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    imagePreview.removeAttribute('src');
+    imagePreview.classList.add('hidden');
+  }
+
+  imageInput.addEventListener('change', () => {
+    clearPreview();
+    if (!imageInput.files.length) return;
+    previewUrl = URL.createObjectURL(imageInput.files[0]);
+    imagePreview.src = previewUrl;
+    imagePreview.classList.remove('hidden');
+  });
+
+  form.addEventListener('reset', clearPreview);
 
   dropZone.addEventListener('dragover', (event) => {
     event.preventDefault();
