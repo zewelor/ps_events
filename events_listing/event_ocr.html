@@ -18,9 +18,10 @@ sitemap: false
   {% endunless %}
   <form action="{{ site.env.BACKEND_HOST }}/events_ocr" method="POST" enctype="multipart/form-data" class="space-y-6">
     <input type="hidden" name="google_token" id="google_token" value="">
-    <div>
+    <div id="image-drop-zone" class="rounded-lg border-2 border-dashed border-gray-300 p-4">
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
-      <input type="file" name="event_image" id="event_image" required class="form-input file-input-button" />
+      <input type="file" name="event_image" id="event_image" accept="image/*" required aria-describedby="image-help" class="form-input file-input-button" />
+      <p id="image-help" class="form-help">Escolha ou arraste uma imagem para aqui. Também pode colar uma imagem copiada.</p>
     </div>
     <div>
       <label for="event_text" class="form-label">Informações adicionais</label>
@@ -67,7 +68,7 @@ sitemap: false
 <script src="/assets/js/upload_form.js"></script>
 <script>
 {% unless jekyll.environment == 'development' %}
-{% include google_auth.js %}
+{% include google_auth.js on_sign_in="warmUpOcrBackend" %}
 {% endunless %}
 
   const form = document.querySelector('#ocr-upload form');
@@ -75,6 +76,52 @@ sitemap: false
   const ocrText = document.getElementById('ocr-text');
   const closeModalBtn = document.getElementById('close-modal');
   const submitBtn = document.getElementById('submit-btn');
+  const imageInput = document.getElementById('event_image');
+  const dropZone = document.getElementById('image-drop-zone');
+
+  function warmUpOcrBackend() {
+    fetch(new URL('/health', form.action), {cache: 'no-store'})
+      .then((response) => {
+        if (!response.ok) console.warn('Não foi possível contactar o servidor:', response.status);
+      })
+      .catch((error) => console.warn('Não foi possível contactar o servidor:', error));
+  }
+
+  function selectFile(file) {
+    const files = new DataTransfer();
+    files.items.add(file);
+    imageInput.files = files.files;
+    imageInput.dispatchEvent(new Event('change', {bubbles: true}));
+  }
+
+  dropZone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropZone.classList.add('border-[var(--color-buttons)]');
+  });
+
+  dropZone.addEventListener('dragleave', (event) => {
+    if (!dropZone.contains(event.relatedTarget)) dropZone.classList.remove('border-[var(--color-buttons)]');
+  });
+
+  dropZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('border-[var(--color-buttons)]');
+    const files = event.dataTransfer.files;
+    if (files.length !== 1 || !files[0].type.startsWith('image/')) {
+      PXOForms.showToast('Arraste uma imagem de cada vez.', 'error');
+      return;
+    }
+    selectFile(files[0]);
+  });
+
+  document.addEventListener('paste', (event) => {
+    const image = Array.from(event.clipboardData.files).find((file) => file.type.startsWith('image/'));
+    if (!image) return;
+    if (event.target.closest('input:not([type="file"]), textarea, [contenteditable="true"]') &&
+        event.clipboardData.getData('text/plain')) return;
+    event.preventDefault();
+    selectFile(image);
+  });
 
   closeModalBtn.addEventListener('click', () => {
     modal.classList.add('hidden');

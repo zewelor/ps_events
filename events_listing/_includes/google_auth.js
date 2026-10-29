@@ -20,5 +20,8 @@ let googleCredential = null;
     document.getElementById("google_token").value = res.credential;
     document.getElementById("google-user").classList.remove("hidden");
     document.getElementById("google-signin").classList.add("hidden");
+{% if include.on_sign_in %}
+    {{ include.on_sign_in }}();
+{% endif %}
   }
   document.addEventListener("DOMContentLoaded", initGoogle);
