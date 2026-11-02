@@ -6,6 +6,7 @@ class EventDuplicateCheck
   Unavailable = Class.new(StandardError)
   FIELD_COLUMNS = SheetInvestigator::SCHEMA_KEY_BY_COLUMN.invert.freeze
   REQUIRED_COLUMNS = [*FIELD_COLUMNS.values, "added_at", "submitted_by", "image"].freeze
+  ANCILLARY_FIELDS = %i[contact_email contact_tel event_link1 event_link2 event_link3 event_link4].freeze
 
   attr_reader :headers
 
@@ -26,7 +27,7 @@ class EventDuplicateCheck
 
   def check(event, distinct_from: [])
     incoming = canonical(event)
-    equivalent = @records.find { |record| record[:canonical] == incoming }
+    equivalent = @records.find { |record| covered?(incoming, record[:canonical]) }
     return {status: "skipped", existing_row: equivalent[:reference]} if equivalent
 
     candidates = @records.filter_map do |record|
@@ -55,6 +56,14 @@ class EventDuplicateCheck
   end
 
   private
+
+  def covered?(incoming, stored)
+    incoming.all? do |field, value|
+      value == stored[field] ||
+        (ANCILLARY_FIELDS.include?(field) && value.empty?) ||
+        (field == :name && value.gsub(/(?<=\d)\.(?=[ºª])/, "") == stored[field].gsub(/(?<=\d)\.(?=[ºª])/, ""))
+    end
+  end
 
   def records(response)
     headers, *rows = response.values
@@ -85,7 +94,9 @@ class EventDuplicateCheck
       elsif field.to_s.start_with?("event_link")
         value.strip # URL paths are case-sensitive.
       else
-        value.unicode_normalize(:nfc).strip.gsub(/[[:space:]]+/, " ").downcase
+        text = value.unicode_normalize(:nfc).strip.gsub(/[[:space:]]+/, " ")
+        # URL paths can also appear inside descriptions, not only link fields.
+        text.split(%r{(https?://\S+)}i).map.with_index { |part, index| index.odd? ? part : part.downcase }.join
       end
       [field, normalized]
     end

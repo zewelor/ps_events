@@ -206,6 +206,31 @@ class AddEventEndpointTest < Minitest::Test
     assert_equal 2, app.settings.google_sheets.rows.length
   end
 
+  def test_form_replay_without_existing_contacts_and_links_is_skipped
+    submit_event(valid_params.merge(contact_email: "info@example.com", event_link1: "https://example.com/Agenda"))
+    body = submit_event
+
+    assert_equal 200, last_response.status
+    assert_equal "skipped", body["outcome"]
+    assert_equal 1, app.settings.google_sheets.rows.length
+  end
+
+  def test_new_information_and_changed_stored_content_require_current_review
+    submit_event
+    incoming = valid_params.merge(contact_email: "info@example.com", event_link1: "https://example.com/Agenda")
+    conflict = submit_event(incoming)
+    fingerprint = conflict["results"].first["candidates"].first["fingerprint"]
+    app.settings.google_sheets.rows.first[8] = "O evento foi cancelado."
+    body = submit_event(incoming.merge(distinct_from: JSON.generate([fingerprint])))
+
+    assert_equal 409, last_response.status
+    candidate = body["results"].first["candidates"].first
+    assert_equal "O evento foi cancelado.", candidate["event"]["description"]
+    assert_equal "info@example.com", body["results"].first["event"]["contact_email"]
+    refute_equal fingerprint, candidate["fingerprint"]
+    assert_equal 1, app.settings.google_sheets.rows.length
+  end
+
   def test_invalid_distinct_acknowledgement_is_rejected
     submit_event(valid_params.merge(distinct_from: "true"))
 

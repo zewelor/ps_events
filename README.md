@@ -74,11 +74,16 @@ All ingestion paths check the live configured target and `Approved` before an
 append, with columns resolved by their headers, including links. An unavailable
 read, missing headers or malformed stored dates prevents unchecked writes.
 
-Equivalent event content returns HTTP 200, `outcome: "skipped"`, and the existing
-row reference. Comparison normalizes valid dates, case and whitespace; submission
-timestamps, submitter and image UUIDs are ignored. URL path case is preserved.
-Optional blank end dates mean the start date. Different content is not silently
-discarded or merged.
+Already covered event content returns HTTP 200, `outcome: "skipped"`, and the
+existing row reference. Comparison normalizes valid dates, case outside URLs,
+whitespace and ordinal spelling in names (`22º` / `22.º`); submission timestamps,
+submitter and image UUIDs are ignored. URL path case is preserved, including URLs
+embedded in descriptions. Optional blank end dates mean the start date.
+Incoming contacts and links may be omitted when all other event content matches;
+any supplied contact or link must match the stored value. Missing times do not
+match known times. New or changed information remains a conflict, including
+description changes, even when the occurrence appears to be the same. There is
+no automatic correction or merge of an existing row.
 
 Potential matches return HTTP 409 and `status: "needs_review"`. Both endpoints
 return `counts: {added, skipped, conflicted}` and per-event `results`. Conflicts
@@ -88,11 +93,14 @@ OCR can change both the title and venue wording. Overlapping events at the same
 venue also reach review, including tournaments inside an older aggregate entry.
 These are candidates, not proof of duplication.
 
-The form preserves its data and offers **É o mesmo evento** (no additional write)
-or **É outro evento**. The latter resubmits that event to `/add_event` with
+The form preserves its data, shows the submitted and stored values for every
+differing field, and offers **Não guardar esta submissão** (no changes saved) or
+**É outro evento**. New or corrected facts about the same occurrence remain for
+review; treating them as a distinct occurrence would append another row.
+The latter action resubmits that event to `/add_event` with
 `distinct_from`, a JSON array of the candidate fingerprints being explicitly
 acknowledged. Fingerprints bind the input, existing event content and row reference;
-changed data is checked again. Equivalent content is always skipped, even with
+changed data is checked again. Already covered content is always skipped, even with
 an acknowledgement. OCR review submits only the selected occurrence, without
 rerunning extraction or resubmitting successful earlier occurrences.
 On a partial failure, earlier conflicts remain reviewable; failed or unattempted

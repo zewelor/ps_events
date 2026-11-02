@@ -62,6 +62,75 @@ class AddEventServiceTest < Minitest::Test
     assert_equal 1, @sheets.rows.size
   end
 
+  def test_omitted_contacts_and_links_are_already_covered_without_publishing_an_image
+    saved = @event.merge(contact_email: "info@example.com", contact_tel: "+351 291 123 456",
+      event_link1: "https://example.com/Agenda", event_link2: "https://example.com/Tickets",
+      event_link3: "https://example.com/Details", event_link4: "https://example.com/Booking")
+    save(saved)
+    result = nil
+    capture_io do
+      result = @service.add_event(@event, submitter_email: "test@example.com") { flunk "A covered replay must not publish an image" }
+    end
+
+    assert_equal "skipped", result[:status]
+    assert_equal "Events!A2:S2", result[:existing_row]
+    assert_equal 1, @sheets.rows.size
+  end
+
+  def test_new_contacts_and_links_remain_visible_as_conflicts
+    save
+    incoming = @event.merge(contact_email: "info@example.com", contact_tel: "+351 291 123 456", event_link1: "https://example.com/Agenda")
+    result = save(incoming)
+
+    assert_equal "conflict", result[:status]
+    assert_equal %i[contact_email contact_tel event_link1], result[:candidates].first[:differences]
+    assert_equal incoming, result[:event]
+    assert_equal 1, @sheets.rows.size
+  end
+
+  def test_missing_times_do_not_choose_between_same_name_sessions
+    save
+    later = @event.merge(start_time: "21:00", end_time: "22:00")
+    conflict = save(later)
+    save(later, distinct_from: conflict[:candidates].map { |candidate| candidate[:fingerprint] })
+
+    result = save(@event.merge(start_time: "", end_time: ""))
+
+    assert_equal "conflict", result[:status]
+    assert_equal 2, result[:candidates].size
+    assert_equal 2, @sheets.rows.size
+  end
+
+  def test_ordinal_spelling_in_name_does_not_create_another_occurrence
+    save(@event.merge(name: "22.º Torneio de golfe"))
+    result = save(@event.merge(name: "22º Torneio de golfe"))
+
+    assert_equal "skipped", result[:status]
+    assert_equal "conflict", save(@event.merge(name: "23º Torneio de golfe"))[:status]
+    assert_equal 1, @sheets.rows.size
+  end
+
+  def test_embedded_url_paths_in_descriptions_keep_their_case
+    save(@event.merge(description: "Consulte o programa em https://example.com/Agenda."))
+    result = save(@event.merge(description: "Consulte o programa em https://example.com/agenda."))
+
+    assert_equal "conflict", result[:status]
+    assert_includes result[:candidates].first[:differences], :description
+    assert_equal "skipped", save(@event.merge(description: "CONSULTE O PROGRAMA EM https://example.com/Agenda."))[:status]
+    assert_equal 1, @sheets.rows.size
+  end
+
+  def test_description_changes_cannot_be_hidden_by_other_matching_fields
+    save
+    ["Evento cancelado.", "Sessão adicional às 21:00.", "Entrada: 20 €.", "Inscrições até 12/10/2026."].each do |change|
+      result = save(@event.merge(description: "#{@event[:description]} #{change}"))
+
+      assert_equal "conflict", result[:status], change
+      assert_includes result[:candidates].first[:differences], :description
+    end
+    assert_equal 1, @sheets.rows.size
+  end
+
   def test_changed_name_category_and_venue_still_produce_review_candidates_on_same_day
     save
     result = save(@event.merge(name: "Apresentação de música", category: "Arte", location: "Outro local"))

@@ -20,6 +20,15 @@
     }
   };
 
+  const EVENT_FIELD_LABELS = {
+    name: 'Nome', start_date: 'Data de início', start_time: 'Hora de início',
+    end_date: 'Data de fim', end_time: 'Hora de fim', location: 'Local',
+    description: 'Descrição', category: 'Categoria', organizer: 'Organizador',
+    contact_email: 'Email de contacto', contact_tel: 'Telefone de contacto',
+    price_type: 'Preço', event_link1: 'Ligação 1', event_link2: 'Ligação 2',
+    event_link3: 'Ligação 3', event_link4: 'Ligação 4'
+  };
+
   function dismissToast(toast) {
     if (!toast || !toast.isConnected || toast.dataset.state === 'closing') return;
 
@@ -204,15 +213,25 @@
         appendText(candidateCard, 'p', 'font-medium', event.name || 'Evento sem nome');
         appendText(candidateCard, 'p', '', `Data e hora: ${eventDateTime(event) || 'Não indicadas'}`);
         appendText(candidateCard, 'p', '', `Local: ${event.location || 'Não indicado'}`);
+        (candidate.differences || []).forEach((field) => {
+          const difference = document.createElement('div');
+          difference.className = 'mt-2 space-y-1 break-words';
+          appendText(difference, 'p', 'font-medium', EVENT_FIELD_LABELS[field] || field);
+          appendText(difference, 'p', 'whitespace-pre-wrap', `Submetido: ${submittedEvent[field] || '(sem informação)'}`);
+          appendText(difference, 'p', 'whitespace-pre-wrap', `Registado: ${event[field] || '(sem informação)'}`);
+          candidateCard.appendChild(difference);
+        });
         card.appendChild(candidateCard);
       });
+
+      appendText(card, 'p', 'text-sm', 'Esta opção não guarda alterações. Se os dados forem novos ou corrigidos, mantenha a submissão para revisão.');
 
       const actions = document.createElement('div');
       actions.className = 'flex flex-wrap gap-3 pt-2';
       const sameButton = document.createElement('button');
       sameButton.type = 'button';
       sameButton.className = 'navigation-button';
-      sameButton.textContent = 'É o mesmo evento';
+      sameButton.textContent = 'Não guardar esta submissão';
       actions.appendChild(sameButton);
       actionButtons.push(sameButton);
 

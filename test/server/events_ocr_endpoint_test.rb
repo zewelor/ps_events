@@ -298,4 +298,23 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal 0, body["counts"]["added"]
     assert_empty app.settings.google_sheets.rows
   end
+
+  def test_mixed_batch_preserves_new_facts_while_skipping_covered_replays
+    submit_events([valid_event.merge(contact_email: "info@example.com", event_link1: "https://example.com/Agenda")])
+    batch = [
+      valid_event,
+      valid_event.merge(description: "#{valid_event[:description]} Evento cancelado."),
+      valid_event.merge(contact_tel: "+351 291 123 456"),
+      valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
+    ]
+    first = submit_events(batch)
+    replay = submit_events(batch)
+
+    assert_equal 409, last_response.status
+    assert_equal({"added" => 1, "skipped" => 1, "conflicted" => 2}, first["counts"])
+    assert_equal({"added" => 0, "skipped" => 2, "conflicted" => 2}, replay["counts"])
+    assert_equal batch[1][:description], replay["results"][1]["event"]["description"]
+    assert_equal "+351 291 123 456", replay["results"][2]["event"]["contact_tel"]
+    assert_equal 2, app.settings.google_sheets.rows.size
+  end
 end
