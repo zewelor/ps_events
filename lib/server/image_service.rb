@@ -6,6 +6,13 @@ class ImageService
   MAX_SIZE = 900
   QUALITY = 80
   UPLOAD_DIR = "/tmp"
+  REFERENCE_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/
+
+  def self.path_for_reference(reference)
+    raise ArgumentError, "Invalid image reference" unless reference.is_a?(String) && REFERENCE_PATTERN.match?(reference)
+
+    File.join(UPLOAD_DIR, "#{reference}.webp")
+  end
 
   # Configure MiniMagick timeout
   MiniMagick.configure do |config|

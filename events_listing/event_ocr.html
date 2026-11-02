@@ -84,6 +84,8 @@ sitemap: false
   const googleTokenInput = document.getElementById('google_token');
   const duplicateReview = document.getElementById('duplicate-review');
   let pendingConflicts = [];
+  let unresolvedResults = [];
+  let processedImageRef = null;
   let reviewCounts = null;
   let reviewMessage = '';
   let originalOcrData = null;
@@ -97,11 +99,15 @@ sitemap: false
     const result = {
       message: reviewMessage,
       counts: reviewCounts,
-      results: pendingConflicts.map((item) => item.conflict)
+      results: [...pendingConflicts.map((item) => item.conflict), ...unresolvedResults]
     };
 
     if (!pendingConflicts.length) {
-      PXOForms.showReviewNotice(duplicateReview, `A revisão terminou. Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`);
+      const message = unresolvedResults.length
+        ? `Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}. Ainda há eventos por verificar.`
+        : `A revisão terminou. Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`;
+      PXOForms.showReviewNotice(duplicateReview, message);
+      PXOForms.renderUnresolvedEvents(duplicateReview, unresolvedResults);
       return;
     }
 
@@ -133,9 +139,12 @@ sitemap: false
     });
     data.set('distinct_from', JSON.stringify(conflictFingerprints(pending.conflict)));
 
-    const image = originalOcrData.get('event_image');
-    if (originalOcrData.get('use_event_image') === 'on' && typeof File !== 'undefined' && image instanceof File && image.size > 0) {
-      data.set('event_image', image);
+    if (originalOcrData.get('use_event_image') === 'on') {
+      if (!processedImageRef) {
+        PXOForms.showToast('Não foi possível reutilizar a imagem. Os dados foram mantidos para revisão.', 'error');
+        return;
+      }
+      data.set('image_ref', processedImageRef);
     }
 
     return PXOForms.submitUploadForm({
@@ -158,6 +167,12 @@ sitemap: false
         renderOcrReview();
       },
       onConflict: (result, retry) => {
+        const unresolved = (result.results || []).filter(item => item.status === 'failed' || item.status === 'not_attempted');
+        if (unresolved.length) {
+          unresolvedResults.push(...unresolved.map(item => ({...item, index: pending.conflict.index})));
+          pendingConflicts = pendingConflicts.filter(item => item !== pending);
+          reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
+        }
         const updatedConflict = (result.results || []).find((item) => item.status === 'conflict');
         if (updatedConflict) pending.conflict = updatedConflict;
         pending.retry = retry;
@@ -252,8 +267,10 @@ sitemap: false
       },
       onConflict: (result, _retry, originalData) => {
         originalOcrData = originalData;
+        processedImageRef = result.image_ref || null;
         reviewMessage = result.message || '';
         const results = result.results || [];
+        unresolvedResults = results.filter(item => item.status === 'failed' || item.status === 'not_attempted');
         reviewCounts = {
           added: Number(result.counts?.added ?? results.filter((item) => item.status === 'added').length),
           skipped: Number(result.counts?.skipped ?? results.filter((item) => item.status === 'skipped').length),

@@ -58,8 +58,8 @@ helpers do
 
   def upload_image_if_production(image_path)
     if settings.environment == :production
-      GitHubService.upload_image(image_path)
-      puts "✅ Image uploaded to GitHub (production)"
+      GitHubService.ensure_image(image_path)
+      puts "✅ Image available on GitHub (production)"
     else
       puts "ℹ️ Skipping GitHub upload (not in production environment)"
     end
@@ -120,7 +120,7 @@ helpers do
     references
   end
 
-  def ingestion_response(results, events: nil, event: nil, failed: false)
+  def ingestion_response(results, events: nil, event: nil, failed: false, image_ref: nil)
     counts = {
       added: results.count { |result| result[:status] == "added" },
       skipped: results.count { |result| result[:status] == "skipped" },
@@ -141,6 +141,7 @@ helpers do
       summary
     end
     data = {message: message, counts: counts, results: results}
+    data[:image_ref] = image_ref if image_ref
     data[:events] = events if events
     if event
       data[:event_name] = event[:name]
@@ -292,6 +293,7 @@ post "/events_ocr" do
     end
 
     image_path = validate_event_image(params[:event_image])
+    image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
       events = EventOcrService.call(image_path, retry_sleep: 5, additional_text: additional_text)
     rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError => e
@@ -329,10 +331,10 @@ post "/events_ocr" do
       events.each_with_index do |remaining, remaining_index|
         results << {status: "not_attempted", index: remaining_index, event: remaining} if remaining_index > index
       end
-      return ingestion_response(results, events: events, failed: true)
+      return ingestion_response(results, events: events, failed: true, image_ref: image_ref)
     end
 
-    ingestion_response(results, events: events)
+    ingestion_response(results, events: events, image_ref: image_ref)
   rescue RubyLLM::RateLimitError => e
     puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
     json_error("Limite de pedidos/quota do modelo LLM excedido: #{e.message}", 429, error_code: "rate_limit_exceeded")
@@ -356,14 +358,21 @@ post "/add_event" do
   validation_params.delete(:event_image)
   validation_params.delete(:google_token)
   validation_params.delete(:distinct_from)
+  validation_params.delete(:image_ref)
 
   begin
     distinct_from = distinct_event_references
+    image_ref = ParamUtils.fetch(params, :image_ref)
+    if image_ref
+      raise ArgumentError, "Image reference and file cannot be combined" if params[:event_image]
+
+      image_path = ImageService.path_for_reference(image_ref)
+    end
   rescue JSON::ParserError, ArgumentError
-    return json_error("A confirmação do evento não é válida. Verifique os dados e tente novamente.")
+    return json_error("A confirmação ou referência de imagem não é válida. Verifique os dados e tente novamente.")
   end
 
-  image_path = "" # Initialize image_path
+  image_path ||= ""
 
   # Convert dates from HTML5 format (yyyy-mm-dd) to the format expected by the
   # validator (dd/mm/YYYY). Other formats pass through unchanged.
@@ -379,7 +388,10 @@ post "/add_event" do
 
     # Process image only after successful validation
     begin
-      image_path = validate_event_image(params[:event_image])
+      unless image_ref
+        image_path = validate_event_image(params[:event_image])
+        image_ref = File.basename(image_path, ".webp") unless image_path.empty?
+      end
     rescue => e
       return json_error(e.message)
     end
@@ -395,14 +407,17 @@ post "/add_event" do
         spreadsheet_id: settings.spreadsheet_id,
         events_range: settings.events_range
       ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path, distinct_from: distinct_from) do
+        if settings.environment != :production && image_ref && (!File.file?(image_path) || File.symlink?(image_path))
+          raise "Processed image is unavailable; upload the source again"
+        end
         upload_image_if_production(image_path) unless image_path.empty?
       end
 
-      ingestion_response([saved], event: validated_params)
+      ingestion_response([saved], event: validated_params, image_ref: image_ref)
     rescue => e
       puts "❌ Error adding event: #{e.message}"
       puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
-      ingestion_response([{status: "failed", event: validated_params}], failed: true)
+      ingestion_response([{status: "failed", event: validated_params}], failed: true, image_ref: image_ref)
     end
   else
     puts "❌ Validation failed: #{result.errors.to_h.inspect}"

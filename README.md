@@ -104,8 +104,29 @@ changed data is checked again. Already covered content is always skipped, even w
 an acknowledgement. OCR review submits only the selected occurrence, without
 rerunning extraction or resubmitting successful earlier occurrences.
 On a partial failure, earlier conflicts remain reviewable; failed or unattempted
-occurrences are not automatically retried. The failure summary and source inputs
-remain available for checking the uncertain outcome.
+occurrences remain visible with their event data throughout review, including
+after the last conflict is resolved. A failed selected-occurrence write also
+stays visible for reconciliation. These occurrences are not automatically retried.
+The failure summary and source inputs remain available for checking the uncertain
+outcome.
+
+When the flyer is used for events, ingestion responses include `image_ref`, the
+UUID of the processed WebP. Selected-occurrence requests reuse this value instead
+of uploading or processing the original file again. `/add_event` accepts either
+`image_ref` or `event_image`, never both. References are transport metadata, not
+event fields or duplicate acknowledgements. The server validates the UUID and
+derives the fixed temporary path; clients cannot supply a filesystem path.
+
+Image availability is checked only after an append is allowed. Production reuses
+the existing GitHub image when its content matches, or publishes the processed
+file if absent. It never overwrites different content. Published references can
+still be reused after the temporary file disappears; an unpublished reference
+requires that file on the current worker. Missing images or an unconfirmed
+publication prevent the sheet append. A lost create response is reconciled with
+one remote read rather than another blind upload.
+The [GitHub Contents API](https://docs.github.com/en/rest/repos/contents) is read
+on the configured branch; its blob SHA is compared with the processed bytes
+before an existing image is reused.
 
 OCR processes events in order, updating one request-local index after every
 confirmed append. A save failure stops the remaining appends; results identify
@@ -126,9 +147,11 @@ Integrating the feedback into r3x and persisting stable identities remain separa
 work. Do not automatically replay a flyer and assume wording/date changes are
 fully deduplicated. This change does not edit or hide existing sheet rows.
 
-Run Ruby coverage with `./dockerized.sh rake test`. The two browser-independent
-JavaScript recovery regressions use Node's built-in runner:
-`node test/upload_form_test.js` (no npm dependencies).
+Run Ruby coverage with `./dockerized.sh rake test`. Browser-independent JavaScript
+regressions use Node's built-in runner: `node test/upload_form_test.js` and
+`node test/ocr_review_test.js` (no npm dependencies).
+The OCR regressions exercise the page's review lifecycle and shared upload code,
+including persistent failure details and image reuse across successive decisions.
 
 Generate an ICS file from the default Google Sheets CSV:
 

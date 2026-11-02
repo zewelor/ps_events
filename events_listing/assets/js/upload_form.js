@@ -113,12 +113,15 @@
         }
 
         const ingestionFailure = response.status === 503 && result.status === 'error' && result.error_code === 'ingestion_failed';
-        const hasConflicts = Array.isArray(result.results) && result.results.some((item) => item.status === 'conflict');
-        if (result.status === 'needs_review' || (ingestionFailure && hasConflicts)) {
+        if (result.status === 'needs_review' || ingestionFailure) {
           if (onConflict) {
             onConflict(result, (fingerprints) => {
               const retryData = copyFormData(data);
               retryData.set('distinct_from', JSON.stringify(acknowledgedFingerprints(data, fingerprints)));
+              if (result.image_ref) {
+                retryData.delete('event_image');
+                retryData.set('image_ref', result.image_ref);
+              }
               return submitFormData({ form, submitBtn, action, data: retryData, onSuccess, onSkipped, onConflict });
             }, data);
             if (ingestionFailure) showToast(result.message || `Erro ${response.status}`, 'error');
@@ -258,6 +261,26 @@
       card.appendChild(actions);
       container.appendChild(card);
     });
+    renderUnresolvedEvents(container, result.results || []);
+  }
+
+  function renderUnresolvedEvents(container, results) {
+    const unresolved = results.filter(item => item.status === 'failed' || item.status === 'not_attempted');
+    if (!unresolved.length) return;
+    appendText(container, 'p', 'font-semibold', 'Há eventos por verificar. Confirme os registos guardados antes de tentar novamente.');
+    unresolved.forEach((item) => {
+      const card = document.createElement('article');
+      card.className = 'space-y-2 rounded-lg border border-amber-200 bg-white p-4';
+      const event = item.event || {};
+      appendText(card, 'h2', 'font-semibold', event.name || 'Evento sem nome');
+      appendText(card, 'p', 'text-sm', item.status === 'failed' ? 'Resultado do registo por confirmar' : 'Registo ainda não tentado');
+      Object.entries(event).forEach(([field, value]) => {
+        if (field !== 'name' && EVENT_FIELD_LABELS[field] && value) {
+          appendText(card, 'p', 'whitespace-pre-wrap break-words text-sm', `${EVENT_FIELD_LABELS[field]}: ${value}`);
+        }
+      });
+      container.appendChild(card);
+    });
   }
 
   function showReviewNotice(container, message) {
@@ -266,5 +289,5 @@
     appendText(container, 'p', '', message);
   }
 
-  window.PXOForms = { dismissToast, showToast, submitUploadForm, renderConflictReview, showReviewNotice };
+  window.PXOForms = { dismissToast, showToast, submitUploadForm, renderConflictReview, renderUnresolvedEvents, showReviewNotice };
 })();
