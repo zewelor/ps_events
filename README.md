@@ -62,10 +62,65 @@ curl -X POST http://localhost:4567/events_ocr \
 when the model is temporarily unavailable during analysis, before any events are
 saved. Clients may retry that explicit response with bounded backoff.
 
-Quota failures keep HTTP 429 with `rate_limit_exceeded`; validation and ordinary
-processing failures keep their existing responses. A generic 503, timeout, or lost
+Quota failures keep HTTP 429 with `rate_limit_exceeded`. Saving failures return
+HTTP 503 with `ingestion_failed`, including confirmed results before the failure.
+A generic 503, timeout, or lost
 response does not guarantee that nothing was saved. Do not automatically repeat
 those uploads without checking the persisted events.
+
+### Duplicate feedback
+
+All ingestion paths check the live configured target and `Approved` before an
+append, with columns resolved by their headers, including links. An unavailable
+read, missing headers or malformed stored dates prevents unchecked writes.
+
+Equivalent event content returns HTTP 200, `outcome: "skipped"`, and the existing
+row reference. Comparison normalizes valid dates, case and whitespace; submission
+timestamps, submitter and image UUIDs are ignored. URL path case is preserved.
+Optional blank end dates mean the start date. Different content is not silently
+discarded or merged.
+
+Potential matches return HTTP 409 and `status: "needs_review"`. Both endpoints
+return `counts: {added, skipped, conflicted}` and per-event `results`. Conflicts
+include the submitted `event`, candidate `event` data, `reference`, `differences`
+and a `fingerprint`. Same-start-date matches are deliberately conservative, as
+OCR can change both the title and venue wording. Overlapping events at the same
+venue also reach review, including tournaments inside an older aggregate entry.
+These are candidates, not proof of duplication.
+
+The form preserves its data and offers **É o mesmo evento** (no additional write)
+or **É outro evento**. The latter resubmits that event to `/add_event` with
+`distinct_from`, a JSON array of the candidate fingerprints being explicitly
+acknowledged. Fingerprints bind the input, existing event content and row reference;
+changed data is checked again. Equivalent content is always skipped, even with
+an acknowledgement. OCR review submits only the selected occurrence, without
+rerunning extraction or resubmitting successful earlier occurrences.
+On a partial failure, earlier conflicts remain reviewable; failed or unattempted
+occurrences are not automatically retried. The failure summary and source inputs
+remain available for checking the uncertain outcome.
+
+OCR processes events in order, updating one request-local index after every
+confirmed append. A save failure stops the remaining appends; results identify
+confirmed additions, the failed occurrence (its write outcome may be unknown),
+and unattempted occurrences. The next request rebuilds the live index, so an
+equivalent retry skips earlier successes, including lost append responses.
+
+`AddEventService#add_event` now returns a hash with `status: "added"` and `range`,
+`status: "skipped"` and `existing_row`, or `status: "conflict"` and candidates.
+CLI `bin/add_event` prints this feedback; conflicts exit with status 2. A skipped
+or conflicting event does not publish another image through these ingestion paths.
+
+Limits: this is a read-before-append check, not a transactional concurrency lock.
+Simultaneous requests can still race. There is no durable source/occurrence identity
+or automatic semantic adjudication in this change. A resized/recompressed source
+has different bytes; the same image alone cannot identify each occurrence.
+Integrating the feedback into r3x and persisting stable identities remain separate
+work. Do not automatically replay a flyer and assume wording/date changes are
+fully deduplicated. This change does not edit or hide existing sheet rows.
+
+Run Ruby coverage with `./dockerized.sh rake test`. The two browser-independent
+JavaScript recovery regressions use Node's built-in runner:
+`node test/upload_form_test.js` (no npm dependencies).
 
 Generate an ICS file from the default Google Sheets CSV:
 

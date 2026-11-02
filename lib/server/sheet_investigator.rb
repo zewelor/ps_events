@@ -1,6 +1,5 @@
 require "date"
 require_relative "event_validation"
-require_relative "sheets_config"
 
 # Read-only view over the events spreadsheet.
 #
@@ -153,6 +152,8 @@ class SheetInvestigator
   end
 
   def self.from_spreadsheet(range: nil)
+    require_relative "sheets_config"
+
     header, rows, first_row_number = SheetsConfig.read_rows(range: range)
     new(rows, headers: header, first_row_number: first_row_number)
   end

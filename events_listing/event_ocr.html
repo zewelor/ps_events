@@ -53,6 +53,7 @@ sitemap: false
       </button>
     </div>
   </form>
+  <div id="duplicate-review" class="hidden space-y-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-slate-800" role="status" aria-live="polite"></div>
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50"></div>
 
   <div id="result-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
@@ -80,7 +81,91 @@ sitemap: false
   const imageInput = document.getElementById('event_image');
   const dropZone = document.getElementById('image-drop-zone');
   const imagePreview = document.getElementById('image-preview');
+  const googleTokenInput = document.getElementById('google_token');
+  const duplicateReview = document.getElementById('duplicate-review');
+  let pendingConflicts = [];
+  let reviewCounts = null;
+  let reviewMessage = '';
+  let originalOcrData = null;
   let previewUrl = null;
+
+  function conflictFingerprints(conflict) {
+    return (conflict.candidates || []).map((candidate) => candidate.fingerprint).filter(Boolean);
+  }
+
+  function renderOcrReview() {
+    const result = {
+      message: reviewMessage,
+      counts: reviewCounts,
+      results: pendingConflicts.map((item) => item.conflict)
+    };
+
+    if (!pendingConflicts.length) {
+      PXOForms.showReviewNotice(duplicateReview, `A revisão terminou. Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`);
+      return;
+    }
+
+    PXOForms.renderConflictReview(duplicateReview, result, {
+      onSame: (conflict) => {
+        pendingConflicts = pendingConflicts.filter((item) => item.conflict !== conflict);
+        reviewCounts.skipped += 1;
+        reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
+        reviewMessage = 'Este evento foi dispensado como já existente. Os eventos já processados foram mantidos.';
+        renderOcrReview();
+      },
+      onDifferent: (conflict) => {
+        const pending = pendingConflicts.find((item) => item.conflict === conflict);
+        if (pending.retry) {
+          return pending.retry(conflictFingerprints(conflict));
+        } else {
+          return submitExtractedEvent(pending);
+        }
+      }
+    });
+  }
+
+  function submitExtractedEvent(pending) {
+    const event = pending.conflict.event || {};
+    const data = new FormData();
+    data.set('google_token', originalOcrData.get('google_token') || '');
+    Object.entries(event).forEach(([field, value]) => {
+      if (value != null && value !== '') data.set(field, String(value));
+    });
+    data.set('distinct_from', JSON.stringify(conflictFingerprints(pending.conflict)));
+
+    const image = originalOcrData.get('event_image');
+    if (originalOcrData.get('use_event_image') === 'on' && typeof File !== 'undefined' && image instanceof File && image.size > 0) {
+      data.set('event_image', image);
+    }
+
+    return PXOForms.submitUploadForm({
+      form,
+      submitBtn,
+      action: new URL('/add_event', form.action).toString(),
+      data,
+      onSuccess: (result) => {
+        pendingConflicts = pendingConflicts.filter((item) => item !== pending);
+        reviewCounts.added += 1;
+        reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
+        PXOForms.showToast(result.message || 'Evento adicionado com sucesso!');
+        renderOcrReview();
+      },
+      onSkipped: (result) => {
+        pendingConflicts = pendingConflicts.filter((item) => item !== pending);
+        reviewCounts.skipped += 1;
+        reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
+        PXOForms.showToast(result.message || 'Este evento já se encontra registado.', 'info');
+        renderOcrReview();
+      },
+      onConflict: (result, retry) => {
+        const updatedConflict = (result.results || []).find((item) => item.status === 'conflict');
+        if (updatedConflict) pending.conflict = updatedConflict;
+        pending.retry = retry;
+        reviewMessage = result.message || reviewMessage;
+        renderOcrReview();
+      }
+    });
+  }
 
   function warmUpOcrBackend() {
     fetch(new URL('/health', form.action), {cache: 'no-store'})
@@ -160,11 +245,35 @@ sitemap: false
     PXOForms.submitUploadForm({
       form,
       submitBtn,
+      onSkipped: (result) => {
+        PXOForms.showToast(result.message || 'Este evento já se encontra registado.', 'info');
+        duplicateReview.replaceChildren();
+        duplicateReview.classList.add('hidden');
+      },
+      onConflict: (result, _retry, originalData) => {
+        originalOcrData = originalData;
+        reviewMessage = result.message || '';
+        const results = result.results || [];
+        reviewCounts = {
+          added: Number(result.counts?.added ?? results.filter((item) => item.status === 'added').length),
+          skipped: Number(result.counts?.skipped ?? results.filter((item) => item.status === 'skipped').length),
+          conflicted: Number(result.counts?.conflicted ?? results.filter((item) => item.status === 'conflict').length)
+        };
+        pendingConflicts = results
+          .filter((item) => item.status === 'conflict')
+          .map((conflict) => ({ conflict, retry: null }));
+        renderOcrReview();
+      },
       onSuccess: (result) => {
+        PXOForms.showToast(result.message);
         ocrText.value = JSON.stringify(result.events, null, 2);
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        duplicateReview.replaceChildren();
+        duplicateReview.classList.add('hidden');
+        const googleToken = googleTokenInput.value;
         form.reset();
+        googleTokenInput.value = googleToken;
       }
     });
   });

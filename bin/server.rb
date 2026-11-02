@@ -108,6 +108,53 @@ helpers do
   rescue ArgumentError
     date_str
   end
+
+  def distinct_event_references
+    value = ParamUtils.fetch(params, :distinct_from)
+    return [] if value.nil?
+
+    references = JSON.parse(value)
+    unless references.is_a?(Array) && references.all? { |reference| reference.is_a?(String) && /\A[0-9a-f]{64}\z/.match?(reference) }
+      raise ArgumentError, "Invalid distinct_from"
+    end
+    references
+  end
+
+  def ingestion_response(results, events: nil, event: nil, failed: false)
+    counts = {
+      added: results.count { |result| result[:status] == "added" },
+      skipped: results.count { |result| result[:status] == "skipped" },
+      conflicted: results.count { |result| result[:status] == "conflict" }
+    }
+    summary = "Adicionados: #{counts[:added]}. Já existentes: #{counts[:skipped]}. A aguardar revisão: #{counts[:conflicted]}."
+    message = if failed
+      "Não foi possível concluir a submissão. #{summary} Os dados foram mantidos. Verifique os eventos antes de tentar novamente."
+    elsif counts[:conflicted].positive?
+      "Encontrámos eventos semelhantes. Confirme se são os mesmos eventos."
+    elsif counts[:added].zero? && counts[:skipped].positive?
+      if counts[:skipped] == 1
+        "Este evento já se encontra registado. Não precisa de o submeter novamente."
+      else
+        "Os #{counts[:skipped]} eventos já se encontram registados. Não precisa de os submeter novamente."
+      end
+    else
+      summary
+    end
+    data = {message: message, counts: counts, results: results}
+    data[:events] = events if events
+    if event
+      data[:event_name] = event[:name]
+      data[:event_date] = event[:start_date]
+    end
+    if failed
+      json_response(data.merge(status: "error", error_code: "ingestion_failed"), 503)
+    elsif counts[:conflicted].positive?
+      json_response(data.merge(status: "needs_review"), 409)
+    else
+      outcome = (counts[:added].zero? && counts[:skipped].positive?) ? "skipped" : "added"
+      json_success(message, data.merge(outcome: outcome))
+    end
+  end
 end
 
 # Initialize Google Sheets service
@@ -262,22 +309,30 @@ post "/events_ocr" do
 
     pp events
 
-    # Ensure events is an array before calling .each, if it could be a single string from OCR
-    appended_ranges = []
-    Array(events).each do |ev|
-      if ev.is_a?(Hash)
-        result = service.add_event(ev,
-          submitter_email: ocr_submitter_email,
-          image_path: use_image ? image_path : "")
-        appended_ranges << result.updates.updated_range if result&.updates&.updated_range
+    raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
+
+    results = []
+    image_uploaded = false
+    events.each_with_index do |ev, index|
+      result = service.add_event(ev,
+        submitter_email: ocr_submitter_email,
+        image_path: use_image ? image_path : "") do
+        if use_image && !image_uploaded
+          upload_image_if_production(image_path)
+          image_uploaded = true
+        end
       end
+      results << result.merge(index: index)
+    rescue => e
+      puts "❌ Error saving OCR event #{index}: #{e.message}"
+      results << {status: "failed", index: index, event: ev}
+      events.each_with_index do |remaining, remaining_index|
+        results << {status: "not_attempted", index: remaining_index, event: remaining} if remaining_index > index
+      end
+      return ingestion_response(results, events: events, failed: true)
     end
 
-    upload_image_if_production(image_path) if use_image
-
-    events_count = appended_ranges.size
-    range_info = appended_ranges.any? ? " → #{appended_ranges.join(", ")}" : ""
-    json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {events: events})
+    ingestion_response(results, events: events)
   rescue RubyLLM::RateLimitError => e
     puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
     json_error("Limite de pedidos/quota do modelo LLM excedido: #{e.message}", 429, error_code: "rate_limit_exceeded")
@@ -300,6 +355,13 @@ post "/add_event" do
   validation_params = params.dup
   validation_params.delete(:event_image)
   validation_params.delete(:google_token)
+  validation_params.delete(:distinct_from)
+
+  begin
+    distinct_from = distinct_event_references
+  rescue JSON::ParserError, ArgumentError
+    return json_error("A confirmação do evento não é válida. Verifique os dados e tente novamente.")
+  end
 
   image_path = "" # Initialize image_path
 
@@ -317,7 +379,7 @@ post "/add_event" do
 
     # Process image only after successful validation
     begin
-      image_path = process_event_image(params[:event_image])
+      image_path = validate_event_image(params[:event_image])
     rescue => e
       return json_error(e.message)
     end
@@ -328,22 +390,19 @@ post "/add_event" do
     end
 
     begin
-      AddEventService.new(
+      saved = AddEventService.new(
         google_sheets: settings.google_sheets,
         spreadsheet_id: settings.spreadsheet_id,
         events_range: settings.events_range
-      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path)
+      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path, distinct_from: distinct_from) do
+        upload_image_if_production(image_path) unless image_path.empty?
+      end
 
-      puts "✅ Event successfully added to spreadsheet"
-
-      json_success("Event added successfully", {
-        event_name: validated_params[:name],
-        event_date: validated_params[:start_date].strip
-      })
+      ingestion_response([saved], event: validated_params)
     rescue => e
       puts "❌ Error adding event: #{e.message}"
       puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
-      json_error("Failed to add event. Please try again.", 500)
+      ingestion_response([{status: "failed", event: validated_params}], failed: true)
     end
   else
     puts "❌ Validation failed: #{result.errors.to_h.inspect}"
