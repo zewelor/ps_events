@@ -5,25 +5,10 @@ require "rack/test"
 require_relative "../test_helper"
 require_relative "../../bin/server"
 require_relative "../../lib/server/auth_registry"
+require_relative "../fixtures/memory_sheets"
 
 class EventsOcrEndpointTest < Minitest::Test
   include Rack::Test::Methods
-
-  class DummySheets
-    attr_reader :rows
-
-    MockUpdates = Struct.new(:updated_range)
-    MockResponse = Struct.new(:updates)
-
-    def initialize
-      @rows = []
-    end
-
-    def append_row(_id, range, data)
-      @rows << data
-      MockResponse.new(MockUpdates.new("#{range}!A#{@rows.size}"))
-    end
-  end
 
   def app
     Sinatra::Application
@@ -32,7 +17,7 @@ class EventsOcrEndpointTest < Minitest::Test
   def setup
     @orig_env = app.settings.environment
     @orig_sheets = app.settings.google_sheets
-    app.settings.google_sheets = DummySheets.new
+    app.settings.google_sheets = MemorySheets.new
     app.set :environment, :test
   end
 
@@ -221,11 +206,11 @@ class EventsOcrEndpointTest < Minitest::Test
       end
     end
 
-    assert_equal 422, last_response.status
+    assert_equal 503, last_response.status
     body = JSON.parse(last_response.body)
     assert_equal "error", body["status"]
-    refute body.key?("error_code")
-    assert_includes body["message"], "Write failed"
+    assert_equal "ingestion_failed", body["error_code"]
+    refute_equal "ocr_temporarily_unavailable", body["error_code"]
   end
 
   def test_rate_limit_error
@@ -248,5 +233,88 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "error", body["status"]
     assert_equal "rate_limit_exceeded", body["error_code"]
     assert_includes body["message"], "Quota exceeded"
+  end
+
+  def submit_events(events)
+    capture_io do
+      EventOcrService.stub :call, events do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+            post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+          end
+        end
+      end
+    end
+    JSON.parse(last_response.body)
+  end
+
+  def test_batch_replay_and_duplicates_within_batch_add_zero_extra_rows
+    first = submit_events([valid_event, valid_event])
+    replay = submit_events([valid_event])
+
+    assert_equal({"added" => 1, "skipped" => 1, "conflicted" => 0}, first["counts"])
+    assert_equal({"added" => 0, "skipped" => 1, "conflicted" => 0}, replay["counts"])
+    assert_equal "skipped", replay["outcome"]
+    assert_equal 1, app.settings.google_sheets.rows.size
+  end
+
+  def test_partial_append_failure_reports_successes_and_retry_adds_only_missing_occurrences
+    later_event = valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
+    app.settings.google_sheets.append_failure_after = 1
+    failed = submit_events([valid_event, later_event])
+
+    assert_equal 503, last_response.status
+    assert_equal 1, failed["counts"]["added"]
+    assert_equal "Events!A2:S2", failed["results"].first["range"]
+    assert_equal "failed", failed["results"].last["status"]
+
+    app.settings.google_sheets.append_failure_after = nil
+    retried = submit_events([valid_event, later_event])
+
+    assert_equal 200, last_response.status
+    assert_equal({"added" => 1, "skipped" => 1, "conflicted" => 0}, retried["counts"])
+    assert_equal 2, app.settings.google_sheets.rows.size
+  end
+
+  def test_ocr_conflicts_are_reported_separately_from_successful_appends
+    submit_events([valid_event])
+    body = submit_events([
+      valid_event.merge(name: "Outro título OCR", category: "Arte", location: "Outro local"),
+      valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
+    ])
+
+    assert_equal 409, last_response.status
+    assert_equal({"added" => 1, "skipped" => 0, "conflicted" => 1}, body["counts"])
+    assert_equal "Events!A2:S2", body["results"].first["candidates"].first["reference"]
+    assert_equal 2, app.settings.google_sheets.rows.size
+  end
+
+  def test_live_read_failure_does_not_append
+    app.settings.google_sheets.read_error = "Offline"
+    body = submit_events([valid_event])
+
+    assert_equal 503, last_response.status
+    assert_equal "ingestion_failed", body["error_code"]
+    assert_equal 0, body["counts"]["added"]
+    assert_empty app.settings.google_sheets.rows
+  end
+
+  def test_mixed_batch_preserves_new_facts_while_skipping_covered_replays
+    submit_events([valid_event.merge(contact_email: "info@example.com", event_link1: "https://example.com/Agenda")])
+    batch = [
+      valid_event,
+      valid_event.merge(description: "#{valid_event[:description]} Evento cancelado."),
+      valid_event.merge(contact_tel: "+351 291 123 456"),
+      valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
+    ]
+    first = submit_events(batch)
+    replay = submit_events(batch)
+
+    assert_equal 409, last_response.status
+    assert_equal({"added" => 1, "skipped" => 1, "conflicted" => 2}, first["counts"])
+    assert_equal({"added" => 0, "skipped" => 2, "conflicted" => 2}, replay["counts"])
+    assert_equal batch[1][:description], replay["results"][1]["event"]["description"]
+    assert_equal "+351 291 123 456", replay["results"][2]["event"]["contact_tel"]
+    assert_equal 2, app.settings.google_sheets.rows.size
   end
 end

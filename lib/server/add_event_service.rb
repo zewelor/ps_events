@@ -1,6 +1,7 @@
 require "active_support/time"
 require_relative "event_validation"
 require_relative "event_validation_error"
+require_relative "event_duplicate_check"
 
 class AddEventService
   def initialize(google_sheets:, spreadsheet_id:, events_range:)
@@ -9,23 +10,33 @@ class AddEventService
     @events_range = events_range
   end
 
-  def add_event(event, submitter_email:, image_path: "")
+  def add_event(event, submitter_email:, image_path: "", distinct_from: [])
     validation = EventValidation.call(event)
     if validation.failure?
       raise EventValidationError.new("Invalid event", validation_errors: validation.errors)
     end
 
+    @duplicates ||= EventDuplicateCheck.new(sheets: @google_sheets, spreadsheet_id: @spreadsheet_id, events_range: @events_range)
+    decision = @duplicates.check(event, distinct_from: distinct_from)
+    return decision if decision
+
+    yield if block_given? # Publish a supplied image only when a row will be added.
     row = build_row(event, submitter_email, image_path)
     log_event(row)
+    # Keep the existing formatting and metadata, but write in the live header order.
+    column_names = %w[added_at submitted_by name start_date start_time end_date end_time location description category organizer email phone price image link_1 link_2 link_3 link_4]
+    columns = column_names.zip(row).to_h
 
-    unless @google_sheets
-      puts "⚠️ Google Sheets service is nil - row NOT appended (APP_ENV=test?)"
-      return nil
-    end
+    result = @google_sheets.append_row(@spreadsheet_id, @events_range, @duplicates.headers.map { |header| columns.fetch(header) })
+    range = result&.updates&.updated_range
+    raise "Append outcome is unknown; read the live sheet before retrying" if range.to_s.empty?
 
-    result = @google_sheets.append_row(@spreadsheet_id, @events_range, row)
-    puts "✅ Row appended to sheet: #{result.updates.updated_range}" if result&.updates
-    result
+    @duplicates.record_added(event, range)
+    puts "✅ Row appended to sheet: #{range}"
+    {status: "added", range: range}
+  rescue
+    @duplicates = nil # A lost append response must be checked against live data.
+    raise
   end
 
   private

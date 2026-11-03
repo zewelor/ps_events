@@ -382,6 +382,8 @@ sitemap: false
 
   </form>
 
+  <div id="duplicate-review" class="hidden space-y-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-slate-800" role="status" aria-live="polite"></div>
+
   <!-- Toast notifications container -->
   <div id="toast-container" class="fixed inset-x-0 bottom-5 flex flex-col items-center space-y-3 z-50" aria-live="polite" aria-atomic="true"></div>
 </section>
@@ -403,6 +405,7 @@ sitemap: false
     const removeImageBtn = document.getElementById('remove-image');
     const contactEmailInput = document.getElementById('contact_email');
     const googleTokenInput = document.getElementById('google_token');
+    const duplicateReview = document.getElementById('duplicate-review');
 
     // Google Sign-In elements
     const googleSigninSection = document.getElementById('google-signin-section');
@@ -513,9 +516,26 @@ sitemap: false
         form,
         submitBtn,
         onSuccess: (result) => {
-          PXOForms.showToast(`Evento "${result.event_name}" adicionado com sucesso!`);
+          PXOForms.showToast(result.message || 'Evento adicionado com sucesso!');
+          duplicateReview.replaceChildren();
+          duplicateReview.classList.add('hidden');
+          const googleToken = googleTokenInput.value;
           form.reset();
+          googleTokenInput.value = googleToken;
           imagePreview.classList.add('hidden');
+        },
+        onSkipped: (result) => {
+          PXOForms.showToast(result.message || 'Este evento já se encontra registado.', 'info');
+          duplicateReview.replaceChildren();
+          duplicateReview.classList.add('hidden');
+        },
+        onConflict: (result, retry) => {
+          PXOForms.renderConflictReview(duplicateReview, result, {
+            onSame: () => PXOForms.showReviewNotice(duplicateReview, 'A submissão foi dispensada. Nenhum evento foi adicionado.'),
+            onDifferent: (conflict) => {
+              return retry((conflict.candidates || []).map((candidate) => candidate.fingerprint).filter(Boolean));
+            }
+          });
         }
       });
     });

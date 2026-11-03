@@ -75,34 +75,35 @@ processed_path = ImageService.validate_and_process(uploaded_file)
 uuid = File.basename(processed_path, ".*")
 puts "Image processed to WebP: #{processed_path} (UUID: #{uuid})"
 
-# 2. Save locally under assets/images
-local_dest = File.expand_path("../events_listing/assets/images/#{uuid}.webp", __dir__)
-FileUtils.mkdir_p(File.dirname(local_dest))
-FileUtils.cp(processed_path, local_dest)
-puts "Saved image locally to: #{local_dest}"
+begin
+  result = add_service.add_event(event_data, submitter_email: submitter_email, image_path: processed_path) do
+    # Store/publish the image only after the live duplicate check allows an append.
+    local_dest = File.expand_path("../events_listing/assets/images/#{uuid}.webp", __dir__)
+    FileUtils.mkdir_p(File.dirname(local_dest))
+    FileUtils.cp(processed_path, local_dest)
+    puts "Saved image locally to: #{local_dest}"
 
-# 3. Attempt GitHub API upload
-if ENV["GH_TOKEN"].to_s.strip.empty? || ENV["GH_REPO"].to_s.strip.empty?
-  puts "Warning: GH_TOKEN or GH_REPO not found. Skipping GitHub API upload."
-else
-  puts "Uploading image to GitHub..."
-  if GitHubService.upload_image(processed_path)
-    puts "Uploaded successfully to GitHub!"
-  else
-    puts "Warning: GitHub API upload failed. Image was still saved locally."
+    if ENV["GH_TOKEN"].to_s.strip.empty? || ENV["GH_REPO"].to_s.strip.empty?
+      puts "Warning: GH_TOKEN or GH_REPO not found. Skipping GitHub API upload."
+    else
+      puts "Uploading image to GitHub..."
+      if GitHubService.upload_image(processed_path)
+        puts "Uploaded successfully to GitHub!"
+      else
+        puts "Warning: GitHub API upload failed. Image was still saved locally."
+      end
+    end
   end
+ensure
+  File.delete(processed_path) if File.exist?(processed_path)
 end
 
-# 4. Append row to Google Sheets
-puts "Appending event row to Google Sheets..."
-result = add_service.add_event(event_data, submitter_email: submitter_email, image_path: processed_path)
-
-if result
+case result[:status]
+when "added"
   puts "Success! Event successfully added."
-else
-  puts "Error: Failed to append row to Google Sheets."
-  exit 1
+when "skipped"
+  puts "Already registered: #{result[:existing_row]}. No row or image added."
+when "conflict"
+  puts JSON.pretty_generate(result)
+  exit 2
 end
-
-# Cleanup temporary file from /tmp
-File.delete(processed_path) if File.exist?(processed_path)

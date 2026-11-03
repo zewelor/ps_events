@@ -58,8 +58,8 @@ helpers do
 
   def upload_image_if_production(image_path)
     if settings.environment == :production
-      GitHubService.upload_image(image_path)
-      puts "✅ Image uploaded to GitHub (production)"
+      GitHubService.ensure_image(image_path)
+      puts "✅ Image available on GitHub (production)"
     else
       puts "ℹ️ Skipping GitHub upload (not in production environment)"
     end
@@ -80,17 +80,23 @@ helpers do
     image_path
   end
 
-  # DRY guard for Google OAuth + whitelist. Halts with the proper
-  # status on failure, returns the authorized email on success.
-  def require_whitelisted_google_user!(missing_message: "Google authentication required")
-    google_token = ParamUtils.fetch(params, :google_token)
-    result = AuthGuard.authenticate_google_token(google_token, missing_message: missing_message)
+  # Share development behavior and failure responses while retaining each route's authentication strategy.
+  def require_authenticated_user!(missing_message: "Google authentication required")
+    return "development@example.com" if settings.environment == :development
+
+    result = if block_given?
+      yield
+    else
+      AuthGuard.authenticate_google_token(ParamUtils.fetch(params, :google_token), missing_message: missing_message)
+    end
     unless result[:authenticated]
-      puts "❌ #{result[:error]}"
-      halt result[:status_code], json_error(result[:error], result[:status_code])
+      error = result[:error] || "Authentication required"
+      status_code = result[:status_code] || 401
+      puts "❌ #{error}"
+      halt status_code, json_error(error, status_code)
     end
 
-    puts "✅ Google auth validated for: #{result[:email]}"
+    puts "✅ Authenticated via #{result[:method] || :google_oauth}: #{result[:email]}"
     result[:email]
   end
 
@@ -107,6 +113,54 @@ helpers do
     end
   rescue ArgumentError
     date_str
+  end
+
+  def distinct_event_references
+    value = ParamUtils.fetch(params, :distinct_from)
+    return [] if value.nil?
+
+    references = JSON.parse(value)
+    unless references.is_a?(Array) && references.all? { |reference| reference.is_a?(String) && /\A[0-9a-f]{64}\z/.match?(reference) }
+      raise ArgumentError, "Invalid distinct_from"
+    end
+    references
+  end
+
+  def ingestion_response(results, events: nil, event: nil, failed: false, image_ref: nil)
+    counts = {
+      added: results.count { |result| result[:status] == "added" },
+      skipped: results.count { |result| result[:status] == "skipped" },
+      conflicted: results.count { |result| result[:status] == "conflict" }
+    }
+    summary = "Adicionados: #{counts[:added]}. Já existentes: #{counts[:skipped]}. A aguardar revisão: #{counts[:conflicted]}."
+    message = if failed
+      "Não foi possível concluir a submissão. #{summary} Os dados foram mantidos. Verifique os eventos antes de tentar novamente."
+    elsif counts[:conflicted].positive?
+      "Encontrámos eventos semelhantes. Confirme se são os mesmos eventos."
+    elsif counts[:added].zero? && counts[:skipped].positive?
+      if counts[:skipped] == 1
+        "Este evento já se encontra registado. Não precisa de o submeter novamente."
+      else
+        "Os #{counts[:skipped]} eventos já se encontram registados. Não precisa de os submeter novamente."
+      end
+    else
+      summary
+    end
+    data = {message: message, counts: counts, results: results}
+    data[:image_ref] = image_ref if image_ref
+    data[:events] = events if events
+    if event
+      data[:event_name] = event[:name]
+      data[:event_date] = event[:start_date]
+    end
+    if failed
+      json_response(data.merge(status: "error", error_code: "ingestion_failed"), 503)
+    elsif counts[:conflicted].positive?
+      json_response(data.merge(status: "needs_review"), 409)
+    else
+      outcome = (counts[:added].zero? && counts[:skipped].positive?) ? "skipped" : "added"
+      json_success(message, data.merge(outcome: outcome))
+    end
   end
 end
 
@@ -144,9 +198,6 @@ end
 configure do
   # Google OAuth - always available
   AuthRegistry.register(:google_oauth, lambda do |request|
-    # Skip in development mode
-    return {authenticated: false} if settings.environment == :development
-
     params = request.params
     google_token = ParamUtils.fetch(params, :google_token)
     # No token: silent miss so another strategy (e.g. API Bearer) can try.
@@ -213,7 +264,7 @@ get "/health" do
 end
 
 post "/event_image" do
-  require_whitelisted_google_user! unless settings.environment == :development
+  require_authenticated_user!
 
   begin
     image_path = process_event_image(params[:event_image])
@@ -225,17 +276,7 @@ end
 
 post "/events_ocr" do
   # Authentication via AuthRegistry (supports Google OAuth or API Bearer)
-  if settings.environment == :development
-    user_email = "development@example.com"
-  else
-    auth_result = AuthRegistry.authenticate(request)
-    unless auth_result[:authenticated]
-      status_code = auth_result[:status_code] || 401
-      return json_error(auth_result[:error] || "Authentication required", status_code)
-    end
-    user_email = auth_result[:email]
-    puts "✅ Authenticated via #{auth_result[:method]}: #{user_email}"
-  end
+  user_email = require_authenticated_user! { AuthRegistry.authenticate(request) }
 
   begin
     use_image = params[:use_event_image]
@@ -245,6 +286,7 @@ post "/events_ocr" do
     end
 
     image_path = validate_event_image(params[:event_image])
+    image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
       events = EventOcrService.call(image_path, retry_sleep: 5, additional_text: additional_text)
     rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError => e
@@ -262,22 +304,30 @@ post "/events_ocr" do
 
     pp events
 
-    # Ensure events is an array before calling .each, if it could be a single string from OCR
-    appended_ranges = []
-    Array(events).each do |ev|
-      if ev.is_a?(Hash)
-        result = service.add_event(ev,
-          submitter_email: ocr_submitter_email,
-          image_path: use_image ? image_path : "")
-        appended_ranges << result.updates.updated_range if result&.updates&.updated_range
+    raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
+
+    results = []
+    image_uploaded = false
+    events.each_with_index do |ev, index|
+      result = service.add_event(ev,
+        submitter_email: ocr_submitter_email,
+        image_path: use_image ? image_path : "") do
+        if use_image && !image_uploaded
+          upload_image_if_production(image_path)
+          image_uploaded = true
+        end
       end
+      results << result.merge(index: index)
+    rescue => e
+      puts "❌ Error saving OCR event #{index}: #{e.message}"
+      results << {status: "failed", index: index, event: ev}
+      events.each_with_index do |remaining, remaining_index|
+        results << {status: "not_attempted", index: remaining_index, event: remaining} if remaining_index > index
+      end
+      return ingestion_response(results, events: events, failed: true, image_ref: image_ref)
     end
 
-    upload_image_if_production(image_path) if use_image
-
-    events_count = appended_ranges.size
-    range_info = appended_ranges.any? ? " → #{appended_ranges.join(", ")}" : ""
-    json_success("#{events_count} evento(s) processado(s) via OCR#{range_info}", {events: events})
+    ingestion_response(results, events: events, image_ref: image_ref)
   rescue RubyLLM::RateLimitError => e
     puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
     json_error("Limite de pedidos/quota do modelo LLM excedido: #{e.message}", 429, error_code: "rate_limit_exceeded")
@@ -292,7 +342,7 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
-  google_user_email = require_whitelisted_google_user!(
+  google_user_email = require_authenticated_user!(
     missing_message: "Google authentication is required to submit an event"
   )
 
@@ -300,8 +350,22 @@ post "/add_event" do
   validation_params = params.dup
   validation_params.delete(:event_image)
   validation_params.delete(:google_token)
+  validation_params.delete(:distinct_from)
+  validation_params.delete(:image_ref)
 
-  image_path = "" # Initialize image_path
+  begin
+    distinct_from = distinct_event_references
+    image_ref = ParamUtils.fetch(params, :image_ref)
+    if image_ref
+      raise ArgumentError, "Image reference and file cannot be combined" if params[:event_image]
+
+      image_path = ImageService.path_for_reference(image_ref)
+    end
+  rescue JSON::ParserError, ArgumentError
+    return json_error("A confirmação ou referência de imagem não é válida. Verifique os dados e tente novamente.")
+  end
+
+  image_path ||= ""
 
   # Convert dates from HTML5 format (yyyy-mm-dd) to the format expected by the
   # validator (dd/mm/YYYY). Other formats pass through unchanged.
@@ -317,7 +381,10 @@ post "/add_event" do
 
     # Process image only after successful validation
     begin
-      image_path = process_event_image(params[:event_image])
+      unless image_ref
+        image_path = validate_event_image(params[:event_image])
+        image_ref = File.basename(image_path, ".webp") unless image_path.empty?
+      end
     rescue => e
       return json_error(e.message)
     end
@@ -328,22 +395,22 @@ post "/add_event" do
     end
 
     begin
-      AddEventService.new(
+      saved = AddEventService.new(
         google_sheets: settings.google_sheets,
         spreadsheet_id: settings.spreadsheet_id,
         events_range: settings.events_range
-      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path)
+      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path, distinct_from: distinct_from) do
+        if settings.environment != :production && image_ref && (!File.file?(image_path) || File.symlink?(image_path))
+          raise "Processed image is unavailable; upload the source again"
+        end
+        upload_image_if_production(image_path) unless image_path.empty?
+      end
 
-      puts "✅ Event successfully added to spreadsheet"
-
-      json_success("Event added successfully", {
-        event_name: validated_params[:name],
-        event_date: validated_params[:start_date].strip
-      })
+      ingestion_response([saved], event: validated_params, image_ref: image_ref)
     rescue => e
       puts "❌ Error adding event: #{e.message}"
       puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
-      json_error("Failed to add event. Please try again.", 500)
+      ingestion_response([{status: "failed", event: validated_params}], failed: true, image_ref: image_ref)
     end
   else
     puts "❌ Validation failed: #{result.errors.to_h.inspect}"
