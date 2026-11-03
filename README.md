@@ -70,6 +70,11 @@ those uploads without checking the persisted events.
 
 ### Duplicate feedback
 
+Web ingestion endpoints share one authentication guard. Development uses the
+same local submitter identity for OCR and selected-event review without requiring
+Google sign-in. Outside development, forms/image uploads still require Google
+and the whitelist; OCR retains its Google/API Bearer authentication strategies.
+
 All ingestion paths check the live configured target and `Approved` before an
 append, with columns resolved by their headers, including links. An unavailable
 read, missing headers or malformed stored dates prevents unchecked writes.

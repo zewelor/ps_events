@@ -176,4 +176,57 @@ class SharedFlyerReviewTest < Minitest::Test
     assert_equal "", app.settings.google_sheets.rows.first[14]
     assert_equal 0, @published
   end
+
+  def test_development_ocr_review_saves_without_unavailable_google_sign_in
+    app.set :environment, :development
+    header "Host", "localhost"
+    seed_existing(event("21", "Já registado"))
+    body = nil
+    resolved = nil
+    capture_io do
+      AuthRegistry.stub :authenticate, ->(*) { flunk "Development must not request authentication" } do
+        GoogleAuthService.stub :validate_token, ->(*) { flunk "Development must not validate a Google token" } do
+          EventOcrService.stub :call, [event("20"), event] do
+            ImageService.stub :validate_and_process, @path do
+              post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"), use_event_image: "on"}
+            end
+          end
+          assert_equal 409, last_response.status
+          body = JSON.parse(last_response.body)
+          conflict = body.fetch("results").find { |result| result.fetch("status") == "conflict" }
+          post "/add_event", conflict.fetch("event").merge(
+            "image_ref" => body.fetch("image_ref"),
+            "distinct_from" => JSON.generate(conflict.fetch("candidates").map { |candidate| candidate.fetch("fingerprint") })
+          )
+          resolved = JSON.parse(last_response.body)
+        end
+      end
+    end
+
+    assert_equal 200, last_response.status
+    assert_equal "added", resolved["outcome"]
+    assert_equal ["development+ocr@example.com", "development@example.com"], app.settings.google_sheets.rows.map { |row| row[1] }
+    assert_equal [@image_ref, @image_ref], app.settings.google_sheets.rows.map { |row| row[14] }
+    assert_not_requested :get, @url
+    assert_equal 0, @published
+  end
+
+  def test_production_still_requires_authentication_for_both_ingestion_routes
+    registry_calls = 0
+    capture_io do
+      post "/add_event", event
+      assert_equal 401, last_response.status
+      AuthRegistry.stub :authenticate, ->(*) {
+        registry_calls += 1
+        {authenticated: false, error: "Authentication required", status_code: 401}
+      } do
+        post "/events_ocr", {}
+      end
+    end
+
+    assert_equal 401, last_response.status
+    assert_equal 1, registry_calls
+    assert_empty app.settings.google_sheets.rows
+    assert_equal 0, @published
+  end
 end

@@ -80,17 +80,23 @@ helpers do
     image_path
   end
 
-  # DRY guard for Google OAuth + whitelist. Halts with the proper
-  # status on failure, returns the authorized email on success.
-  def require_whitelisted_google_user!(missing_message: "Google authentication required")
-    google_token = ParamUtils.fetch(params, :google_token)
-    result = AuthGuard.authenticate_google_token(google_token, missing_message: missing_message)
+  # Share development behavior and failure responses while retaining each route's authentication strategy.
+  def require_authenticated_user!(missing_message: "Google authentication required")
+    return "development@example.com" if settings.environment == :development
+
+    result = if block_given?
+      yield
+    else
+      AuthGuard.authenticate_google_token(ParamUtils.fetch(params, :google_token), missing_message: missing_message)
+    end
     unless result[:authenticated]
-      puts "❌ #{result[:error]}"
-      halt result[:status_code], json_error(result[:error], result[:status_code])
+      error = result[:error] || "Authentication required"
+      status_code = result[:status_code] || 401
+      puts "❌ #{error}"
+      halt status_code, json_error(error, status_code)
     end
 
-    puts "✅ Google auth validated for: #{result[:email]}"
+    puts "✅ Authenticated via #{result[:method] || :google_oauth}: #{result[:email]}"
     result[:email]
   end
 
@@ -192,9 +198,6 @@ end
 configure do
   # Google OAuth - always available
   AuthRegistry.register(:google_oauth, lambda do |request|
-    # Skip in development mode
-    return {authenticated: false} if settings.environment == :development
-
     params = request.params
     google_token = ParamUtils.fetch(params, :google_token)
     # No token: silent miss so another strategy (e.g. API Bearer) can try.
@@ -261,7 +264,7 @@ get "/health" do
 end
 
 post "/event_image" do
-  require_whitelisted_google_user! unless settings.environment == :development
+  require_authenticated_user!
 
   begin
     image_path = process_event_image(params[:event_image])
@@ -273,17 +276,7 @@ end
 
 post "/events_ocr" do
   # Authentication via AuthRegistry (supports Google OAuth or API Bearer)
-  if settings.environment == :development
-    user_email = "development@example.com"
-  else
-    auth_result = AuthRegistry.authenticate(request)
-    unless auth_result[:authenticated]
-      status_code = auth_result[:status_code] || 401
-      return json_error(auth_result[:error] || "Authentication required", status_code)
-    end
-    user_email = auth_result[:email]
-    puts "✅ Authenticated via #{auth_result[:method]}: #{user_email}"
-  end
+  user_email = require_authenticated_user! { AuthRegistry.authenticate(request) }
 
   begin
     use_image = params[:use_event_image]
@@ -349,7 +342,7 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
-  google_user_email = require_whitelisted_google_user!(
+  google_user_email = require_authenticated_user!(
     missing_message: "Google authentication is required to submit an event"
   )
 
