@@ -55,6 +55,17 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v4
 
+      - name: Build CI image for the checked-out dependencies
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          target: ci
+          tags: ghcr.io/${{ github.repository }}:ci
+          cache-from: type=gha,scope=ci
+          cache-to: type=gha,mode=max,scope=ci
+
       - name: Build Jekyll site
         run: docker compose run -e JEKYLL_ENV=production -e BACKEND_HOST=${{ secrets.BACKEND_HOST }} -e COMMIT_SHA=${{ steps.build_sha.outputs.value }} app bundle exec jekyll build --source /app/events_listing --destination /app/_site
         env:

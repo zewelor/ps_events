@@ -113,6 +113,17 @@ jobs:
       - name: Pull latest changes before commit
         run: git pull --rebase --autostash
 
+      - name: Build CI image for the checked-out dependencies
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          target: ci
+          tags: ghcr.io/${{ github.repository }}:ci
+          cache-from: type=gha,scope=ci
+          cache-to: type=gha,mode=max,scope=ci
+
       - name: Validate regenerated Jekyll build
         env:
           COMPOSE_FILE: docker-compose.ci.yml

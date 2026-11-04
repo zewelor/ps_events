@@ -207,7 +207,7 @@ spreadsheet ID, the range and the services from, so use it instead of re-reading
 
 ### Conscious Workflow Trade-offs
 - Keep GitHub Actions orchestration simple for this hobby project, even if that leaves small, understood races in place.
-- `regenerate_events.yml` intentionally reuses the moving `:ci` image for faster daily runs instead of waiting for a per-commit rebuild; if a same-push race happens, the next daily run is expected to pick up the newer image.
+- `regenerate_events.yml` and `jekyll_site.yml` build the `ci` target from the checked-out dependencies with the shared build cache before running Jekyll. Keep these builds local to the job; `publish_ci` owns publishing the shared `:ci` tag.
 - When a push also triggers `regenerate_events.yml`, prefer skipping the push-triggered `jekyll_site.yml` deploy and let the `workflow_run` path be the canonical site deployment for that change.
 
 ### 1. Plan Mode Default

@@ -11,7 +11,8 @@ flowchart TD
     push_regen["push(main)<br/>bin/spreadsheet_to_ical<br/>or regenerate_events.yml"] --> regenerate["regenerate_events.yml<br/>download CSV & prune images"]
     schedule_regen["schedule / workflow_dispatch / repository_dispatch"] --> regenerate
 
-    regenerate --> regen_validate["validate regenerated Jekyll build<br/>with :ci image"]
+    regenerate --> regen_image["build local :ci image<br/>from checked-out dependencies"]
+    regen_image --> regen_validate["validate regenerated Jekyll build"]
     regen_validate --> regen_commit["auto-commit CSV & assets<br/>via GITHUB_TOKEN"]
     regen_validate --> regen_complete["workflow_run completed<br/>(success only)"]
     regen_complete --> jekyll["jekyll_site.yml<br/>Build and deploy site"]
@@ -23,6 +24,7 @@ flowchart TD
 
     push_site["push(main)<br/>events_listing/**<br/>or jekyll_site.yml<br/>(unless regenerate handoff files changed)"] --> jekyll
     schedule_site["schedule / workflow_dispatch"] --> jekyll
+    jekyll --> site_image["build local :ci image<br/>before Jekyll build"]
 
     push_backend["push<br/>changes outside ignored event/site paths"] --> docker_checks
     pr_backend["pull_request<br/>changes outside ignored event/site paths"] --> docker_checks
@@ -53,4 +55,4 @@ Design notes:
 - Push triggers remain enabled for Renovate branches because `.github/renovate.json5` uses `automergeType: 'branch'`; Renovate needs passing branch checks before it can merge those updates directly.
 - `tests` builds a local `:ci` image without package write access. `publish_ci` is the only Docker Checks job that pushes the shared `:ci` tag.
 - `production_smoke` builds and runs the final `live` image without package write access; production publication depends on that runtime proof.
-- `regenerate_events.yml` intentionally validates against the moving `:ci` image for a simpler and faster daily workflow. A same-push race with a fresh `docker_checks` publish is an accepted trade-off in this hobby project.
+- `regenerate_events.yml` and `jekyll_site.yml` build the `ci` target from the checked-out dependencies before invoking Jekyll. Both reuse the shared `ci` build cache without waiting for `docker_checks` to publish the moving tag; this also handles Renovate branch merges that leave that tag behind the current lockfile.
