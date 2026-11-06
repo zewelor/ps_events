@@ -141,35 +141,80 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "api+ocr@service.test", app.settings.google_sheets.rows.first[1]
   end
 
-  class UnavailableChat
-    def initialize(error)
-      @error = error
+  def test_api_ocr_uses_bearer_policy_and_reports_model_timeout_as_retryable
+    options_seen = nil
+    capture_io do
+      EventOcrService.stub :call, lambda { |_, **options|
+        options_seen = options
+        raise Faraday::TimeoutError, "model timed out"
+      } do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+            post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+          end
+        end
+      end
     end
 
-    def with_schema(_schema)
-      self
+    assert_equal :none, options_seen[:llm_recovery]
+    assert_equal 300, options_seen[:request_timeout]
+    assert_equal 503, last_response.status
+    assert_equal "ocr_temporarily_unavailable", JSON.parse(last_response.body)["error_code"]
+    assert_empty app.settings.google_sheets.rows
+  end
+
+  def test_google_ocr_timeout_preserves_existing_error_response
+    capture_io do
+      EventOcrService.stub :call, ->(*) { raise Faraday::TimeoutError, "model timed out" } do
+        ImageService.stub :validate_and_process, "/tmp/test.webp" do
+          AuthRegistry.stub :authenticate, {authenticated: true, email: "user@example.com", method: :google_oauth} do
+            post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+          end
+        end
+      end
     end
 
-    def with_thinking(**_options)
-      self
+    assert_equal 422, last_response.status
+    body = JSON.parse(last_response.body)
+    assert_includes body["message"], "Erro ao analisar imagem: model timed out"
+    refute body["retry_safe"]
+    assert_empty app.settings.google_sheets.rows
+  end
+
+  def test_api_model_overload_returns_retryable_503_without_writes
+    TestHelper.setup_network_blocking
+    original_key = RubyLLM.config.gemini_api_key
+    RubyLLM.config.gemini_api_key = "offline-test-key"
+    request = stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").to_return(
+      status: 503,
+      headers: {"Content-Type" => "application/json"},
+      body: JSON.generate(error: {code: 503, message: "High demand", status: "UNAVAILABLE"})
+    )
+    image = File.expand_path("../fixtures/ocr_events.png", __dir__)
+
+    capture_io do
+      ImageService.stub :validate_and_process, image do
+        AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+          post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(image, "image/png")}
+        end
+      end
     end
 
-    def with_instructions(_instructions)
-      self
-    end
-
-    def ask(*_args, **_options)
-      raise @error
-    end
+    assert_equal 503, last_response.status
+    assert_equal "ocr_temporarily_unavailable", JSON.parse(last_response.body)["error_code"]
+    assert_empty app.settings.google_sheets.rows
+    assert_requested request, times: 1
+  ensure
+    RubyLLM.config.gemini_api_key = original_key
+    TestHelper.reset_network_mocks
   end
 
   def test_transient_ocr_errors_are_retryable_before_any_event_is_saved
     TestHelper.setup_network_blocking
 
     [RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError].each do |error_class|
-      chat = UnavailableChat.new(error_class.new("Model temporarily unavailable"))
       capture_io do
-        RubyLLM.stub :chat, chat do
+        EventOcrService.stub :call, ->(*) { raise error_class, "Model temporarily unavailable" } do
           ImageService.stub :validate_and_process, "/tmp/test.webp" do
             AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
               post "/events_ocr", {
@@ -233,6 +278,55 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "error", body["status"]
     assert_equal "rate_limit_exceeded", body["error_code"]
     assert_includes body["message"], "Quota exceeded"
+    assert_equal true, body["retry_safe"]
+    assert_empty app.settings.google_sheets.rows
+  end
+
+  def test_provider_rate_limit_response_is_safe_to_retry_before_writes
+    TestHelper.setup_network_blocking
+    original_key = RubyLLM.config.gemini_api_key
+    RubyLLM.config.gemini_api_key = "offline-test-key"
+    request = stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").to_return(
+      status: 429,
+      headers: {"Content-Type" => "application/json"},
+      body: JSON.generate(error: {code: 429, message: "Quota exceeded", status: "RESOURCE_EXHAUSTED"})
+    )
+    image = File.expand_path("../fixtures/ocr_events.png", __dir__)
+
+    capture_io do
+      ImageService.stub :validate_and_process, image do
+        AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+          post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(image, "image/png")}
+        end
+      end
+    end
+
+    assert_equal 429, last_response.status
+    assert_equal true, JSON.parse(last_response.body)["retry_safe"]
+    assert_empty app.settings.google_sheets.rows
+    assert_requested request, times: 1
+  ensure
+    RubyLLM.config.gemini_api_key = original_key
+    TestHelper.reset_network_mocks
+  end
+
+  def test_rate_limit_during_save_does_not_claim_retry_is_safe
+    capture_io do
+      EventOcrService.stub :call, [valid_event] do
+        app.settings.google_sheets.stub :append_row, ->(*) { raise RubyLLM::RateLimitError, "Write failed" } do
+          ImageService.stub :validate_and_process, "/tmp/test.webp" do
+            AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+              post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 503, last_response.status
+    body = JSON.parse(last_response.body)
+    assert_equal "ingestion_failed", body["error_code"]
+    refute body["retry_safe"]
   end
 
   def submit_events(events)

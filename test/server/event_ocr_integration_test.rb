@@ -80,6 +80,45 @@ class EventOcrIntegrationTest < Minitest::Test
     assert_requested request, times: 1
   end
 
+  def test_unknown_recovery_policy_fails_before_request
+    error = assert_raises(ArgumentError) { EventOcrService.call(@image_path, llm_recovery: :unknown) }
+
+    assert_includes error.message, "unknown LLM recovery policy"
+    assert_empty @requests
+  end
+
+  def test_ocr_without_recovery_does_not_retry_transient_provider_failure
+    RubyLLM.config.max_retries = 1
+    RubyLLM.config.retry_interval = 0
+    request = stub_request(:post, GEMINI_URL).to_return(
+      status: 503,
+      headers: {"Content-Type" => "application/json"},
+      body: JSON.generate(error: {code: 503, message: "High demand", status: "UNAVAILABLE"})
+    )
+
+    assert_raises(RubyLLM::ServiceUnavailableError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_requested request, times: 1
+    assert_equal 1, RubyLLM.config.max_retries
+  ensure
+    RubyLLM.config.retry_interval = 0.1
+  end
+
+  def test_ocr_without_recovery_does_not_repeat_invalid_model_output
+    invalid = events.map(&:dup)
+    invalid.first[:start_date] = "invalid-date"
+    request = stub_gemini(invalid, events)
+
+    assert_raises(RuntimeError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_requested request, times: 1
+  end
+
+  def test_ocr_without_recovery_propagates_provider_timeout
+    request = stub_request(:post, GEMINI_URL).to_timeout
+
+    assert_raises(Faraday::ConnectionFailed) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_requested request, times: 1
+  end
+
   def test_pdf_rasterizes_every_page
     pdf_path = File.join(@directory, "events.pdf")
     MiniMagick.convert do |convert|

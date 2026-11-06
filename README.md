@@ -58,11 +58,23 @@ curl -X POST http://localhost:4567/events_ocr \
 
 ### OCR failure responses
 
+OCR supports `llm_recovery: :automatic` (the default provider retries and validation
+correction attempts) or `llm_recovery: :none` (no automatic retries). Recovery applies
+only to analysis before saving events. The endpoint selects `:none` and a separate
+300-second request timeout for Bearer authentication; Google-authenticated requests
+retain the default recovery and timeout. Authentication does not indicate whether a
+human or a program initiated the request. The timeout applies to each model request,
+not the complete upload and event-saving operation.
+
 `POST /events_ocr` returns HTTP 503 with `error_code: "ocr_temporarily_unavailable"`
 when the model is temporarily unavailable during analysis, before any events are
 saved. Clients may retry that explicit response with bounded backoff.
 
-Quota failures keep HTTP 429 with `rate_limit_exceeded`. Saving failures return
+Provider rate limits and quota failures during analysis return HTTP 429 with
+`rate_limit_exceeded` and `retry_safe: true`: no events were saved. This does not
+distinguish a short throttle from exhausted quota; clients may use bounded retries
+and must report persistent failures. A 429 without this explicit flag is not safe
+to retry automatically. Saving failures return
 HTTP 503 with `ingestion_failed`, including confirmed results before the failure.
 A generic 503, timeout, or lost
 response does not guarantee that nothing was saved. Do not automatically repeat

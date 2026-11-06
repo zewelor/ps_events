@@ -27,6 +27,8 @@ require_relative "../lib/server/api_auth_service"
 require_relative "../lib/server/auth_guard"
 require_relative "../lib/server/param_utils"
 
+EVENT_ANALYSIS_LLM_TIMEOUT = 300
+
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
 
@@ -81,8 +83,10 @@ helpers do
   end
 
   # Share development behavior and failure responses while retaining each route's authentication strategy.
-  def require_authenticated_user!(missing_message: "Google authentication required")
-    return "development@example.com" if settings.environment == :development
+  def authenticate_user!(missing_message: "Google authentication required")
+    if settings.environment == :development
+      return {authenticated: true, email: "development@example.com", method: :development}
+    end
 
     result = if block_given?
       yield
@@ -97,7 +101,7 @@ helpers do
     end
 
     puts "✅ Authenticated via #{result[:method] || :google_oauth}: #{result[:email]}"
-    result[:email]
+    result
   end
 
   # Convert HTML5 date input (yyyy-mm-dd) to dd/mm/YYYY expected by the
@@ -264,7 +268,7 @@ get "/health" do
 end
 
 post "/event_image" do
-  require_authenticated_user!
+  authenticate_user!
 
   begin
     image_path = process_event_image(params[:event_image])
@@ -276,7 +280,14 @@ end
 
 post "/events_ocr" do
   # Authentication via AuthRegistry (supports Google OAuth or API Bearer)
-  user_email = require_authenticated_user! { AuthRegistry.authenticate(request) }
+  auth = authenticate_user! { AuthRegistry.authenticate(request) }
+  user_email = auth[:email]
+  # Bearer callers can retry explicit pre-save failures with bounded backoff. Limit
+  # each model request to 300 seconds and disable model and validation retries to
+  # avoid multiplying attempts and reduce the risk of exceeding the caller's timeout.
+  # Google requests retain their defaults. The timeout does not bound the whole upload.
+  # The authentication method selects this policy; it does not identify the operator.
+  api_bearer = auth[:method] == :api_bearer
 
   begin
     use_image = params[:use_event_image]
@@ -288,8 +299,19 @@ post "/events_ocr" do
     image_path = validate_event_image(params[:event_image])
     image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
-      events = EventOcrService.call(image_path, retry_sleep: 5, additional_text: additional_text)
-    rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError => e
+      options = {retry_sleep: 5, additional_text: additional_text}
+      if api_bearer
+        options[:llm_recovery] = :none
+        options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT
+      end
+      events = EventOcrService.call(image_path, **options)
+    rescue RubyLLM::RateLimitError => e
+      puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
+      return json_response({status: "error", message: "Limite de pedidos/quota do modelo LLM excedido: #{e.message}",
+                            error_code: "rate_limit_exceeded", retry_safe: true}, 429)
+    rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError, Faraday::TimeoutError, Faraday::ConnectionFailed => e
+      raise "Erro ao analisar imagem: #{e.message}" if !api_bearer && (e.is_a?(Faraday::TimeoutError) || e.is_a?(Faraday::ConnectionFailed))
+
       puts "⚠️ OCR temporarily unavailable: #{e.message}"
       return json_error("O serviço de análise está temporariamente indisponível. Tente novamente mais tarde.", 503,
         error_code: "ocr_temporarily_unavailable")
@@ -342,9 +364,9 @@ end
 post "/add_event" do
   puts "📝 Received event submission with params: #{params.keys}"
 
-  google_user_email = require_authenticated_user!(
+  google_user_email = authenticate_user!(
     missing_message: "Google authentication is required to submit an event"
-  )
+  )[:email]
 
   # Remove the file upload from params for validation
   validation_params = params.dup

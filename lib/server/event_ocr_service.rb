@@ -22,13 +22,15 @@ class EventOcrService
   ADDITIONAL_TEXT_MAX_LENGTH = 5000
   ANALYSIS_PROMPT = "Analyze the attached event material and return the events according to the instructions."
 
-  def self.call(*args, **kwargs)
-    new = self.new
-    new.analyze(*args, **kwargs)
-  rescue RubyLLM::RateLimitError, RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError
-    raise
-  rescue => e
-    raise "Erro ao analisar imagem: #{e.message}"
+  def self.call(*args, llm_recovery: :automatic, request_timeout: nil, **kwargs)
+    service = new(llm_recovery: llm_recovery, request_timeout: request_timeout)
+    begin
+      service.analyze(*args, **kwargs)
+    rescue RubyLLM::RateLimitError, RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError, Faraday::TimeoutError, Faraday::ConnectionFailed
+      raise
+    rescue => e
+      raise "Erro ao analisar imagem: #{e.message}"
+    end
   end
 
   def self.build_instructions
@@ -66,8 +68,11 @@ class EventOcrService
     INSTR
   end
 
-  def initialize
-    @chat = RubyLLM.chat(model: MODEL).with_schema(build_schema).with_thinking(effort: :medium)
+  def initialize(llm_recovery: :automatic, request_timeout: nil)
+    raise ArgumentError, "unknown LLM recovery policy: #{llm_recovery.inspect}" unless %i[automatic none].include?(llm_recovery)
+
+    @llm_recovery = llm_recovery
+    @chat = llm_client(request_timeout).chat(model: MODEL).with_schema(build_schema).with_thinking(effort: :medium)
   end
 
   def analyze(input_path, retry_sleep: 0, additional_text: nil)
@@ -84,12 +89,23 @@ class EventOcrService
 
   attr_reader :chat
 
+  def llm_client(request_timeout)
+    return RubyLLM if @llm_recovery == :automatic && request_timeout.nil?
+
+    RubyLLM.context do |config|
+      config.request_timeout = request_timeout if request_timeout
+      config.max_retries = 0 if @llm_recovery == :none
+    end
+  end
+
   def analyze_image(image_path, retry_sleep:, additional_text: nil)
     llm_output = chat.ask(build_analysis_prompt(additional_text), with: image_path).content
 
     begin
       parse_and_validate_response(llm_output)
     rescue EventValidationError => first_error
+      raise first_error if @llm_recovery == :none
+
       puts("🔄 Retrying due to validation error: #{first_error.message}")
       Retryable.retryable(tries: 5, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
         puts("🔄 Retry attempt #{retries}")
