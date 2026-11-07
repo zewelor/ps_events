@@ -29,13 +29,13 @@ layout: default
       </a>
       <div id="image-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
         <div id="image-overlay" class="absolute inset-0 bg-black/70"></div>
-        <div class="relative w-[95vw] h-[95vh] flex flex-col items-center">
+        <div class="relative max-w-full flex flex-col items-center">
           <button id="close-image-modal" class="navigation-button mb-2 self-end">Fechar</button>
           <img
             id="modal-image"
             src="{{ page.image | relative_url | escape }}"
             alt="{{ page._name | escape }}"
-            class="rounded-lg w-full min-h-0 flex-1 object-contain"
+            class="rounded-lg h-auto max-w-[95vw] max-h-[calc(95vh-3rem)]"
           />
         </div>
       </div>
@@ -220,19 +220,38 @@ function showCopySuccess() {
 document.addEventListener('DOMContentLoaded', () => {
   const imageLink = document.getElementById('event-image-link');
   const imageModal = document.getElementById('image-modal');
+  const modalImage = document.getElementById('modal-image');
   const overlay = document.getElementById('image-overlay');
   const closeBtn = document.getElementById('close-image-modal');
+  let previousOverflow = '';
+  let previousScrollbarGutter = '';
+
+  function sizeModalImage() {
+    if (modalImage?.naturalWidth && modalImage.naturalHeight) {
+      const ratio = modalImage.naturalWidth / modalImage.naturalHeight;
+      modalImage.style.width = `min(95vw, calc((95vh - 3rem) * ${ratio}))`;
+    }
+  }
+
+  modalImage?.addEventListener('load', sizeModalImage);
+  sizeModalImage();
 
   function closeModal() {
-    if (imageModal) {
+    if (imageModal && !imageModal.classList.contains('hidden')) {
       imageModal.classList.add('hidden');
       imageModal.classList.remove('flex');
+      document.documentElement.style.overflow = previousOverflow;
+      document.documentElement.style.scrollbarGutter = previousScrollbarGutter;
     }
   }
 
   if (imageLink && imageModal) {
     imageLink.addEventListener('click', (e) => {
       e.preventDefault();
+      previousOverflow = document.documentElement.style.overflow;
+      previousScrollbarGutter = document.documentElement.style.scrollbarGutter;
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.scrollbarGutter = 'auto';
       imageModal.classList.remove('hidden');
       imageModal.classList.add('flex');
     });
