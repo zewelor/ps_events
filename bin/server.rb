@@ -82,6 +82,17 @@ helpers do
     image_path
   end
 
+  def cleanup_event_image(image_path)
+    return if image_path.to_s.empty?
+
+    File.unlink(image_path)
+  rescue Errno::ENOENT
+    # The temporary image may already have been removed.
+  rescue => e
+    # Cleanup must not turn confirmed writes into an apparent ingestion failure.
+    puts "❌ Failed to remove processed image #{image_path}: #{e.message}"
+  end
+
   # Share development behavior and failure responses while retaining each route's authentication strategy.
   def authenticate_user!(missing_message: "Google authentication required")
     if settings.environment == :development
@@ -288,6 +299,7 @@ post "/events_ocr" do
   # Google requests retain their defaults. The timeout does not bound the whole upload.
   # The authentication method selects this policy; it does not identify the operator.
   api_bearer = auth[:method] == :api_bearer
+  image_needed_for_review = false
 
   begin
     use_image = params[:use_event_image]
@@ -346,9 +358,11 @@ post "/events_ocr" do
       events.each_with_index do |remaining, remaining_index|
         results << {status: "not_attempted", index: remaining_index, event: remaining} if remaining_index > index
       end
+      image_needed_for_review = image_ref.present?
       return ingestion_response(results, events: events, failed: true, image_ref: image_ref)
     end
 
+    image_needed_for_review = image_ref.present? && results.any? { |result| result[:status] == "conflict" }
     ingestion_response(results, events: events, image_ref: image_ref)
   rescue RubyLLM::RateLimitError => e
     puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
@@ -357,6 +371,8 @@ post "/events_ocr" do
     pp events
     puts "❌ Error processing OCR: #{e.message}"
     json_error(e.message)
+  ensure
+    cleanup_event_image(image_path) unless image_needed_for_review
   end
 end
 

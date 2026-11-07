@@ -100,6 +100,7 @@ class SharedFlyerReviewTest < Minitest::Test
     assert_equal 409, last_response.status
     assert_equal @image_ref, body["image_ref"]
     assert_equal 0, @published
+    assert File.file?(@path), "Unpublished conflicts need the local flyer for review"
     body.fetch("results").each do |conflict|
       resolved = resolve(conflict)
       assert_equal 200, last_response.status
@@ -119,6 +120,7 @@ class SharedFlyerReviewTest < Minitest::Test
     assert_equal 503, last_response.status
     assert_equal %w[added conflict failed not_attempted], body["results"].map { |result| result["status"] }
     assert_equal @image_ref, body["image_ref"]
+    assert File.file?(@path), "Partial results must retain the shared flyer"
     File.delete(@path)
     app.settings.google_sheets.append_failure_after = nil
     resolved = resolve(body["results"][1])
@@ -175,6 +177,44 @@ class SharedFlyerReviewTest < Minitest::Test
     refute body.key?("image_ref")
     assert_equal "", app.settings.google_sheets.rows.first[14]
     assert_equal 0, @published
+    refute File.exist?(@path)
+  end
+
+  def test_success_removes_local_flyer_only_after_publication_and_appends
+    body = submit_ocr([event("21"), event("22")])
+
+    assert_equal 200, last_response.status
+    assert_equal @image_ref, body["image_ref"]
+    assert_equal 1, @published
+    assert_equal [@image_ref, @image_ref], app.settings.google_sheets.rows.map { |row| row[14] }
+    refute File.exist?(@path)
+  end
+
+  def test_mixed_batch_keeps_flyer_for_later_conflict_resolution
+    seed_existing(event("21", "Já registado"))
+    body = submit_ocr([event("22"), event])
+
+    assert_equal 409, last_response.status
+    assert_equal %w[added conflict], body["results"].map { |result| result["status"] }
+    assert File.file?(@path)
+    assert_equal 1, @published
+    resolve(body["results"].last)
+
+    assert_equal 200, last_response.status
+    assert_equal 1, @published
+    assert_equal 2, app.settings.google_sheets.rows.length
+  end
+
+  def test_unconfirmed_publication_keeps_unpublished_flyer_without_appending
+    stub_request(:put, @url).to_return(status: 503)
+    body = submit_ocr([event("21"), event("22")])
+
+    assert_equal 503, last_response.status
+    assert_equal "ingestion_failed", body["error_code"]
+    assert_equal %w[failed not_attempted], body["results"].map { |result| result["status"] }
+    assert_equal @image_ref, body["image_ref"]
+    assert File.file?(@path)
+    assert_empty app.settings.google_sheets.rows
   end
 
   def test_development_ocr_review_saves_without_unavailable_google_sign_in

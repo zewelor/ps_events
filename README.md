@@ -141,6 +141,15 @@ still be reused after the temporary file disappears; an unpublished reference
 requires that file on the current worker. Missing images or an unconfirmed
 publication prevent the sheet append. A lost create response is reconciled with
 one remote read rather than another blind upload.
+
+`/events_ocr` removes its processed temporary image when the request finishes,
+including OCR errors, empty results, successful batches and duplicate-only batches.
+When the flyer is selected for events, conflicts and failed or uncertain saves keep
+the file for review and reconciliation, including unattempted occurrences. Without
+a selected flyer, even these responses discard the analysis-only image. Cleanup
+errors are logged without changing the ingestion result. Retained files have no
+automatic expiry; request cleanup does not cover a killed process or older files.
+
 The [GitHub Contents API](https://docs.github.com/en/rest/repos/contents) is read
 on the configured branch; its blob SHA is compared with the processed bytes
 before an existing image is reused.

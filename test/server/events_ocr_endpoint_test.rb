@@ -22,6 +22,7 @@ class EventsOcrEndpointTest < Minitest::Test
   end
 
   def teardown
+    @provider_image&.close!
     app.set :environment, @orig_env
     app.settings.google_sheets = @orig_sheets
   end
@@ -190,7 +191,9 @@ class EventsOcrEndpointTest < Minitest::Test
       headers: {"Content-Type" => "application/json"},
       body: JSON.generate(error: {code: 503, message: "High demand", status: "UNAVAILABLE"})
     )
-    image = File.expand_path("../fixtures/ocr_events.png", __dir__)
+    @provider_image = Tempfile.new(["ocr_provider_", ".png"])
+    image = @provider_image.path
+    FileUtils.cp(File.expand_path("../fixtures/ocr_events.png", __dir__), image)
 
     capture_io do
       ImageService.stub :validate_and_process, image do
@@ -291,7 +294,9 @@ class EventsOcrEndpointTest < Minitest::Test
       headers: {"Content-Type" => "application/json"},
       body: JSON.generate(error: {code: 429, message: "Quota exceeded", status: "RESOURCE_EXHAUSTED"})
     )
-    image = File.expand_path("../fixtures/ocr_events.png", __dir__)
+    @provider_image = Tempfile.new(["ocr_provider_", ".png"])
+    image = @provider_image.path
+    FileUtils.cp(File.expand_path("../fixtures/ocr_events.png", __dir__), image)
 
     capture_io do
       ImageService.stub :validate_and_process, image do
