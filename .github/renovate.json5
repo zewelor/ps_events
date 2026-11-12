@@ -2,6 +2,7 @@
   extends: [
     'config:recommended',
     ':dependencyDashboard',
+    'github>zewelor/renovate-config//presets/github-actions',
   ],
   timezone: 'Europe/Warsaw',
   vulnerabilityAlerts: {
@@ -99,6 +100,13 @@
       matchManagers: [
         'github-actions',
       ],
+      matchDepTypes: ['action'],
+      automergeType: 'branch',
+    },
+    {
+      description: 'Preserve the existing policy for other workflow dependencies',
+      matchManagers: ['github-actions'],
+      matchDepTypes: ['!action'],
       automerge: true,
       automergeType: 'branch'
     },
