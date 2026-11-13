@@ -15,7 +15,7 @@ flowchart TD
     regen_image --> regen_validate["validate regenerated Jekyll build"]
     regen_validate --> regen_commit["auto-commit CSV & assets<br/>via GITHUB_TOKEN"]
     regen_validate --> regen_complete["workflow_run completed<br/>(success only)"]
-    regen_complete --> jekyll["jekyll_site.yml<br/>Build and deploy site"]
+    regen_complete --> jekyll["jekyll_site.yml build job<br/>build and deploy site<br/>protected group: pages"]
 
     regen_commit -. no push-triggered workflows .-> token_note["GITHUB_TOKEN commits<br/>do not trigger push workflows"]
     push_regen -. push deploy skipped;<br/>workflow_run is canonical .-> jekyll
@@ -34,13 +34,13 @@ flowchart TD
     docker_changes -->|non-documentation change or dispatch| docker_tests["tests job<br/>builds local :ci image"]
     docker_changes -. documentation-only .-> docker_docs["tests and image publication skipped"]
     docker_checks --> docker_lint["docker_lint job<br/>Docker files only"]
-    docker_tests --> docker_ci["publish_ci job<br/>pushes :ci"]
+    docker_tests --> docker_ci["publish_ci job<br/>verified main: push :ci<br/>protected group: ci-docker"]
     docker_changes --> docker_ci
     docker_lint --> docker_ci
     docker_tests --> docker_smoke["production_smoke job<br/>builds & runs local live image"]
     docker_changes --> docker_smoke
     docker_lint --> docker_smoke
-    docker_ci --> docker_production["push_production job"]
+    docker_ci --> docker_production["push_production job<br/>verified main: image and webhook<br/>protected group: production-docker"]
     docker_smoke --> docker_production
     docker_changes --> docker_production
     docker_tests --> docker_production
@@ -53,6 +53,10 @@ Design notes:
 - When the same push also triggers `regenerate_events.yml`, the push-triggered Jekyll deploy is skipped and the `workflow_run` path from `Regenerate events` becomes the canonical deploy path.
 - Changes limited to root `AGENTS.md`, `README*`, or files under `docs/` reach the `changes` job and skip Docker tests and image publication. Markdown elsewhere, including workflow, site, and runtime paths, still runs tests.
 - Push triggers remain enabled for Renovate branches because `.github/renovate.json5` uses `automergeType: 'branch'`; Renovate needs passing branch checks before it can merge those updates directly.
+- Runtime publication guards and the site checkout use the repository's default
+  branch. Native branch filters remain `main`; Cloudflare's `--branch=main` is
+  the production deployment channel and remains independent of the checkout ref.
 - `tests` builds a local `:ci` image without package write access. `publish_ci` is the only Docker Checks job that pushes the shared `:ci` tag.
-- `production_smoke` builds and runs the final `live` image without package write access; production publication depends on that runtime proof.
+- For each non-documentation main push or main manual run that reaches Docker Checks, `production_smoke` builds and runs the full `live` image; production publication depends on that runtime proof and the tests. Test and CI configuration changes can therefore publish an image too.
+- The `:ci` and production publication jobs and eligible Pages build jobs do not cancel active jobs; failed regeneration does not enter the Pages concurrency group; a newer pending job can replace an older pending job. Each qualifying backend run builds the complete checked-out revision. Old-ref reruns can update moving tags.
 - `regenerate_events.yml` and `jekyll_site.yml` build the `ci` target from the checked-out dependencies before invoking Jekyll. Both reuse the shared `ci` build cache without waiting for `docker_checks` to publish the moving tag; this also handles Renovate branch merges that leave that tag behind the current lockfile.

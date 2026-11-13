@@ -25,7 +25,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      production: ${{ steps.detect.outputs.production }}
       docker_lint: ${{ steps.detect.outputs.docker_lint }}
       tests: ${{ steps.detect.outputs.tests }}
     steps:
@@ -33,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Detect production deployment changes
+      - name: Select verification checks
         id: detect
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -45,7 +44,6 @@ jobs:
           ZERO_SHA: '0000000000000000000000000000000000000000'
         run: |
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            echo "production=true" >> "$GITHUB_OUTPUT"
             echo "docker_lint=true" >> "$GITHUB_OUTPUT"
             echo "tests=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -60,15 +58,8 @@ jobs:
             changed_files="$(gh api "repos/${REPOSITORY}/compare/${BEFORE_SHA}...${TARGET_SHA}" --jq '.files[] | .filename, .previous_filename? | select(. != null)')"
           fi
 
-          production=false
           docker_lint=false
           while IFS= read -r path; do
-            case "$path" in
-              Dockerfile|.dockerignore|Gemfile|Gemfile.lock|bin/server.rb|lib/server/*|.github/workflows/docker_checks.yml)
-                production=true
-                ;;
-            esac
-
             case "$path" in
               Dockerfile|.dockerignore|.hadolint.yaml|docker-compose*.yml|docker-compose*.yaml|.github/workflows/docker_checks.yml)
                 docker_lint=true
@@ -79,7 +70,6 @@ jobs:
           EOF
 
           tests_required="$(printf '%s\n' "$changed_files" | bash .github/scripts/docker_checks_tests_required.sh)"
-          echo "production=${production}" >> "$GITHUB_OUTPUT"
           echo "docker_lint=${docker_lint}" >> "$GITHUB_OUTPUT"
           echo "tests=${tests_required}" >> "$GITHUB_OUTPUT"
 
@@ -141,11 +131,7 @@ jobs:
       always() &&
       needs.changes.result == 'success' &&
       needs.tests.result == 'success' &&
-      (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped') &&
-      (
-        github.event_name == 'workflow_dispatch' ||
-        needs.changes.outputs.production == 'true'
-      )
+      (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped')
     needs:
       - changes
       - docker_lint
@@ -186,13 +172,16 @@ jobs:
       needs.changes.result == 'success' &&
       needs.tests.result == 'success' &&
       (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped') &&
-      github.ref == 'refs/heads/main' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
       github.event_name != 'pull_request'
     needs:
       - changes
       - docker_lint
       - tests
     runs-on: ubuntu-latest
+    concurrency:
+      group: ci-docker
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: write
@@ -226,12 +215,8 @@ jobs:
       (needs.docker_lint.result == 'success' || needs.docker_lint.result == 'skipped') &&
       needs.publish_ci.result == 'success' &&
       needs.production_smoke.result == 'success' &&
-      github.ref == 'refs/heads/main' &&
-      github.event_name != 'pull_request' &&
-      (
-        github.event_name == 'workflow_dispatch' ||
-        needs.changes.outputs.production == 'true'
-      )
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.event_name != 'pull_request'
     needs:
       - changes
       - docker_lint
@@ -241,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: production-docker
-      cancel-in-progress: true
+      cancel-in-progress: false
     environment: production
     permissions:
       contents: read

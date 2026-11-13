@@ -24,11 +24,6 @@ permissions:
   id-token: write
   packages: read
 
-# Allow only one Pages deployment workflow at a time.
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   # Build job
   build:
@@ -42,11 +37,14 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Capture build SHA
         id: build_sha
