@@ -1,4 +1,4 @@
-FROM ghcr.io/zewelor/ruby:4.0.9-slim AS base
+FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:3c6da6eb407da3f5b34a770e378d781c7f6e6da2aba9aba24114a5a2b6c09f50 AS base
 
 ARG RUNTIME_PACKAGES="imagemagick ghostscript"
 ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
