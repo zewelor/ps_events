@@ -3,6 +3,7 @@
     'config:recommended',
     ':dependencyDashboard',
     'github>zewelor/renovate-config//presets/github-actions',
+    'github>zewelor/renovate-config//presets/ruby-images',
   ],
   timezone: 'Europe/Warsaw',
   vulnerabilityAlerts: {
