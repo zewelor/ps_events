@@ -62,9 +62,6 @@ RUN mkdir -p "$BUNDLE_PATH" && \
 
 USER 1000:1000
 
-# https://code.visualstudio.com/remote/advancedcontainers/avoid-extension-reinstalls
-RUN mkdir -p "$HOME/.vscode-server/"
-
 FROM basedev AS baseliveci
 
 # Workdir is declared in this Dockerfile's base stage
