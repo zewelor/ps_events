@@ -1,5 +1,7 @@
 FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:3c6da6eb407da3f5b34a770e378d781c7f6e6da2aba9aba24114a5a2b6c09f50 AS base
 
+WORKDIR /app
+
 ARG RUNTIME_PACKAGES="imagemagick ghostscript"
 ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
 ARG WATCHEXEC_VERSION="2.4.3"
@@ -16,7 +18,8 @@ ENV BUNDLE_PATH=/bundle \
 
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
-RUN apt-get update && \
+RUN chown app:app /app && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     $RUNTIME_PACKAGES && \
     apt-get clean && \
@@ -62,7 +65,7 @@ RUN mkdir -p "$HOME/.vscode-server/"
 
 FROM basedev AS baseliveci
 
-# Workdir set in base image
+# Workdir is declared in this Dockerfile's base stage
 # hadolint ignore=DL3045
 COPY --chown=1000:1000 Gemfile Gemfile.lock ./
 
@@ -91,7 +94,7 @@ ENV BUNDLE_DEPLOYMENT="1" \
   RUBYOPT='--disable-did_you_mean' \
   APP_ENV="production"
 
-# Workdir set in base image
+# Workdir is declared in this Dockerfile's base stage
 # hadolint ignore=DL3045
 COPY --chown=1000:1000 --from=live_builder $BUNDLE_PATH $BUNDLE_PATH
 # hadolint ignore=DL3045
