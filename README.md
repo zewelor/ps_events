@@ -16,8 +16,7 @@ writes to the checkout without changing host permissions. See Docker's
 
 `dockerized.sh` checks the connected daemon before each Compose command and
 refuses rootful Docker or a failed inspection. Use `just up`, `just jekyll`,
-the sourced aliases, or `./dockerized.sh compose ...` for local work. VS Code
-Dev Containers checks the daemon during host initialization. Direct
+the sourced aliases, or `./dockerized.sh compose ...` for local work. Direct
 `docker compose` commands bypass the check and must connect to the rootless
 daemon. CI invokes Compose directly with `docker-compose.ci.yml`, keeping its
 separate image and user configuration.

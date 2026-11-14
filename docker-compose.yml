@@ -1,4 +1,4 @@
-# Local workspace paths are configured in docker-compose.override.yml; see docs/local-docker.md.
+# Run local Compose from the project root; see docs/local-docker.md.
 x-app: &x-app
   build:
     context: .
@@ -6,9 +6,12 @@ x-app: &x-app
   tty: true
   # Rootless Docker maps container root to the unprivileged host user.
   user: "0:0"
+  working_dir: ${PWD:?Run Compose from the project root}
   volumes:
+    - type: bind
+      source: .
+      target: ${PWD:?Run Compose from the project root}
     - bundler:/bundle
-    - vscode:/home/app/.vscode-server
 
 services:
   app:
@@ -77,5 +80,4 @@ services:
 
 
 volumes:
-  vscode:
   bundler:
