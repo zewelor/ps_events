@@ -52,6 +52,8 @@ RUN set -eux; \
 
 FROM basedev AS dev
 
+WORKDIR /
+
 ENV BUNDLE_AUTO_INSTALL=true \
     BUNDLE_CLEAN=true
 
