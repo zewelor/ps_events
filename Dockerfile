@@ -1,4 +1,4 @@
-FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:62c1367aded2acc2ce8b725881e1a8da3e00c60f0ddc21bff631383679e283ee AS base
+FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:0e28d32a796c08eefb5ad659cfee866683c4019a3217e7b7c0e665e6f2899173 AS base
 
 WORKDIR /app
 
