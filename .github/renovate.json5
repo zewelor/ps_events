@@ -95,6 +95,7 @@
         'irb',
         'mini_magick',
         'webmock',
+        'puma',
       ],
     },
     {
