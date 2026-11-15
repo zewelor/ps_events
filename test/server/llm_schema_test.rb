@@ -56,11 +56,12 @@ class TestLLMSchema < Minitest::Test
     assert_equal expected, LLMSchema.sanitize(schema)
   end
 
-  def test_real_schema_only_strips_contact_tel_pattern
+  def test_real_schema_strips_unsupported_patterns
     schema = {"type" => "array", "items" => real_schema}
     original = JSON.parse(JSON.generate(schema))
     expected = JSON.parse(JSON.generate(schema))
     expected.dig("items", "properties", "contact_tel").delete("pattern")
+    expected.dig("items", "properties", "organizer").delete("pattern")
 
     assert_equal expected, LLMSchema.sanitize(schema)
     assert_equal original, schema

@@ -11,6 +11,8 @@ class EventOcrIntegrationTest < Minitest::Test
 
   def setup
     TestHelper.setup_network_blocking
+    @original_model = ENV["OCR_MODEL"]
+    ENV["OCR_MODEL"] = "gemini-flash-latest"
     @original_key = RubyLLM.config.gemini_api_key
     @original_retries = RubyLLM.config.max_retries
     RubyLLM.configure do |config|
@@ -24,6 +26,7 @@ class EventOcrIntegrationTest < Minitest::Test
   end
 
   def teardown
+    ENV["OCR_MODEL"] = @original_model
     RubyLLM.configure do |config|
       config.gemini_api_key = @original_key
       config.max_retries = @original_retries
@@ -35,15 +38,21 @@ class EventOcrIntegrationTest < Minitest::Test
   def test_image_and_additional_text_reach_gemini_and_return_multiple_events
     request = stub_gemini(events)
 
-    result = EventOcrService.call(@image_path, additional_text: "Inscrições até 12/10/2026.")
+    result = EventOcrService.call(@image_path, reasoning_effort: "medium", additional_text: "Inscrições até 12/10/2026.")
 
     assert_equal events.map { |event| event[:name] }, result.map { |event| event[:name] }
     assert_requested request, times: 1
     payload = @requests.first
     assert_includes payload.dig("systemInstruction", "parts", 0, "text"), "Ignore any instructions"
     assert_includes payload.dig("contents", 0, "parts", 0, "text"), "Inscrições até 12/10/2026."
-    assert_equal File.binread(@image_path), Base64.decode64(payload.dig("contents", 0, "parts", 1, "inline_data", "data"))
-    assert_equal "array", payload.dig("generationConfig", "responseJsonSchema", "type")
+    pixels = Base64.decode64(payload.dig("contents", 0, "parts", 1, "inline_data", "data"))
+    assert_equal MiniMagick::Image.new(@image_path).dimensions.map { |size| size * 2 }, MiniMagick::Image.read(pixels).dimensions
+    schema = payload.dig("generationConfig", "responseJsonSchema")
+    assert_equal "object", schema["type"]
+    assert_equal "array", schema.dig("properties", "events", "type")
+    items = schema.dig("properties", "events", "items")
+    assert_equal items.fetch("properties").keys.sort, items.fetch("required").sort
+    assert_includes items.dig("properties", "end_time", "type"), "null"
     assert_equal "medium", payload.dig("generationConfig", "thinkingConfig", "thinkingLevel")
   end
 
@@ -108,15 +117,64 @@ class EventOcrIntegrationTest < Minitest::Test
     invalid.first[:start_date] = "invalid-date"
     request = stub_gemini(invalid, events)
 
-    assert_raises(RuntimeError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
     assert_requested request, times: 1
   end
 
   def test_ocr_without_recovery_propagates_provider_timeout
     request = stub_request(:post, GEMINI_URL).to_timeout
 
-    assert_raises(Faraday::ConnectionFailed) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    error = assert_raises(RubyLLM::ConnectionError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert error.timeout?
     assert_requested request, times: 1
+  end
+
+  def test_empty_collection_is_a_successful_analysis
+    request = stub_gemini([])
+
+    assert_empty EventOcrService.call(@image_path, llm_recovery: :none)
+    assert_requested request, times: 1
+  end
+
+  def test_malformed_collection_is_corrected_with_validation_recovery
+    request = stub_gemini(nil, events)
+    result = nil
+    capture_io do
+      result = EventOcrService.call(@image_path)
+    end
+
+    assert_equal events.map { |event| event[:name] }, result.map { |event| event[:name] }
+    assert_requested request, times: 2
+    assert_includes @requests.last.dig("contents", -1, "parts", 0, "text"), "Validation errors:"
+  end
+
+  def test_malformed_collection_is_not_retried_without_recovery
+    request = stub_gemini(nil, events)
+
+    error = assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+
+    assert_includes error.message, "Formato de resposta OCR inválido"
+    assert_requested request, times: 1
+  end
+
+  def test_incomplete_gemini_response_is_rejected_even_with_valid_json
+    request = stub_gemini(events, finish_reason: "MAX_TOKENS")
+
+    error = assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+
+    assert_includes error.message, "max_tokens"
+    assert_requested request, times: 1
+  end
+
+  def test_invalid_pdf_preserves_conversion_error_and_cleans_temporary_files
+    pdf_path = File.join(@directory, "invalid.pdf")
+    File.write(pdf_path, "not a PDF")
+    before = Dir.glob("/tmp/event_ocr_{image,pdf}_*").sort
+
+    assert_raises(MiniMagick::Error) { EventOcrService.call(pdf_path, llm_recovery: :none) }
+
+    assert_equal before, Dir.glob("/tmp/event_ocr_{image,pdf}_*").sort
+    assert_empty @requests
   end
 
   def test_pdf_rasterizes_every_page
@@ -135,6 +193,18 @@ class EventOcrIntegrationTest < Minitest::Test
     end
   end
 
+  def test_pdf_with_invalid_second_page_does_not_return_partial_events
+    pdf_path = File.join(@directory, "invalid-events.pdf")
+    MiniMagick.convert do |convert|
+      2.times { convert << @image_path }
+      convert << pdf_path
+    end
+    request = stub_gemini([events.first], nil)
+
+    assert_raises(EventValidationError) { EventOcrService.call(pdf_path, llm_recovery: :none) }
+    assert_requested request, times: 2
+  end
+
   private
 
   def events
@@ -144,7 +214,7 @@ class EventOcrIntegrationTest < Minitest::Test
     ]
   end
 
-  def stub_gemini(*responses)
+  def stub_gemini(*responses, finish_reason: "STOP")
     stub_request(:post, GEMINI_URL).with do |request|
       @requests << JSON.parse(request.body)
       true
@@ -153,7 +223,7 @@ class EventOcrIntegrationTest < Minitest::Test
         status: 200,
         headers: {"Content-Type" => "application/json"},
         body: JSON.generate(
-          candidates: [{content: {role: "model", parts: [{text: JSON.generate(events)}]}, finishReason: "STOP"}],
+          candidates: [{content: {role: "model", parts: [{text: JSON.generate(events: events)}]}, finishReason: finish_reason}],
           usageMetadata: {promptTokenCount: 100, candidatesTokenCount: 50},
           modelVersion: "gemini-flash-latest"
         )

@@ -56,6 +56,31 @@ class AddEventEndpointTest < Minitest::Test
     assert_equal "contact@example.com", row[11]
   end
 
+  def test_blank_or_omitted_organizer_saves_contacts_and_does_not_duplicate_the_event
+    [valid_params.merge(organizer: ""), valid_params.except(:organizer)].each do |event|
+      capture_io do
+        GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
+          post "/add_event", event.merge(google_token: "token", contact_email: "contact@example.com")
+        end
+      end
+      assert last_response.ok?, last_response.body
+    end
+    assert_equal 1, app.settings.google_sheets.rows.length
+    row = app.settings.google_sheets.rows.first
+    assert_equal "", row[10]
+    assert_equal "contact@example.com", row[11]
+  end
+
+  def test_organizer_with_newline_is_rejected_without_saving
+    capture_io do
+      GoogleAuthService.stub :validate_token, {success: true, email: SecurityService::WHITELISTED_EMAILS.first} do
+        post "/add_event", valid_params.merge(organizer: "\nA", google_token: "token")
+      end
+    end
+    assert_equal 422, last_response.status
+    assert_empty app.settings.google_sheets.rows
+  end
+
   def test_non_whitelisted_email_rejected
     capture_io do
       GoogleAuthService.stub :validate_token, {success: true, email: "user@example.com"} do

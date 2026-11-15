@@ -50,8 +50,7 @@ rescue => e
 
   if e.message.include?("API_KEY")
     puts
-    puts "Make sure the GEMINI_API_KEY environment variable is set."
-    puts "Export GEMINI_API_KEY=<your_api_key>"
+    puts "Set OPENAI_API_KEY for OpenAI, or GEMINI_API_KEY when OCR_MODEL=gemini-flash-latest."
   end
 
   exit 1

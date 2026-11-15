@@ -58,9 +58,11 @@ class EventsOcrEndpointTest < Minitest::Test
   def test_successful_ocr
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     ocr_call = nil
+    ocr_source = nil
     out, _err = capture_io do
       EventOcrService.stub :call, lambda { |path, **options|
         ocr_call = [path, options]
+        ocr_source = File.binread(path)
         [valid_event]
       } do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
@@ -86,7 +88,8 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal "OCR Event", row[2]
     assert_includes row[1], "+ocr@"
     assert_equal "test", row[14]
-    assert_equal ["/tmp/test.webp", {retry_sleep: 5, additional_text: "Entrada gratuita até às 20:00."}], ocr_call
+    assert_equal File.binread(__FILE__), ocr_source
+    assert_equal({retry_sleep: 5, additional_text: "Entrada gratuita até às 20:00."}, ocr_call.last)
   end
 
   def test_ocr_rejects_additional_text_over_limit
@@ -184,12 +187,12 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_api_model_overload_returns_retryable_503_without_writes
     TestHelper.setup_network_blocking
-    original_key = RubyLLM.config.gemini_api_key
-    RubyLLM.config.gemini_api_key = "offline-test-key"
-    request = stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").to_return(
+    original_key = RubyLLM.config.openai_api_key
+    RubyLLM.config.openai_api_key = "offline-test-key"
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(
       status: 503,
       headers: {"Content-Type" => "application/json"},
-      body: JSON.generate(error: {code: 503, message: "High demand", status: "UNAVAILABLE"})
+      body: JSON.generate(error: {code: "server_error", message: "High demand", type: "server_error"})
     )
     @provider_image = Tempfile.new(["ocr_provider_", ".png"])
     image = @provider_image.path
@@ -208,7 +211,7 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_empty app.settings.google_sheets.rows
     assert_requested request, times: 1
   ensure
-    RubyLLM.config.gemini_api_key = original_key
+    RubyLLM.config.openai_api_key = original_key
     TestHelper.reset_network_mocks
   end
 
@@ -287,12 +290,12 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_provider_rate_limit_response_is_safe_to_retry_before_writes
     TestHelper.setup_network_blocking
-    original_key = RubyLLM.config.gemini_api_key
-    RubyLLM.config.gemini_api_key = "offline-test-key"
-    request = stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").to_return(
+    original_key = RubyLLM.config.openai_api_key
+    RubyLLM.config.openai_api_key = "offline-test-key"
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(
       status: 429,
       headers: {"Content-Type" => "application/json"},
-      body: JSON.generate(error: {code: 429, message: "Quota exceeded", status: "RESOURCE_EXHAUSTED"})
+      body: JSON.generate(error: {code: "rate_limit_exceeded", message: "Quota exceeded", type: "rate_limit_exceeded"})
     )
     @provider_image = Tempfile.new(["ocr_provider_", ".png"])
     image = @provider_image.path
@@ -311,7 +314,7 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_empty app.settings.google_sheets.rows
     assert_requested request, times: 1
   ensure
-    RubyLLM.config.gemini_api_key = original_key
+    RubyLLM.config.openai_api_key = original_key
     TestHelper.reset_network_mocks
   end
 

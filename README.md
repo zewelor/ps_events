@@ -30,6 +30,36 @@ source dockerized.sh; lefthook run pre-commit
 ## Usage
 
 
+### OCR models
+
+OCR defaults to OpenAI `gpt-6.1-terra` with `low` reasoning effort. Set
+`OPENAI_API_KEY` in `.env`. Override the model with `OCR_MODEL` and the effort
+with `OCR_REASONING_EFFORT`. To select Gemini, use
+`OCR_MODEL=gemini-flash-latest` and `GEMINI_API_KEY`; set
+`OCR_REASONING_EFFORT=medium` to retain its previous effort setting.
+Provider errors never switch models silently.
+
+Both providers use a structured `{events: [...]}` response derived from
+`lib/event_schema.json`. The service rejects incomplete responses and validates
+the entire event list before ingestion. Its public result remains an array;
+the existing pre-write retry and partial-ingestion contracts remain unchanged.
+
+OCR reads the original upload, separately from the publication WebP. It creates
+an oriented colour PNG from the first frame, scales up to 2× with a maximum side
+of 4096 px, and keeps prepared files until analysis and retries finish. PDF
+pages are rasterized and analyzed sequentially. Explicit source years are
+preserved; only a missing year uses the current year by default.
+
+Extract without saving events: `./dockerized.sh ruby bin/ocr path/to/poster.jpg`.
+The same command accepts a PDF.
+
+### Optional organizer
+
+An event may omit `organizer` or supply an empty string. A supplied name must
+contain at least two non-whitespace characters and be at most 100 characters.
+The submission form does not require it. Event pages retain available contacts
+and omit the organizer from JSON-LD when no organizer is supplied.
+
 ### API Authentication (OCR)
 
 Endpoint `/events_ocr` pode ser chamado com Bearer token em vez de Google OAuth.

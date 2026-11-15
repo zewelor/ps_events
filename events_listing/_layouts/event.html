@@ -48,17 +48,27 @@ layout: default
     </h2>
     <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Quando:</strong> <span class="text-[var(--color-text-muted)]">{{ page | format_event_datetime | escape }}</span></p>
     <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ page.location | escape }}</span></p>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Organizador:</strong> <span class="text-[var(--color-text-muted)]">{{ page.organizer | escape }}
-      {% if page.email or page.phone %}
-        (
-        {% if page.email %}
-          <a href="mailto:{{ page.email | escape }}" class="text-blue-600 hover:underline">{{ page.email | escape }}</a>{% if page.phone %}, {{ page.phone | escape }}{% endif %}
-        {% else %}
-          {{ page.phone | escape }}
-        {% endif %}
-        )
-      {% endif %}
-    </span></p>
+    {% assign organizer = page.organizer | default: "" | strip %}
+    {% assign email = page.email | default: "" | strip %}
+    {% assign phone = page.phone | default: "" | strip %}
+    {% assign has_contacts = false %}
+    {% if email != "" or phone != "" %}{% assign has_contacts = true %}{% endif %}
+    {% if organizer != "" or has_contacts %}
+    <p class="mb-2">
+      <strong class="text-[var(--color-text-muted)]">{% if organizer != "" %}Organizador:{% else %}Contactos:{% endif %}</strong>
+      <span class="text-[var(--color-text-muted)]">
+        {%- if organizer != "" -%}
+          {{ organizer | escape }}{% if has_contacts %} ({% endif %}
+        {%- endif -%}
+        {%- if email != "" -%}
+          <a href="mailto:{{ email | escape }}" class="text-blue-600 hover:underline">{{ email | escape }}</a>
+        {%- endif -%}
+        {%- if email != "" and phone != "" %}, {% endif -%}
+        {%- if phone != "" -%}{{ phone | escape }}{%- endif -%}
+        {%- if organizer != "" and has_contacts -%}){%- endif -%}
+      </span>
+    </p>
+    {% endif %}
     <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Preço:</strong> <span class="text-[var(--color-text-muted)]">{% if page.price == "" or page.price == nil %}Sem informação disponível{% else %}{{ page.price | escape }}{% endif %}</span></p>
   </div>
   <div class="bg-green-50 p-6 rounded-xl shadow-md mb-6">
@@ -297,11 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
     "{{ page.image | absolute_url }}"
   ],
   {% endif %}
-  "description": {{ page.description | jsonify }},
+  "description": {{ page.description | jsonify }}{% if organizer != "" %},
   "organizer": {
     "@type": "Organization",
-    "name": {{ page.organizer | default: 'PXO Pulse' | jsonify }}
-  }
+    "name": {{ organizer | jsonify | replace: '<', '\u003c' }}
+  }{% endif %}
 }
 </script>
 {% endif %}

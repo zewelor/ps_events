@@ -6,6 +6,19 @@ class TestEventValidation < Minitest::Test
     @validator = EventValidation.new
   end
 
+  def test_organizer_is_optional_but_a_supplied_name_is_validated
+    event = {name: "Clube de leitura", start_date: "14/11/2026", location: "Biblioteca Municipal",
+             description: "Encontro para partilha de leituras.", category: "Comunidade & Cultura"}
+    [event, event.merge(organizer: ""), event.merge(organizer: "Biblioteca Municipal")].each do |payload|
+      result = @validator.call(payload)
+      assert result.success?, result.errors.inspect
+    end
+    [" ", " A ", "A", "\n", "\nA", "AB\n", "AB\nCD", "AB\rCD", "x" * 101, nil, 123].each do |organizer|
+      result = @validator.call(event.merge(organizer: organizer))
+      assert result.failure?, "Invalid organizer accepted: #{organizer.inspect}"
+    end
+  end
+
   def test_invalid_name_too_short
     data = {
       name: "V",

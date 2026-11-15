@@ -6,8 +6,7 @@
     "start_date",
     "location",
     "description",
-    "category",
-    "organizer"
+    "category"
   ],
   "properties": {
     "name": { "type": "string", "minLength": 3, "maxLength": 200 },
@@ -21,9 +20,9 @@
       "Música", "Comida", "Arte", "Natureza", "Saúde & Bem-Estar",
       "Desporto", "Aprendizagem & Workshops", "Comunidade & Cultura"
     ] },
-    "organizer": { "type": "string", "minLength": 2, "maxLength": 100 },
+    "organizer": { "type": "string", "maxLength": 100, "description": "Optional: leave empty, or provide a name with at least two non-whitespace characters and no line breaks.", "pattern": "(?<![\\s\\S])(?:|[^\\r\\n]*\\S[^\\r\\n]*\\S[^\\r\\n]*)(?![\\s\\S])" },
     "contact_email": { "type": "string", "pattern": "^(|[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z\\d\\-]+)*\\.[a-z]+)$" },
-    "contact_tel": { "type": "string", "pattern": "^(|(?=(?:.*\\d){7,})[\\d\\s\\-\\(\\)\\+]+)$" },
+    "contact_tel": { "type": "string", "description": "One contact phone number only. If multiple numbers are printed, choose one here and preserve the others in description. Do not join numbers with a slash.", "pattern": "^(|(?=(?:.*\\d){7,})[\\d\\s\\-\\(\\)\\+]+)$" },
     "price_type": { "type": "string", "enum": ["Gratuito", "Pago", "Desconhecido"] },
     "event_link1": { "type": "string", "pattern": "^(|https?://.+)$" },
     "event_link2": { "type": "string", "pattern": "^(|https?://.+)$" },

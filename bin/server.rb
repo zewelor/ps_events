@@ -316,17 +316,24 @@ post "/events_ocr" do
         options[:llm_recovery] = :none
         options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT
       end
-      events = EventOcrService.call(image_path, **options)
+      # The WebP above is for publication; OCR must retain the upload's fine text.
+      ocr_source_path = params[:event_image]&.dig(:tempfile)&.path.to_s
+      events = EventOcrService.call(ocr_source_path, **options)
     rescue RubyLLM::RateLimitError => e
       puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
       return json_response({status: "error", message: "Limite de pedidos/quota do modelo LLM excedido: #{e.message}",
                             error_code: "rate_limit_exceeded", retry_safe: true}, 429)
-    rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError, Faraday::TimeoutError, Faraday::ConnectionFailed => e
-      raise "Erro ao analisar imagem: #{e.message}" if !api_bearer && (e.is_a?(Faraday::TimeoutError) || e.is_a?(Faraday::ConnectionFailed))
+    rescue RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError, RubyLLM::ConnectionError, Faraday::TimeoutError, Faraday::ConnectionFailed => e
+      if !api_bearer && (e.is_a?(RubyLLM::ConnectionError) || e.is_a?(Faraday::TimeoutError) || e.is_a?(Faraday::ConnectionFailed))
+        return json_error("Erro ao analisar imagem: #{e.message}")
+      end
 
       puts "⚠️ OCR temporarily unavailable: #{e.message}"
       return json_error("O serviço de análise está temporariamente indisponível. Tente novamente mais tarde.", 503,
         error_code: "ocr_temporarily_unavailable")
+    rescue => e
+      puts "❌ Error analyzing OCR: #{e.message}"
+      return json_error("Erro ao analisar imagem: #{e.message}")
     end
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")

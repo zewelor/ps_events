@@ -9,7 +9,7 @@ require_relative "../../lib/server/event_ocr_service"
 class TestEventOcrPrompt < Minitest::Test
   INSTRUCTIONS = EventOcrService.build_instructions
 
-  def test_contains_current_year
+  def test_contains_fallback_year
     assert_includes INSTRUCTIONS, Time.now.year.to_s
   end
 

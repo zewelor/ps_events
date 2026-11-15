@@ -11,8 +11,6 @@ require_relative "../../lib/server/event_ocr_service"
 class TestEventOcrService < Minitest::Test
   include TestHelper
 
-  LlmResponse = Struct.new(:content, keyword_init: true)
-
   def setup
     TestHelper.setup_network_blocking
 
@@ -38,9 +36,9 @@ class TestEventOcrService < Minitest::Test
     RubyLLM.stub(:chat, @dummy_chat) { yield }
   end
 
-  def test_analyze_normalizes_single_json_object_to_array
+  def test_analyze_returns_single_event_from_collection
     with_stubbed_llm do
-      @service = EventOcrService.new
+      @service = EventOcrService.new(model: "gemini-flash-latest", llm_recovery: :none)
       event = {
         name: "Evento de Teste",
         start_date: "15/06/2025",
@@ -48,21 +46,22 @@ class TestEventOcrService < Minitest::Test
         location: "Porto",
         description: "Um evento de teste válido para os nossos testes",
         category: "Música",
-        organizer: "Organizador Teste"
+        organizer: nil
       }
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |_message = nil, with:|
-        LlmResponse.new(content: JSON.generate(event))
+        RubyLLM::Message.new(role: :assistant, content: JSON.generate(events: [event]), finish_reason: :stop)
       end
 
-      result = @service.analyze("/fake/image/path", retry_sleep: 0)
+      result = @service.analyze(File.expand_path("../fixtures/ocr_events.png", __dir__), retry_sleep: 0)
 
       assert_equal ["Evento de Teste"], result.map { |item| item[:name] }
+      refute result.first.key?(:organizer)
     end
   end
 
   def test_analyze_rejects_array_with_mixed_validity
     with_stubbed_llm do
-      @service = EventOcrService.new
+      @service = EventOcrService.new(model: "gemini-flash-latest")
       events = [
         {
           name: "Evento Válido",
@@ -86,7 +85,7 @@ class TestEventOcrService < Minitest::Test
       call_count = 0
       @service.instance_variable_get(:@chat).define_singleton_method(:ask) do |_message = nil, with:|
         call_count += 1
-        LlmResponse.new(content: JSON.generate(events))
+        RubyLLM::Message.new(role: :assistant, content: JSON.generate(events: events), finish_reason: :stop)
       end
 
       error = nil
@@ -97,13 +96,14 @@ class TestEventOcrService < Minitest::Test
           retry_delays << options.fetch(:sleep)
           original_retry.call(**options.merge(sleep: 0), &block)
         } do
-          error = assert_raises(RuntimeError) do
-            @service.analyze("/fake/image/path", retry_sleep: 2)
+          error = assert_raises(EventValidationError) do
+            @service.analyze(File.expand_path("../fixtures/ocr_events.png", __dir__), retry_sleep: 2)
           end
         end
       end
 
-      assert_includes error.message, "Erro ao analisar imagem:"
+      assert_kind_of Hash, error.validation_errors
+      assert_kind_of Array, error.event_data
       assert_operator call_count, :>, 1
       assert_equal [2], retry_delays
     end
@@ -111,7 +111,7 @@ class TestEventOcrService < Minitest::Test
 
   def test_analyze_pdf_aggregates_all_pages_and_cleans_temp_dir
     with_stubbed_llm do
-      @service = EventOcrService.new
+      @service = EventOcrService.new(model: "gemini-flash-latest")
       temp_dir = Dir.mktmpdir("event_ocr_pdf_test_")
       page_one = File.join(temp_dir, "page-0001.png")
       page_two = File.join(temp_dir, "page-0002.png")
