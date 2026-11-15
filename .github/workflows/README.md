@@ -37,7 +37,7 @@ flowchart TD
     docker_tests --> docker_ci["publish_ci job<br/>verified main: push :ci<br/>protected group: ci-docker"]
     docker_changes --> docker_ci
     docker_lint --> docker_ci
-    docker_tests --> docker_smoke["production_smoke job<br/>builds & runs local live image"]
+    docker_tests --> docker_smoke["production_smoke job<br/>live image CMD: Puma HTTP & shutdown"]
     docker_changes --> docker_smoke
     docker_lint --> docker_smoke
     docker_ci --> docker_production["push_production job<br/>verified main: image and webhook<br/>protected group: production-docker"]
@@ -57,6 +57,6 @@ Design notes:
   branch. Native branch filters remain `main`; Cloudflare's `--branch=main` is
   the production deployment channel and remains independent of the checkout ref.
 - `tests` builds a local `:ci` image without package write access. `publish_ci` is the only Docker Checks job that pushes the shared `:ci` tag.
-- For each non-documentation main push or main manual run that reaches Docker Checks, `production_smoke` builds and runs the full `live` image; production publication depends on that runtime proof and the tests. Test and CI configuration changes can therefore publish an image too.
+- For each eligible push (including Renovate branches), pull request or manual run, `production_smoke` builds the full `live` image and runs its normal CMD and user. `.github/scripts/production_smoke.sh` checks a real HTTP `GET /health`, Puma startup and a clean shutdown within 10 seconds. It uses `APP_ENV=test` to skip Google credentials and `--network none` with a loopback probe; production configuration and external integrations are not tested. Production publication depends on this check and the tests. Test and CI configuration changes can therefore publish an image too.
 - The `:ci` and production publication jobs and eligible Pages build jobs do not cancel active jobs; failed regeneration does not enter the Pages concurrency group; a newer pending job can replace an older pending job. Each qualifying backend run builds the complete checked-out revision. Old-ref reruns can update moving tags.
 - `regenerate_events.yml` and `jekyll_site.yml` build the `ci` target from the checked-out dependencies before invoking Jekyll. Both reuse the shared `ci` build cache without waiting for `docker_checks` to publish the moving tag; this also handles Renovate branch merges that leave that tag behind the current lockfile.

@@ -156,15 +156,9 @@ jobs:
             type=gha,scope=live
             type=gha,scope=ci
 
-      - name: Smoke test production image
-        run: |
-          docker run --rm --user 1000:1000 -e APP_ENV=test ps_events:live-smoke \
-            bundle exec ruby -rrack/mock -e '
-              require_relative "bin/server"
-              response = Rack::MockRequest.new(Sinatra::Application).get("/health")
-              abort response.body unless response.status == 200 && JSON.parse(response.body).fetch("status") == "ok"
-              puts response.body
-            '
+      - name: Smoke test Puma over HTTP and graceful shutdown
+        timeout-minutes: 2
+        run: bash .github/scripts/production_smoke.sh ps_events:live-smoke
 
   publish_ci:
     if: >
