@@ -1,0 +1,669 @@
+{
+  "historical_low": {
+    "runs": 10,
+    "scored_runs": 10,
+    "successful_runs": 10,
+    "failed_runs": 0,
+    "errors_by_stage": {},
+    "route_evaluated_runs": 0,
+    "route_matches": 0,
+    "total_expected_events": 52,
+    "unscored_due_to_error_events": 0,
+    "expected_events": 52,
+    "exported_events": 50,
+    "matched_occurrences": 50,
+    "missing_occurrences": 2,
+    "complete_checked_events": 49,
+    "passed_fields": 270,
+    "expected_fields": 281,
+    "unscored_due_to_error_fields": 0,
+    "matched_checked_fields": 271,
+    "bad_field_count": 1,
+    "contact_number_checks": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "unmatched_extra_count": 0,
+    "total_expected_reviews": 14,
+    "unscored_due_to_error_reviews": 0,
+    "expected_reviews": 14,
+    "matched_expected_reviews": 13,
+    "missed_expected_reviews": 1,
+    "unsafe_omission_emission_count": 0,
+    "review_candidates": {
+      "total": 1,
+      "unscored_due_to_error": 0,
+      "emitted": 0,
+      "in_review": 1,
+      "absent": 0
+    },
+    "total_seconds": 162.0061,
+    "stage_seconds": {
+      "reader": 161.8011
+    },
+    "usage_totals": {
+      "input_tokens": 30,
+      "output_tokens": 13157,
+      "cache_read_tokens": 19360,
+      "cache_write_tokens": 29077,
+      "thinking_tokens": 549
+    },
+    "cost_totals": {
+      "status": "complete",
+      "verified": true,
+      "calls_count": 10,
+      "unknown_cost_calls": 0,
+      "runs_with_unknown_cost": 0,
+      "known_cost_usd": 0.10312925,
+      "cold_cost_usd": 0.12636125
+    }
+  },
+  "holdout_low": {
+    "runs": 10,
+    "scored_runs": 10,
+    "successful_runs": 10,
+    "failed_runs": 0,
+    "errors_by_stage": {},
+    "route_evaluated_runs": 0,
+    "route_matches": 0,
+    "total_expected_events": 21,
+    "unscored_due_to_error_events": 0,
+    "expected_events": 21,
+    "exported_events": 20,
+    "matched_occurrences": 20,
+    "missing_occurrences": 1,
+    "complete_checked_events": 19,
+    "passed_fields": 116,
+    "expected_fields": 125,
+    "unscored_due_to_error_fields": 0,
+    "matched_checked_fields": 118,
+    "bad_field_count": 2,
+    "contact_number_checks": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0
+    },
+    "unmatched_extra_count": 0,
+    "total_expected_reviews": 17,
+    "unscored_due_to_error_reviews": 0,
+    "expected_reviews": 17,
+    "matched_expected_reviews": 16,
+    "missed_expected_reviews": 1,
+    "unsafe_omission_emission_count": 0,
+    "review_candidates": {
+      "total": 0,
+      "unscored_due_to_error": 0,
+      "emitted": 0,
+      "in_review": 0,
+      "absent": 0
+    },
+    "total_seconds": 90.8873,
+    "stage_seconds": {
+      "reader": 90.8221
+    },
+    "usage_totals": {
+      "input_tokens": 30,
+      "output_tokens": 6908,
+      "cache_read_tokens": 19360,
+      "cache_write_tokens": 7872,
+      "thinking_tokens": 665
+    },
+    "cost_totals": {
+      "status": "complete",
+      "verified": true,
+      "calls_count": 10,
+      "unknown_cost_calls": 0,
+      "runs_with_unknown_cost": 0,
+      "known_cost_usd": 0.045378,
+      "cold_cost_usd": 0.06861
+    }
+  },
+  "holdout_medium": {
+    "runs": 10,
+    "scored_runs": 10,
+    "successful_runs": 10,
+    "failed_runs": 0,
+    "errors_by_stage": {},
+    "route_evaluated_runs": 0,
+    "route_matches": 0,
+    "total_expected_events": 21,
+    "unscored_due_to_error_events": 0,
+    "expected_events": 21,
+    "exported_events": 21,
+    "matched_occurrences": 21,
+    "missing_occurrences": 0,
+    "complete_checked_events": 21,
+    "passed_fields": 125,
+    "expected_fields": 125,
+    "unscored_due_to_error_fields": 0,
+    "matched_checked_fields": 125,
+    "bad_field_count": 0,
+    "contact_number_checks": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0
+    },
+    "unmatched_extra_count": 0,
+    "total_expected_reviews": 17,
+    "unscored_due_to_error_reviews": 0,
+    "expected_reviews": 17,
+    "matched_expected_reviews": 16,
+    "missed_expected_reviews": 1,
+    "unsafe_omission_emission_count": 0,
+    "review_candidates": {
+      "total": 0,
+      "unscored_due_to_error": 0,
+      "emitted": 0,
+      "in_review": 0,
+      "absent": 0
+    },
+    "total_seconds": 123.9321,
+    "stage_seconds": {
+      "reader": 123.788
+    },
+    "usage_totals": {
+      "input_tokens": 30,
+      "output_tokens": 9709,
+      "cache_read_tokens": 17424,
+      "cache_write_tokens": 9808,
+      "thinking_tokens": 3213
+    },
+    "cost_totals": {
+      "status": "complete",
+      "verified": true,
+      "calls_count": 10,
+      "unknown_cost_calls": 0,
+      "runs_with_unknown_cost": 0,
+      "known_cost_usd": 0.0617062,
+      "cold_cost_usd": 0.082615
+    }
+  },
+  "holdout_low_verified": {
+    "runs": 10,
+    "scored_runs": 10,
+    "successful_runs": 10,
+    "failed_runs": 0,
+    "errors_by_stage": {},
+    "route_evaluated_runs": 0,
+    "route_matches": 0,
+    "total_expected_events": 21,
+    "unscored_due_to_error_events": 0,
+    "expected_events": 21,
+    "exported_events": 17,
+    "matched_occurrences": 17,
+    "missing_occurrences": 4,
+    "complete_checked_events": 17,
+    "passed_fields": 99,
+    "expected_fields": 125,
+    "unscored_due_to_error_fields": 0,
+    "matched_checked_fields": 99,
+    "bad_field_count": 0,
+    "contact_number_checks": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0
+    },
+    "unmatched_extra_count": 0,
+    "total_expected_reviews": 17,
+    "unscored_due_to_error_reviews": 0,
+    "expected_reviews": 17,
+    "matched_expected_reviews": 16,
+    "missed_expected_reviews": 1,
+    "unsafe_omission_emission_count": 0,
+    "review_candidates": {
+      "total": 0,
+      "unscored_due_to_error": 0,
+      "emitted": 0,
+      "in_review": 0,
+      "absent": 0
+    },
+    "total_seconds": 90.8873,
+    "stage_seconds": {
+      "reader": 90.8221
+    },
+    "usage_totals": {
+      "input_tokens": 30,
+      "output_tokens": 6908,
+      "cache_read_tokens": 19360,
+      "cache_write_tokens": 7872,
+      "thinking_tokens": 665
+    },
+    "cost_totals": {
+      "status": "complete",
+      "verified": true,
+      "calls_count": 10,
+      "unknown_cost_calls": 0,
+      "runs_with_unknown_cost": 0,
+      "known_cost_usd": 0.045378,
+      "cold_cost_usd": 0.06861
+    }
+  },
+  "verifier": {
+    "attempted": 20,
+    "completed": 20,
+    "errors": 0,
+    "accepted": 17,
+    "review": 3,
+    "known_cost_usd": 0.04710375,
+    "unknown_cost_calls": 0,
+    "pipeline_known_cost_usd": 0.09248175,
+    "decisions": [
+      {
+        "case_id": "holdout_0cea8987-dba0-4988-b275-a6064b63c8f9",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “20 JUNHO 2026”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “PALCO GASTRONOMIA”; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz identifica “INSERT COIN”, “CONVIDADO ESPECIAL TOZÉ PERFUME” e “São João Porto Santo 2026”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “2026”, “JULHO 1” e “21H30”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras”; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 1 de julho lê-se “Cordophonia apresenta: Tributo ao Max” e “Dia da Região Autónoma da Madeira e das Comunidades Madeirenses”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 1,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica julho de 2026, dia 2, e a hora geral «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras»; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "No dia 2 de julho constam «Amigos do Cantar» e «Tiago Sena Silva».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 2,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “Julho 7” para Pedro Menezes e El Corazon Mariachi, o ano 2026 e a hora geral “21H30”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras” e não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 7 de julho constam “Pedro Menezes” e “El Corazon Mariachi”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 3,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “2026”, “Julho 8” e “21H30”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras”; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 8 de julho constam “Nicole Reynolds” e “Miguel Pires Trio”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 4,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “Animação de Verão 2026”, “Julho 9” e “21H30”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras” e não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 9 de julho: “Armindo & Nélia Velez” e “Fado na Cidade: Susana Andrade”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 5,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «2026», «JULHO 14» e «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras» e não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 14 de julho lê-se «Sónia Soares» e «Roda de Samba: Heloísa Sousa».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 6,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «Julho», dia «15», o ano «2026» e o horário geral «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras» e não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 15 de julho constam «Lourenço Gonçalves» e «Aosesses».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 7,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «2026», «JULHO», dia «16» e «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras»; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "No dia 16 de julho, o cartaz lista «Joana Câmara» e «Triova Voices».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 8,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “Animação de verão 2026”, “Agosto 6” e “21H30”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras” e não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "Na programação de 6 de agosto lê-se “Sónia Soares”, “Old School Generation” e “80’s 90’s 00’s”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 9,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «2026», «Agosto 7» e «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras»; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "No dia 7 de agosto, o cartaz apresenta «Dia da Cidade», «Joana Câmara» e «Tiago Bettencourt».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 10,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «2026», «Agosto 8» para Colors Porto Santo e «21H30».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Largo das Palmeiras»; não apresenta preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "«Colors Porto Santo» consta no programa «Festas de Verão».",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+        "event_index": 11,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “AGOSTO”, dia “20”, “21H30” e o ano “2026”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Largo das Palmeiras”; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "No dia 20 constam “Amigos do Cantar”, “Marotos da Concertina” e “Festa das Vindimas”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_392857d2-4977-4f41-bb07-f2c9c97d461e",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "review",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “04 & 05 de setembro 2026” e o horário termina às “04H”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz identifica o Court Social Club; não indica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz identifica Pedro David e o Complexo de Ténis, mas não identifica o Court Social Club como organizador.",
+            "verdict": "unsupported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_3b981c67-ce08-4ac0-8c59-494db72738c6",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "review",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “18 (SEXTA)”, “SETEMBRO 2026” e “00H → 04H” para Resmas.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz identifica o Court Social Club e não indica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz apresenta “RESMAS”, mas não identifica explicitamente o Court Social Club como organizador; o nome aparece como marca/local.",
+            "verdict": "unsupported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_3b981c67-ce08-4ac0-8c59-494db72738c6",
+        "event_index": 1,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “19 (sábado)”, “setembro” e “2026” para Pedro David.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz identifica o Court Social Club; não indica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz apresenta “Pedro David” e identifica o Court Social Club.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_4b1a24a6-7a94-47d0-a23f-ceff2635fd39",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "review",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica o intervalo «12.09.26—06.03.27».",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "«PORTA33 CENTRO DE ARTE CONTEMPORÂNEA» surge como identificação institucional, sem indicação explícita de local. O preço não é indicado.",
+            "verdict": "unsupported"
+          },
+          "other_facts": {
+            "evidence": "O título corresponde ao cartaz, mas a descrição afirma que o evento é no Porta33, o que não é explicitamente indicado.",
+            "verdict": "unsupported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_4e64b148-3560-4119-9877-378435d0c38f",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “17 MAIO / 18 HORAS”; não imprime ano, pelo que se aplica 2026.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Centro Cultural e de Congressos do Porto Santo” e “Entrada Livre”.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz indica “Espetáculo Teatro”, “Música | Juventude | Território — Ponte Cultural no Porto Santo” e “Direção Artística: Diogo Pinto”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_7c507290-fc7f-4209-a7d6-0c84b25b9a05",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica “21 JUNHO 2026”.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica “Palco Praça do Barqueiro”; não especifica preço de entrada.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz apresenta “Ivandro” e “São João Porto Santo 2026”.",
+            "verdict": "supported"
+          }
+        }
+      },
+      {
+        "case_id": "holdout_7c6d6446-bb16-4876-8ba8-713c586bfc7c",
+        "event_index": 0,
+        "status": "completed",
+        "decision": "accept",
+        "parsed": {
+          "dates_times": {
+            "evidence": "O cartaz indica «31 de outubro, 20h00»; não indica ano, pelo que se aplica 2026.",
+            "verdict": "supported"
+          },
+          "venue_price": {
+            "evidence": "O cartaz indica «Igreja de Nossa Senhora da Piedade, Porto Santo» e não especifica preço.",
+            "verdict": "supported"
+          },
+          "other_facts": {
+            "evidence": "O cartaz anuncia «Concerto de Aniversário — 40 anos Tuna Amadis da Casa do Povo de Gaula».",
+            "verdict": "supported"
+          }
+        }
+      }
+    ]
+  },
+  "reference_sha256": "446d4968a57073387857e5ed3a20ccc1969a1daa017b1bbd11a1014de0d6480e",
+  "scope": "One run per archived source/configuration; references frozen before generation; no event writes. Known costs from SDK with cache, not invoice. Pipeline scorer cost totals are reader-only; combined total is verifier.pipeline_known_cost_usd.",
+  "audit": {
+    "low_material_error": "Two Pedro David nights 04/05 September merged into one continuous range; missing start_time is an omission.",
+    "medium_role_risk": "Four Court Social Club organizer assertions inferred from branding. No clear contradicted date/time/venue/admission assertion found in 21 emitted records.",
+    "verifier_miss": "Marked merged DJ dates supported; rejected record for organizer instead. Accepted same Court organizer on Pedro David19Sep but rejected Resmas18Sep from same image.",
+    "verifier_false_refusal": "Porta33 exhibition venue rejected relative to frozen policy; role interpretation disagreement, not proof venue false.",
+    "review_count_limit": "One aggregated swim review does not count as two date-specific reviews.",
+    "limits": [
+      "Ten archived WebPs, not full upload originals; one run per model setting.",
+      "Scored fields are not all asserted facts. 21/21 is not precision or production safety.",
+      "No whole-pipeline API/save-boundary proof; no provider invoice verification.",
+      "Historical replay score change is reference correction, not reader improvement."
+    ]
+  }
+}

@@ -62,12 +62,13 @@ class EventOcrIntegrationTest < Minitest::Test
     request = stub_gemini(invalid, events)
     result = nil
 
-    output, = capture_io do
+    output, diagnostics = capture_io do
       result = EventOcrService.call(@image_path, additional_text: "Inscrições até 12/10/2026.")
     end
 
     assert_equal "15/10/2026", result.first[:start_date]
-    assert_includes output, "Retrying due to validation error"
+    assert_empty output
+    assert_includes diagnostics, "Retrying due to validation error"
     assert_requested request, times: 2
     contents = @requests.last.fetch("contents")
     assert_equal %w[user model user], contents.map { |message| message.fetch("role") }

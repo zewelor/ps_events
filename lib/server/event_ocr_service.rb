@@ -167,12 +167,12 @@ class EventOcrService
     rescue EventValidationError => first_error
       raise first_error if @llm_recovery == :none
 
-      puts("🔄 Retrying due to validation error: #{first_error.message}")
+      warn("🔄 Retrying due to validation error: #{first_error.message}")
       Retryable.retryable(tries: 5, sleep: retry_sleep, on: [EventValidationError]) do |retries, exception|
-        puts("🔄 Retry attempt #{retries}")
+        warn("🔄 Retry attempt #{retries}")
 
         current_error = exception || first_error
-        puts("📋 Original error message: #{current_error.message}")
+        warn("📋 Original error message: #{current_error.message}")
         error_message = build_retry_message(current_error)
         response = chat.ask(error_message, with: image_path)
 

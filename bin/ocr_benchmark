@@ -1,0 +1,327 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "ruby_llm"
+require "json"
+require "optparse"
+require "digest"
+require "fileutils"
+require_relative "../lib/server/event_ocr_service"
+require_relative "../lib/server/ocr/workflow"
+require_relative "../lib/server/ocr/source_workflow"
+require_relative "../lib/server/ocr/benchmark_scorer"
+
+# Use the production extraction and validation path, without the ingestion
+# endpoint: this command never uploads images or writes spreadsheet rows.
+class BenchmarkOcrService < EventOcrService
+  def usage
+    responses = chat.messages.select { |message| message.role == :assistant }
+    {
+      tokens: chat.tokens.to_h,
+      response_models: responses.map(&:model),
+      ocr_schema_sha256: Digest::SHA256.hexdigest(JSON.generate(chat.schema)),
+      responses: responses.map { |message| response_details(message) }
+    }
+  end
+
+  private
+
+  def response_details(message)
+    details = {finish_reason: message.finish_reason, raw_text: message.content}
+    begin
+      parsed = message.parsed
+      details[:native_event_count] = parsed["events"].length if parsed.is_a?(Hash) && parsed["events"].is_a?(Array)
+    rescue JSON::ParserError => e
+      details[:parse_error] = e.message
+    end
+    details
+  end
+end
+
+def run_legacy_benchmark(paths:, options:)
+  options[:repeat].times.flat_map do |run|
+    paths.map do |path|
+      service = BenchmarkOcrService.new(
+        model: options[:model],
+        reasoning_effort: options[:effort],
+        llm_recovery: :none,
+        request_timeout: 180
+      )
+      result = {
+        image: path,
+        image_sha256: Digest::SHA256.file(path).hexdigest,
+        model: options[:model],
+        effort: options[:effort],
+        run: run + 1,
+        fallback_year: options[:fallback_year],
+        prompt_sha256: Digest::SHA256.hexdigest(EventOcrService.build_instructions(fallback_year: options[:fallback_year])),
+        schema_sha256: Digest::SHA256.file(EventValidation::SCHEMA_PATH).hexdigest,
+        ruby_llm_version: Gem.loaded_specs.fetch("ruby_llm").version.to_s,
+        image_preparation: {scale: EventOcrService::IMAGE_SCALE, max_side: EventOcrService::IMAGE_MAX_SIZE, format: "png"}
+      }
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      begin
+        result[:events] = service.analyze(path, additional_text: options[:text], fallback_year: options[:fallback_year])
+      rescue => e
+        result[:error] = {type: e.class.name, message: e.message}
+      ensure
+        result[:seconds] = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(3)
+        result.merge!(service.usage)
+      end
+      puts JSON.generate(result)
+      $stdout.flush
+      result
+    end
+  end
+end
+
+def run_selected_benchmark(targets:, options:)
+  options[:repeat].times.flat_map do |run_idx|
+    run_num = run_idx + 1
+    targets.each_with_index.map do |target, target_idx|
+      case_id = target[:case_id]
+      path = target[:image]
+      artifact_name = case_id || "#{target_idx + 1}-#{File.basename(path, ".*")}"
+      artifact_dir = options[:artifacts_dir] ? File.join(options[:artifacts_dir], "run-#{run_num}", artifact_name) : nil
+
+      workflow = if options[:workflow] == "source"
+        Ocr::SourceWorkflow.new(model: options[:model], reasoning_effort: options[:effort])
+      else
+        Ocr::Workflow.new(
+          model: options[:model],
+          reasoning_effort: options[:effort],
+          router_model: options[:router_model],
+          geometry_model: options[:geometry_model],
+          geometry_effort: options[:geometry_effort],
+          judge_model: options[:judge_model],
+          image_detail: options[:image_detail],
+          upscale: options[:upscale],
+          llm_recovery: :none,
+          request_timeout: 180
+        )
+      end
+
+      row = {
+        case_id: case_id,
+        image: path,
+        run: run_num,
+        fallback_year: options[:fallback_year],
+        ruby_llm_version: Gem.loaded_specs.fetch("ruby_llm").version.to_s
+      }.compact
+
+      begin
+        analysis = workflow.analyze(
+          path,
+          additional_text: options[:text],
+          fallback_year: options[:fallback_year],
+          artifact_dir: artifact_dir
+        )
+        row.merge!(analysis)
+      rescue => e
+        evidence = workflow.run_evidence
+        row.merge!(evidence)
+        row[:error] = {
+          stage: (e.respond_to?(:stage) && e.stage) ? e.stage.to_s : evidence[:stage],
+          type: e.class.name,
+          message: e.message
+        }
+      end
+
+      puts JSON.generate(row)
+      $stdout.flush
+      row
+    end
+  end
+end
+
+def write_json_output(path, payload)
+  return unless path
+
+  FileUtils.mkdir_p(File.dirname(path))
+  File.write(path, JSON.pretty_generate(payload) + "\n")
+end
+
+def resolve_targets(options, argv_paths)
+  if options[:cases]
+    cases = Ocr::BenchmarkScorer.load_cases(options[:cases], verify_sha256: true)
+    unless options[:case_ids].empty?
+      cases = cases.select { |c| options[:case_ids].include?(c.fetch("id")) }
+      abort "No matching cases for --case #{options[:case_ids].join(",")}" if cases.empty?
+    end
+    cases.map { |c| {case_id: c.fetch("id"), image: c.fetch("resolved_image_path"), expected_route: c["expected_route"]} }
+  else
+    argv_paths.each { |path| abort "Input does not exist: #{path}" unless File.file?(path) }
+    argv_paths.map { |path| {case_id: nil, image: path} }
+  end
+end
+
+options = {
+  selected_flags: [],
+  workflow: nil,
+  model: EventOcrService::MODEL,
+  effort: EventOcrService::REASONING_EFFORT.to_s,
+  router_model: Ocr::Workflow::DEFAULT_ROUTER_MODEL,
+  geometry_model: Ocr::Workflow::DEFAULT_GEOMETRY_MODEL,
+  geometry_effort: Ocr::Workflow::DEFAULT_GEOMETRY_EFFORT.to_s,
+  judge_model: Ocr::Workflow::DEFAULT_JUDGE_MODEL,
+  image_detail: nil,
+  upscale: nil,
+  output: nil,
+  repeat: 1,
+  cases: nil,
+  case_ids: [],
+  score_only: nil,
+  artifacts_dir: nil,
+  fallback_year: Time.now.year,
+  text: nil,
+  dry_run: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: ./dockerized.sh ruby bin/ocr_benchmark [options] [IMAGE ...]"
+  opts.on("--workflow MODE", %w[legacy selected source], "Workflow: legacy (direct EventOcrService) or selected (router + monthly/direct)") { |value| options[:workflow] = value }
+  opts.on("--model MODEL", "Reader OpenAI or Gemini model ID (default: #{options[:model]})") { |value| options[:model] = value }
+  opts.on("--effort EFFORT", "Reader reasoning effort (default: #{options[:effort]})") { |value| options[:effort] = value }
+  opts.on("--router-model MODEL", "Router Judge model (default: #{options[:router_model]})") { |value|
+    options[:router_model] = value
+    options[:selected_flags] << "--router-model"
+  }
+  opts.on("--geometry-model MODEL", "Monthly geometry model (default: #{options[:geometry_model]})") { |value|
+    options[:geometry_model] = value
+    options[:selected_flags] << "--geometry-model"
+  }
+  opts.on("--geometry-effort EFFORT", "Monthly geometry reasoning effort (default: #{options[:geometry_effort]})") { |value|
+    options[:geometry_effort] = value
+    options[:selected_flags] << "--geometry-effort"
+  }
+  opts.on("--judge-model MODEL", "Miniature Judge model (default: #{options[:judge_model]})") { |value|
+    options[:judge_model] = value
+    options[:selected_flags] << "--judge-model"
+  }
+  opts.on("--image-detail DETAIL", Ocr::Workflow::IMAGE_DETAILS, "Image detail level for selected workflow: auto, low, high, original (default)") { |value| options[:image_detail] = value }
+  opts.on("--[no-]upscale", "Scale reader inputs in selected workflow (default: --no-upscale)") { |value| options[:upscale] = value }
+  opts.on("--cases PATH", "Score/run against cases.json fixture manifest") { |value| options[:cases] = value }
+  opts.on("--case IDS", "Filter case IDs from --cases (comma-separated or repeatable)") { |value| options[:case_ids].concat(value.split(",").map(&:strip)) }
+  opts.on("--repeat COUNT", Integer, "Repeat every input with fresh router/geometry/judge/reader calls (default: 1)") { |value| options[:repeat] = value }
+  opts.on("--fallback-year YEAR", Integer, "Fallback year when source omits year (default: current year)") { |value| options[:fallback_year] = value }
+  opts.on("--text TEXT", "Optional additional_text passed to OCR") { |value| options[:text] = value }
+  opts.on("--artifacts-dir DIR", "Persist intermediate and exact final reader input images per run") { |value| options[:artifacts_dir] = value }
+  opts.on("--output PATH", "Write full JSON results (and score report when --cases is set) to this file") { |value| options[:output] = value }
+  opts.on("--score-only PATH", "Offline score an existing benchmark JSON output against --cases without API calls") { |value| options[:score_only] = value }
+  opts.on("--dry-run", "Offline check inputs/hashes and print execution plan without making paid API calls") { options[:dry_run] = true }
+end
+
+parser.parse!
+
+if options[:score_only]
+  abort "Must provide --cases PATH with --score-only" unless options[:cases]
+  abort "Saved results file does not exist: #{options[:score_only]}" unless File.file?(options[:score_only])
+
+  loaded = JSON.parse(File.read(options[:score_only]))
+  runs = (loaded.is_a?(Hash) && loaded.key?("runs")) ? loaded.fetch("runs") : loaded
+  report = Ocr::BenchmarkScorer.score_runs(runs, cases_path: options[:cases])
+  write_json_output(options[:output], report)
+  puts JSON.pretty_generate(report[:aggregates])
+  exit 0
+end
+
+workflow_mode = options[:workflow] || (options[:cases] ? "selected" : "legacy")
+options[:workflow] = workflow_mode
+if workflow_mode == "source"
+  abort "#{options[:selected_flags].first} is only supported with --workflow selected" if options[:selected_flags].any?
+end
+if workflow_mode != "selected"
+  abort "--image-detail is only supported with --workflow selected" unless options[:image_detail].nil?
+  abort "--[no-]upscale is only supported with --workflow selected" unless options[:upscale].nil?
+end
+options[:image_detail] ||= Ocr::Workflow::DEFAULT_IMAGE_DETAIL
+effective_upscale = options[:upscale].nil? ? Ocr::Workflow::DEFAULT_UPSCALE : options[:upscale]
+options[:upscale] = effective_upscale
+abort parser.to_s if options[:cases].nil? && ARGV.empty?
+abort "Repeat count must be positive" unless options[:repeat].positive?
+
+targets = resolve_targets(options, ARGV)
+
+if options[:dry_run]
+  plan = {
+    dry_run: true,
+    paid_api_calls: false,
+    workflow: workflow_mode,
+    image_detail: if workflow_mode == "source"
+                    "original"
+                  else
+                    ((workflow_mode == "selected") ? options[:image_detail] : nil)
+                  end,
+    upscale: (workflow_mode == "selected") ? effective_upscale : nil,
+    repeat: options[:repeat],
+    fallback_year: options[:fallback_year],
+    planned_runs: targets.length * options[:repeat],
+    models: (workflow_mode == "source") ? {reader: options[:model], reader_effort: options[:effort]} : {
+      router: options[:router_model],
+      geometry: options[:geometry_model],
+      geometry_effort: options[:geometry_effort],
+      judge: options[:judge_model],
+      reader: options[:model],
+      reader_effort: options[:effort]
+    },
+    cases: targets.map do |target|
+      {
+        case_id: target[:case_id],
+        image: target[:image],
+        sha256: Digest::SHA256.file(target[:image]).hexdigest,
+        expected_route: target[:expected_route]
+      }.compact
+    end
+  }.compact
+  write_json_output(options[:output], plan)
+  puts JSON.pretty_generate(plan)
+  exit 0
+end
+
+if %w[selected source].include?(workflow_mode)
+  runs = run_selected_benchmark(targets: targets, options: options)
+  payload = {
+    workflow: workflow_mode,
+    image_detail: if workflow_mode == "source"
+                    "original"
+                  else
+                    ((workflow_mode == "selected") ? options[:image_detail] : nil)
+                  end,
+    upscale: (workflow_mode == "selected") ? effective_upscale : nil,
+    cases_path: options[:cases],
+    repeat: options[:repeat],
+    fallback_year: options[:fallback_year],
+    models: (workflow_mode == "source") ? {reader: options[:model], reader_effort: options[:effort]} : {
+      router: options[:router_model],
+      geometry: options[:geometry_model],
+      geometry_effort: options[:geometry_effort],
+      judge: options[:judge_model],
+      reader: options[:model],
+      reader_effort: options[:effort]
+    },
+    runs: runs
+  }.compact
+  if options[:cases]
+    payload[:score] = Ocr::BenchmarkScorer.score_runs(runs, cases_path: options[:cases])
+  end
+  write_json_output(options[:output], payload)
+  puts JSON.pretty_generate(payload.dig(:score, :aggregates)) if payload[:score]
+  exit 1 if runs.any? { |run| run.key?(:error) }
+else
+  results = run_legacy_benchmark(paths: targets.map { |t| t[:image] }, options: options)
+  payload = if options[:cases]
+    {
+      workflow: "legacy",
+      cases_path: options[:cases],
+      repeat: options[:repeat],
+      fallback_year: options[:fallback_year],
+      runs: results,
+      score: Ocr::BenchmarkScorer.score_runs(results, cases_path: options[:cases])
+    }
+  else
+    results
+  end
+  write_json_output(options[:output], payload)
+  exit 1 if results.any? { |result| result.key?(:error) }
+end

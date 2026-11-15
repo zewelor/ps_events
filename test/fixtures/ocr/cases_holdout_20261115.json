@@ -1,0 +1,470 @@
+{
+  "version": 1,
+  "purpose": "Frozen independently source-reviewed holdout using archived published WebP images, not original full-resolution uploads. No model output informed selection or references.",
+  "date_format": "DD/MM/YYYY",
+  "reference_policy": {
+    "year": "Preserve printed years; otherwise use {fallback_year}; this run uses 2026.",
+    "location": "Require an explicit source-supported event-venue relation. An island destination, institutional credit or logo alone is insufficient.",
+    "optional_fields": "Score only listed fields; do not infer unprinted facts. Unknown price is Desconhecido.",
+    "matching": "Match identity and start date, accepting harmless spelling and venue aliases. Measure omissions and unsupported extras separately.",
+    "image_only": "Only the archived image is available; no external programme, sheet, caption or enrichment.",
+    "time": "A shared time applies to a nightly programme where the layout supports it. Preserve printed midnight times against the advertised date without inventing an end date.",
+    "review": "Named identifiable events lacking required day or supported venue are required omissions, not strict expected events.",
+    "route": "No route assertion: whole-image source workflow does not classify routes."
+  },
+  "cases": [
+    {
+      "id": "holdout_0cea8987-dba0-4988-b275-a6064b63c8f9",
+      "image": "../../../events_listing/assets/images/0cea8987-dba0-4988-b275-a6064b63c8f9.webp",
+      "sha256": "3fa0e3a2d995318291394ecb0c388c4212cd7faf918b672f94dc47c3a8e327e7",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Insert Coin"
+          ],
+          "start_date": "20/06/2026",
+          "location_contains": "Palco Gastronomia",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 1,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "Tozé Perfume is a special guest in the same performance, not a separately dated event. Time is not printed."
+      ]
+    },
+    {
+      "id": "holdout_2515efe7-c8b2-4042-be51-546e682e7e7d",
+      "image": "../../../events_listing/assets/images/2515efe7-c8b2-4042-be51-546e682e7e7d.webp",
+      "sha256": "ecf5fa092f22ec4f7e1e0d8fc272a67ac588fd6255fa31106b864c382f0584b4",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Cordophonia",
+            "Tributo ao Max"
+          ],
+          "start_date": "01/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Amigos do Cantar",
+            "Tiago Sena Silva"
+          ],
+          "start_date": "02/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Pedro Menezes",
+            "El Corazon Mariachi"
+          ],
+          "start_date": "07/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Nicole Reynolds",
+            "Miguel Pires Trio"
+          ],
+          "start_date": "08/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Armindo",
+            "Nélia Velez",
+            "Susana Andrade"
+          ],
+          "start_date": "09/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Sónia Soares",
+            "Heloísa Sousa"
+          ],
+          "start_date": "14/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Lourenço Gonçalves",
+            "Aosesses"
+          ],
+          "start_date": "15/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Joana Câmara",
+            "Triova Voices"
+          ],
+          "start_date": "16/07/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Sónia Soares",
+            "Old School Generation"
+          ],
+          "start_date": "06/08/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Joana Câmara",
+            "Tiago Bettencourt"
+          ],
+          "start_date": "07/08/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Colors Porto Santo"
+          ],
+          "start_date": "08/08/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Amigos do Cantar",
+            "Marotos da Concertina"
+          ],
+          "start_date": "20/08/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 12,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "One nightly programme per date and venue, with printed acts grouped in the event name. 21:30 is the common nightly programme start. Cordophonia apresenta Tributo ao Max is one entry. Festa das Vindimas appears alongside 20 August; its relationship to Marotos is ambiguous."
+      ]
+    },
+    {
+      "id": "holdout_392857d2-4977-4f41-bb07-f2c9c97d461e",
+      "image": "../../../events_listing/assets/images/392857d2-4977-4f41-bb07-f2c9c97d461e.webp",
+      "sha256": "31fc9d0e605fe0c0a7eba5d7d3189ca2bc4d0a5ef463432380c9317fddf412ce",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Pedro David"
+          ],
+          "start_date": "04/09/2026",
+          "location_contains": "Court Social Club",
+          "price_type": "Desconhecido",
+          "start_time": "00:00",
+          "end_time": "04:00"
+        },
+        {
+          "name_contains": [
+            "Pedro David"
+          ],
+          "start_date": "05/09/2026",
+          "location_contains": "Court Social Club",
+          "price_type": "Desconhecido",
+          "start_time": "00:00",
+          "end_time": "04:00"
+        }
+      ],
+      "expected_event_count": 2,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "The flyer prints 00H–04H for both advertised dates; retain each advertised date and do not infer another end date."
+      ]
+    },
+    {
+      "id": "holdout_3a473a2a-c33f-4e61-827a-bcd6541601e9",
+      "image": "../../../events_listing/assets/images/3a473a2a-c33f-4e61-827a-bcd6541601e9.webp",
+      "sha256": "67fae8e08fae38d16c21511f1e4f481eb3a0acfc7ba5d395011cf9ee7c013ddf",
+      "expected_events": [],
+      "expected_event_count": 0,
+      "required_omissions": [
+        {
+          "group": "lazy_sundays_venue_uncertain",
+          "reasons": [
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "21/06/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "28/06/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "05/07/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "12/07/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "19/07/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "26/07/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "02/08/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "09/08/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "16/08/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "23/08/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "30/08/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "06/09/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "13/09/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "20/09/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            },
+            {
+              "name_contains": [
+                "Lazy Sundays"
+              ],
+              "start_date": "27/09/{fallback_year}",
+              "reason": "Poncha do Pescador is printed as a prominent title, but its role as venue is not explicitly established; 2026 fallback makes the printed endpoints Sundays."
+            }
+          ]
+        }
+      ],
+      "interpretation_notes": [
+        "Every Sunday 21.6–27.9; no year printed. Poncha do Pescador may name a venue or the series; its venue role is unresolved under this conservative reference policy, not established false. The handwritten 22° is not an event time."
+      ]
+    },
+    {
+      "id": "holdout_3b981c67-ce08-4ac0-8c59-494db72738c6",
+      "image": "../../../events_listing/assets/images/3b981c67-ce08-4ac0-8c59-494db72738c6.webp",
+      "sha256": "9fc46f25aa394386346d7b66fa299f3167518c746fec8393297f944e79f7c5ea",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Resmas"
+          ],
+          "start_date": "18/09/2026",
+          "location_contains": "Court Social Club",
+          "price_type": "Desconhecido",
+          "start_time": "00:00",
+          "end_time": "04:00"
+        },
+        {
+          "name_contains": [
+            "Pedro David"
+          ],
+          "start_date": "19/09/2026",
+          "location_contains": "Court Social Club",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 2,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "00H–04H is printed inside the upper Resmas panel. Its application to the lower Pedro David panel is not explicit, so only the former time is asserted; no next-day end date inferred."
+      ]
+    },
+    {
+      "id": "holdout_4115e9c3-07da-4772-8cf6-f80c88a46ea3",
+      "image": "../../../events_listing/assets/images/4115e9c3-07da-4772-8cf6-f80c88a46ea3.webp",
+      "sha256": "c81270053573e21c38fe2d6d7345b3ddabc8594be9d1260b504ce3391aeb5d0a",
+      "expected_events": [],
+      "expected_event_count": 0,
+      "required_omissions": [
+        {
+          "group": "open_water_course_unspecified",
+          "reasons": [
+            {
+              "name_contains": [
+                "Madeira Island Ultra Swim"
+              ],
+              "start_date": "23/05/2026",
+              "reason": "Island-wide location alone does not identify an event course."
+            },
+            {
+              "name_contains": [
+                "Madeira Island Ultra Swim"
+              ],
+              "start_date": "24/05/2026",
+              "reason": "Island-wide location alone does not identify an event course."
+            }
+          ]
+        }
+      ],
+      "interpretation_notes": [
+        "Swim races are dated 23 and 24 May; Porto Santo Island alone does not identify the open-water course or venue."
+      ]
+    },
+    {
+      "id": "holdout_4b1a24a6-7a94-47d0-a23f-ceff2635fd39",
+      "image": "../../../events_listing/assets/images/4b1a24a6-7a94-47d0-a23f-ceff2635fd39.webp",
+      "sha256": "8d21160b7e0f5c10641e58ca88c886a8bf700234c92bd788297bd6083a184fb9",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Mudar a Escola para Mudar o Mundo"
+          ],
+          "start_date": "12/09/2026",
+          "location_contains": "Porta33",
+          "price_type": "Desconhecido",
+          "end_date": "06/03/2027"
+        }
+      ],
+      "expected_event_count": 1,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "A single dated exhibition range; no daily hours or price printed."
+      ]
+    },
+    {
+      "id": "holdout_4e64b148-3560-4119-9877-378435d0c38f",
+      "image": "../../../events_listing/assets/images/4e64b148-3560-4119-9877-378435d0c38f.webp",
+      "sha256": "210f807d009237c2e83e9ff15448154435bec3746a3c7942494bba4b3ec92afe",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Espetáculo Teatro"
+          ],
+          "start_date": "17/05/{fallback_year}",
+          "location_contains": "Centro Cultural e de Congressos do Porto Santo",
+          "price_type": "Gratuito",
+          "start_time": "18:00"
+        }
+      ],
+      "expected_event_count": 1,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "No year printed; entrada livre supports Gratuito."
+      ]
+    },
+    {
+      "id": "holdout_7c507290-fc7f-4209-a7d6-0c84b25b9a05",
+      "image": "../../../events_listing/assets/images/7c507290-fc7f-4209-a7d6-0c84b25b9a05.webp",
+      "sha256": "94d3d9cac8dfe66cc92ebde9f8ccb596b099b1e9985f7023b8b5287849a17ea5",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Ivandro"
+          ],
+          "start_date": "21/06/2026",
+          "location_contains": "Praça do Barqueiro",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 1,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "Palco Praça do Barqueiro identifies the stage; no time printed."
+      ]
+    },
+    {
+      "id": "holdout_7c6d6446-bb16-4876-8ba8-713c586bfc7c",
+      "image": "../../../events_listing/assets/images/7c6d6446-bb16-4876-8ba8-713c586bfc7c.webp",
+      "sha256": "f0066e32c68e4fb15e928de64102a745644e197571a0686808fdcb959eae4057",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Tuna Amadis"
+          ],
+          "start_date": "31/10/{fallback_year}",
+          "location_contains": "Igreja de Nossa Senhora da Piedade",
+          "price_type": "Desconhecido",
+          "start_time": "20:00"
+        }
+      ],
+      "expected_event_count": 1,
+      "required_omissions": [],
+      "interpretation_notes": [
+        "40 anos / Concerto de Aniversário; year and admission price are not printed."
+      ]
+    }
+  ],
+  "date_placeholders": {
+    "{fallback_year}": "Year supplied by analysis context, 2026 for this run."
+  }
+}

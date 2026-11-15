@@ -1,0 +1,837 @@
+{
+  "version": 2,
+  "purpose": "Source-reviewed image-only reference v2. Separate from historical v1. Expectations score selected facts, not proof of every field or automatic-ingestion safety.",
+  "date_format": "DD/MM/YYYY",
+  "reference_policy": {
+    "year": "Preserve printed years. For a source without a printed year, substitute {fallback_year} using the fallback year.",
+    "location": "Require a source-supported relation between this event and the place. Institutional credit, event topic, catalogue membership or building photograph alone does not establish a venue. A named project intervention area explicitly visited is a place; a precise meeting point is not required and must not be invented. An island-wide travel destination alone remains insufficient for the current venue contract.",
+    "optional_fields": "Only listed fields are scored; absence of optional facts must not invite guesses.",
+    "monthly_candidates": "Source-supported LIFEDUNAS visits are strict expected occurrences. July workshops and October Festa da Escola require review for unconfirmed venue. Viagem +65 remains a review-policy candidate; Madeira is printed destination, not an invented fact.",
+    "matching": "Match by event identity and start date, accepting harmless spelling/venue aliases. Measure omissions and unsupported extras separately; valid JSON alone is not success.",
+    "image_only": "Only the image is supplied in this corpus. Facts from an external programme or operator confirmation require a separate enriched-input reference.",
+    "time": "start_time and end_time belong to their respective endpoint dates. Different daily schedules belong in description. Missing optional time is not permission to invent it.",
+    "routing": "No routing classification is required for source accuracy. Historical v1 retains the original monthly/direct routing expectations."
+  },
+  "cases": [
+    {
+      "id": "monthly_july_2025_shared_banner",
+      "image": "images/monthly_july_2025_shared_banner.jpg",
+      "sha256": "f49aba9a9b174f3581974857c7b5b4938e94b0c671331c07d12566ddd5662448",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Festival Infantil de Vozes"
+          ],
+          "start_date": "19/07/2025",
+          "start_time": "21:30",
+          "location_contains": "Praça do Barqueiro",
+          "organizer_contains": "Junta de Freguesia do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "Casei-me, Socorro"
+          ],
+          "start_date": "03/07/2025",
+          "start_time": "21:00",
+          "location_contains": "Auditório do CCC",
+          "organizer_contains": "JP Ramos Produções"
+        },
+        {
+          "name_contains": [
+            "Festival de Patinagem Artística"
+          ],
+          "start_date": "05/07/2025",
+          "start_time": "19:30",
+          "location_contains": "Pavilhão do Sporting Clube do Porto Santo",
+          "organizer_contains": "Sporting Clube do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "Circuito Padel Dourado"
+          ],
+          "start_date": "21/07/2025",
+          "end_date": "26/07/2025",
+          "location_contains": "Hotel Vila Baleira",
+          "organizer_contains": "Associação Desportiva Os Profetas"
+        },
+        {
+          "name_contains": [
+            "Festa Religiosa do Santíssimo Sacramento"
+          ],
+          "start_date": "26/07/2025",
+          "end_date": "27/07/2025",
+          "location_contains": "Igreja do Espírito Santo",
+          "organizer_contains": "Paróquias do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "Elisabeth Phelps com a Madeira no Coração"
+          ],
+          "start_date": "17/07/2025",
+          "start_time": "20:30",
+          "location_contains": "Biblioteca Municipal",
+          "organizer_contains": "Gabinete da Cultura da CMPS"
+        },
+        {
+          "name_contains": [
+            "Comemorações do Dia Mundial da Conservação da Natureza"
+          ],
+          "start_date": "28/07/2025",
+          "location_contains": "Penedo do Sono",
+          "organizer_contains": "Gabinete do Ambiente da CMPS"
+        },
+        {
+          "name_contains": [
+            "Grupo Folclore Porto Santo"
+          ],
+          "start_date": "01/07/2025",
+          "end_date": "01/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Nicole Reynolds",
+            "Breno Laureano"
+          ],
+          "start_date": "03/07/2025",
+          "end_date": "03/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Noite de Fado",
+            "Susana Andrade"
+          ],
+          "start_date": "08/07/2025",
+          "end_date": "08/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Barbie Dias"
+          ],
+          "start_date": "10/07/2025",
+          "end_date": "10/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Beatriz Abrunhosa"
+          ],
+          "start_date": "15/07/2025",
+          "end_date": "15/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Paulo Melim"
+          ],
+          "start_date": "17/07/2025",
+          "end_date": "17/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Live Brisk"
+          ],
+          "start_date": "22/07/2025",
+          "end_date": "22/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Carina Teixeira",
+            "El Corazón Mariachi"
+          ],
+          "start_date": "24/07/2025",
+          "end_date": "24/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Amigos do Cantar",
+            "Sílvio Resende"
+          ],
+          "start_date": "29/07/2025",
+          "end_date": "29/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Sónia Soares"
+          ],
+          "start_date": "31/07/2025",
+          "end_date": "31/07/2025",
+          "start_time": "22:00",
+          "location_contains": "Largo das Palmeiras"
+        },
+        {
+          "name_contains": [
+            "Visitas LIFEDUNAS"
+          ],
+          "start_date": "09/07/2025",
+          "location_contains": "Zona de intervenção do Projeto LIFEDUNAS",
+          "organizer_contains": "Gabinete do Ambiente da CMPS"
+        },
+        {
+          "name_contains": [
+            "Visitas LIFEDUNAS"
+          ],
+          "start_date": "23/07/2025",
+          "location_contains": "Zona de intervenção do Projeto LIFEDUNAS",
+          "organizer_contains": "Gabinete do Ambiente da CMPS"
+        }
+      ],
+      "expected_event_count": 19,
+      "required_omissions": [
+        {
+          "group": "dia_dos_avos",
+          "reasons": [
+            {
+              "name_contains": [
+                "Dia dos Avós"
+              ],
+              "start_date": "26/07/2025",
+              "reason": "The date and commemoration are clear, but the only venue-like footer is BIBLIOTECA MUNICIPAL; it does not establish the event venue. The body says more information will follow."
+            }
+          ]
+        },
+        {
+          "group": "workshops_unconfirmed_venue",
+          "reasons": [
+            {
+              "name_contains": [
+                "Workshop de Atendimento ao Público e Comunicação"
+              ],
+              "start_date": "16/07/2025",
+              "reason": "Casa do Povo appears only as an institutional credit; the image does not establish the venue of this workshop."
+            },
+            {
+              "name_contains": [
+                "Oficina de Iniciação ao Croché"
+              ],
+              "start_date": "19/07/2025",
+              "reason": "Casa do Povo appears only as an institutional credit; the image does not establish the venue of this workshop."
+            }
+          ]
+        }
+      ],
+      "review_candidates": {
+        "events": [
+          {
+            "name_contains": [
+              "Viagem +65"
+            ],
+            "start_date": "02/07/2025",
+            "end_date": "04/07/2025",
+            "location_contains": "Madeira",
+            "organizer_contains": "Município do Porto Santo"
+          }
+        ],
+        "reason": "Madeira is an explicit trip destination, but the current venue contract needs a more specific place. Do not infer a port, hotel or meeting point."
+      },
+      "regressions": [
+        "Retain the protruding Festas de Verão banner with Largo das Palmeiras and 22h for all ten dated acts.",
+        "Preserve printed 2025 even when the fallback year differs.",
+        "Do not treat Biblioteca Municipal organizer footer as the venue for Dia dos Avós."
+      ],
+      "reference_changes": [
+        "Moved 16 and 19 July workshops from expected events to required review: credit does not establish venue.",
+        "Moved 9 and 23 July LIFEDUNAS visits to expected events: the body explicitly describes visits in the named project intervention area; no street or meeting point inferred."
+      ]
+    },
+    {
+      "id": "monthly_september_2026_neighbouring_venues",
+      "image": "images/monthly_september_2026_neighbouring_venues.jpg",
+      "sha256": "240ddbfed6095c5dedd4d7aadc40f2736bf452d74567166d1adc4f668c108a4a",
+      "expected_events": [
+        {
+          "name_contains": [
+            "SC Portosantense 1948"
+          ],
+          "start_date": "02/09/2026",
+          "start_time": "21:30",
+          "location_contains": "Largo das Palmeiras",
+          "organizer_contains": "Sport Clube Portosantense 1948"
+        },
+        {
+          "name_contains": [
+            "Caminhada Solidária"
+          ],
+          "start_date": "05/09/2026",
+          "start_time": "10:00",
+          "location_contains": "Largo da Câmara Municipal",
+          "organizer_contains": "Força Aérea Portuguesa"
+        },
+        {
+          "name_contains": [
+            "Festa do Santíssimo Sacramento"
+          ],
+          "start_date": "05/09/2026",
+          "end_date": "06/09/2026",
+          "start_time": "18:00",
+          "location_contains": "Igreja de Nossa Senhora da Piedade",
+          "organizer_contains": "Paróquias do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "5.º Torneio Circuito 9 buracos"
+          ],
+          "start_date": "05/09/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "5.º Torneio Circuito Pares 3"
+          ],
+          "start_date": "12/09/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "Colombo's Golfe Trophy"
+          ],
+          "start_date": "19/09/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "Torneio das Vindimas"
+          ],
+          "start_date": "26/09/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "Atividades Desportivas",
+            "FAP"
+          ],
+          "start_date": "06/09/2026",
+          "start_time": "10:00",
+          "end_time": "17:00",
+          "location_contains": "Praia do Ribeiro Cochino",
+          "organizer_contains": "Força Aérea Portuguesa"
+        },
+        {
+          "name_contains": [
+            "Clube de Leitura",
+            "Livros que Inspiram"
+          ],
+          "start_date": "12/09/2026",
+          "start_time": "18:30",
+          "location_contains": "Biblioteca Municipal"
+        },
+        {
+          "name_contains": [
+            "Circuito Padel Dourado"
+          ],
+          "start_date": "12/09/2026",
+          "end_date": "19/09/2026",
+          "location_contains": "Hotel Vila Baleira",
+          "organizer_contains": "Associação Desportiva Os Profetas"
+        },
+        {
+          "name_contains": [
+            "Visita Orientada",
+            "Imagens e Memória do Concelho do Porto Santo"
+          ],
+          "start_date": "17/09/2026",
+          "start_time": "15:00",
+          "location_contains": "Átrio da Câmara Municipal",
+          "organizer_contains": "Direção Regional dos Arquivos, das Bibliotecas e do Livro"
+        },
+        {
+          "name_contains": [
+            "Pequenos Aventureiros, grandes descoberta"
+          ],
+          "start_date": "18/09/2026",
+          "start_time": "10:30",
+          "location_contains": "Biblioteca Municipal",
+          "organizer_contains": "Direção Regional dos Arquivos, das Bibliotecas e do Livro"
+        },
+        {
+          "name_contains": [
+            "Mar, Livros e Mãos à obra"
+          ],
+          "start_date": "19/09/2026",
+          "start_time": "11:00",
+          "location_contains": "Biblioteca Municipal",
+          "organizer_contains": "Direção Regional dos Arquivos, das Bibliotecas e do Livro"
+        }
+      ],
+      "expected_event_count": 13,
+      "required_omissions": [
+        {
+          "group": "festival_colombo",
+          "reasons": [
+            {
+              "name_contains": [
+                "Festival Colombo"
+              ],
+              "start_date": "17/09/2026",
+              "end_date": "20/09/2026",
+              "reason": "Dates, name, description and organizer are printed, but no venue is established in the main event text; the inset is only a photograph."
+            }
+          ]
+        }
+      ],
+      "regressions": [
+        "Do not transfer Largo das Palmeiras from the sports-club event to Caminhada Solidária at Largo da Câmara Municipal.",
+        "Keep four golf tournaments and three separately dated DRABL activities distinct.",
+        "Do not infer Festival Colombo venue from its image or island context."
+      ]
+    },
+    {
+      "id": "monthly_october_2026_reused_inset",
+      "image": "images/monthly_october_2026_reused_inset.jpg",
+      "sha256": "1b67b18b13e33190032ae3364672a84f785adf918f5245d7149900b2d8f13b97",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Para lá da travessa",
+            "Antologia de contos"
+          ],
+          "start_date": "03/10/2026",
+          "start_time": "18:30",
+          "location_contains": "Auditório da CMPS",
+          "organizer_contains": "Câmara Municipal do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "VII Mostra do Pão"
+          ],
+          "start_date": "16/10/2026",
+          "end_date": "18/10/2026",
+          "location_contains": "Praça do Município",
+          "organizer_contains": "Junta de Freguesia do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "Formação de Palmito"
+          ],
+          "start_date": "19/10/2026",
+          "end_date": "23/10/2026",
+          "start_time": "14:00",
+          "end_time": "18:00",
+          "location_contains": "Casa do Povo de Nossa Senhora da Piedade"
+        },
+        {
+          "name_contains": [
+            "Torneio 22.º Aniversário Porto Santo Golfe"
+          ],
+          "start_date": "03/10/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "6.º Torneio Circuito Pares 3"
+          ],
+          "start_date": "17/10/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "EHF Beach Handball Champions Cup"
+          ],
+          "start_date": "15/10/2026",
+          "end_date": "18/10/2026",
+          "location_contains": "Praia do Cabeço",
+          "organizer_contains": "Federação Europeia de Andebol"
+        },
+        {
+          "name_contains": [
+            "Jantar Rosa"
+          ],
+          "start_date": "23/10/2026",
+          "start_time": "20:30",
+          "location_contains": "Hotel The Navigator Colombus",
+          "organizer_contains": "Liga Portuguesa Contra o Cancro"
+        },
+        {
+          "name_contains": [
+            "Circuito Padel Dourado"
+          ],
+          "start_date": "27/10/2026",
+          "end_date": "01/11/2026",
+          "location_contains": "Hotel Vila Baleira",
+          "organizer_contains": "Associação Desportiva Os Profetas"
+        }
+      ],
+      "expected_event_count": 8,
+      "required_omissions": [
+        {
+          "group": "triatlo",
+          "reasons": [
+            {
+              "name_contains": [
+                "Triatlo Porto Santo"
+              ],
+              "start_date": "03/10/2026",
+              "end_date": "04/10/2026",
+              "reason": "The main text gives the event and dates but no venue; do not use the inset triathlon flyer to fill it."
+            }
+          ]
+        },
+        {
+          "group": "exposicao_imagens_memoria",
+          "reasons": [
+            {
+              "name_contains": [
+                "Exposição Imagens e Memória do Concelho do Porto Santo"
+              ],
+              "end_date": "31/12/2026",
+              "reason": "The main panel says only “até 31 dez”; it does not establish a start day. Do not infer 1 October from the agenda month or use the inset exhibition flyer for a start date."
+            }
+          ]
+        },
+        {
+          "group": "festa_escola_unconfirmed_venue",
+          "reasons": [
+            {
+              "name_contains": [
+                "Festa da Escola 2026"
+              ],
+              "start_date": "09/10/2026",
+              "end_date": "11/10/2026",
+              "reason": "Celebration of Escola da Vila identifies the subject, while Porta 33 is an institutional credit. Neither establishes the event venue. External programmes are not part of this input."
+            }
+          ]
+        }
+      ],
+      "regressions": [
+        "Keep VII Mostra do Pão as one 16–18 October range, not three daily events.",
+        "The exhibition has no main-text start date; do not borrow an apparent old inset year/date.",
+        "Keep Circuito Padel Dourado on 27 October–1 November from main text; an old miniature is not a reason to erase complete current agenda facts.",
+        "Keep Porto Santo Golfe 3 and 17 October as separate tournaments."
+      ],
+      "reference_changes": [
+        "Moved Festa da Escola from expected event to required review: institution and subject of celebration do not establish venue."
+      ]
+    },
+    {
+      "id": "monthly_november_2026_weekend_hours",
+      "image": "images/monthly_november_2026_weekend_hours.jpg",
+      "sha256": "5bbd7218414212700901d2b2e19c5d08836d4db797c4a1453b06f841339bd006",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Aniversário do Grupo de Folclore do Porto Santo"
+          ],
+          "start_date": "01/11/2026",
+          "start_time": "10:00",
+          "location_contains": "Igreja do Espírito Santo",
+          "organizer_contains": "Grupo de Folclore do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "6.º Torneio Circuito 9 Buracos"
+          ],
+          "start_date": "01/11/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "Torneio Vila Baleira"
+          ],
+          "start_date": "14/11/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "Campeonato Regional Absoluto"
+          ],
+          "start_date": "28/11/2026",
+          "end_date": "29/11/2026",
+          "location_contains": "Porto Santo Golfe"
+        },
+        {
+          "name_contains": [
+            "2.ª Feira de Artesanato"
+          ],
+          "start_date": "07/11/2026",
+          "end_date": "15/11/2026",
+          "end_time": "23:00",
+          "location_contains": "Centro Cultural e de Congressos",
+          "start_time": "16:00",
+          "price_type": "Desconhecido"
+        },
+        {
+          "name_contains": [
+            "Livros que inspiram",
+            "Clube de leitura"
+          ],
+          "start_date": "14/11/2026",
+          "start_time": "18:00",
+          "location_contains": "Biblioteca Municipal",
+          "organizer_contains": "Câmara Municipal do Porto Santo"
+        },
+        {
+          "name_contains": [
+            "História Florestal do Porto Santo"
+          ],
+          "start_date": "21/11/2026",
+          "start_time": "18:00",
+          "location_contains": "C. C. de Congressos",
+          "organizer_contains": "Reserva da Biosfera da Ilha do Porto Santo"
+        }
+      ],
+      "expected_event_count": 7,
+      "required_omissions": [
+        {
+          "group": "megacampanha_porto_santo_limpo",
+          "reasons": [
+            {
+              "name_contains": [
+                "Porto Santo + Limpo"
+              ],
+              "start_date": "04/11/2026",
+              "end_date": "06/11/2026",
+              "reason": "The campaign and dates are clear, but the main body describes cleanup activity without establishing a location or venue."
+            }
+          ]
+        },
+        {
+          "group": "rali_porto_santo",
+          "reasons": [
+            {
+              "name_contains": [
+                "Rali Porto Santo"
+              ],
+              "start_date": "06/11/2026",
+              "end_date": "07/11/2026",
+              "reason": "The title and rally dates are clear, but the main text does not establish a venue or route; the inset rally flyer is excluded."
+            }
+          ]
+        },
+        {
+          "group": "concurso_natal",
+          "reasons": [
+            {
+              "name_contains": [
+                "Presépios da nossa Reserva da Biosfera"
+              ],
+              "start_date": "16/11/2026",
+              "end_date": "04/12/2026",
+              "reason": "The contest period and open-community note are clear, but no venue is established in the main text."
+            }
+          ]
+        },
+        {
+          "group": "dia_nacional_do_pijama",
+          "reasons": [
+            {
+              "name_contains": [
+                "A Menina que Queria Desenhar o Mundo"
+              ],
+              "start_date": "20/11/2026",
+              "reason": "The play, time 15:00, and presenter are in the main text, but its Biblioteca Municipal / CPCJ footer identifies attribution only and does not establish the venue."
+            },
+            {
+              "name_contains": [
+                "Exibição de um filme para crianças"
+              ],
+              "start_date": "20/11/2026",
+              "reason": "The film event and time 21:00 are in the main text, but its Biblioteca Municipal / CPCJ footer identifies attribution only and does not establish the venue."
+            }
+          ]
+        }
+      ],
+      "regressions": [
+        "Fair first day 7 November 2026 is Saturday: 16:00, not weekday 17:00; close 23:00.",
+        "Do not invent free admission; the readable material does not establish it.",
+        "Keep missing-venue activities omitted rather than using library/CPCJ/organizer attribution."
+      ]
+    },
+    {
+      "id": "sun_day_rotated_hours",
+      "image": "images/sun_day_rotated_hours.jpg",
+      "sha256": "6033e97bd874f26df8129095f560fb936ef3bab74ff03f88959735b5d87b8c12",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Sun Day",
+            "Dance Dance Dance"
+          ],
+          "start_date": "11/10/2026",
+          "start_time": "12:00",
+          "end_time": "20:00",
+          "location_contains": "Balaloa Beach Bar, Praia do Penedo",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 1,
+      "regressions": [
+        "Read rotated 12:00–20:00 correctly; not midnight/00:00.",
+        "Keep the named Balaloa Beach Bar / Praia do Penedo venue."
+      ]
+    },
+    {
+      "id": "dj_nights_caption_mapping",
+      "image": "images/dj_nights_caption_mapping.jpg",
+      "sha256": "499b296d5ea1caa933f7e05fc8281839af91d63184aebfcbc38011445d1a8aa4",
+      "expected_events": [
+        {
+          "name_contains": [
+            "pedro david"
+          ],
+          "start_date": "11/09/2026",
+          "start_time": "00:00",
+          "end_time": "04:00",
+          "price_type": "Desconhecido",
+          "location_contains": "court"
+        },
+        {
+          "name_contains": [
+            "fabrizio reynolds"
+          ],
+          "start_date": "12/09/2026",
+          "start_time": "00:00",
+          "end_time": "04:00",
+          "price_type": "Desconhecido",
+          "location_contains": "court"
+        }
+      ],
+      "expected_event_count": 2,
+      "regressions": [
+        "Read the caption as well as the poster: Pedro David on 11 September, Fabrizio Reynolds on 12 September.",
+        "Keep two separate events, not a continuous 11–12 September event.",
+        "Caption supplies the common 00:00–04:00 window and Court venue."
+      ]
+    },
+    {
+      "id": "palmito_multiple_phone_numbers",
+      "image": "images/palmito_multiple_phone_numbers.jpg",
+      "sha256": "75c63c9824333eabdf11de2c720b34b53e28e1a405943d7e2ef6f0ff1dbbeb82",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Formação",
+            "Palmito"
+          ],
+          "start_date": "19/10/{fallback_year}",
+          "end_date": "23/10/{fallback_year}",
+          "start_time": "14:00",
+          "end_time": "18:00",
+          "location_contains": "Casa do Povo de Nossa Senhora da Piedade",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 1,
+      "visible_contact_numbers": [
+        "924366168",
+        "291985289"
+      ],
+      "regressions": [
+        "The phone field contains one number only, never two numbers joined with a slash.",
+        "Preserve the other printed number in the description; do not discard correct source information to pass validation.",
+        "Keep the 19–23 October range and 14:00–18:00 daily hours.",
+        "No year is printed: use the current analysis year, not a memorized 2026 date from earlier benchmark runs."
+      ]
+    },
+    {
+      "id": "rally_missing_venue",
+      "image": "images/rally_missing_venue.jpg",
+      "sha256": "b676ffeb4fd5bcae8bbcf11f0eeac22aa835fe223ddbe89ef8ff208fb5cccc78",
+      "expected_events": [],
+      "expected_event_count": 0,
+      "required_omissions": [
+        {
+          "reason": "missing_location",
+          "explanation": "Island name in title, no precise venue/route. Logos alone do not establish one."
+        }
+      ],
+      "visible_facts": {
+        "name": "Rali Porto Santo",
+        "start_date": "06/11/2026",
+        "end_date": "07/11/2026"
+      },
+      "regressions": [
+        "Island name Porto Santo is not a precise venue/route.",
+        "Sponsors and federation logos do not establish an event site."
+      ]
+    },
+    {
+      "id": "vaccination_service_prices_missing_venue",
+      "image": "images/vaccination_service_prices_missing_venue.jpg",
+      "sha256": "5b3000bdfef32cdd8cfcd617ee043a2cd3eb7f5c75fa2613325362194bdc3fee",
+      "expected_events": [],
+      "expected_event_count": 0,
+      "required_omissions": [
+        {
+          "reason": "missing_location",
+          "explanation": "Canil & Gatil is printed below the booking phone; treating it as venue needs an interpretation. Strict source reference does not establish location. Service charges do not prove event admission."
+        }
+      ],
+      "visible_facts": {
+        "dates": [
+          "14/07/2026",
+          "11/08/2026",
+          "12/08/2026",
+          "01/09/2026",
+          "02/09/2026",
+          "13/10/2026",
+          "17/11/2026"
+        ],
+        "times": [
+          "09:30-12:00",
+          "14:00-16:00"
+        ],
+        "contact_tel": "291982198",
+        "service_prices_eur": [
+          10,
+          13,
+          2.5,
+          1
+        ]
+      },
+      "regressions": [
+        "A multi-month campaign is not a single-month agenda: route directly.",
+        "Do not infer venue from the booking contact attribution.",
+        "Listed amounts are service prices, not event-admission prices."
+      ]
+    },
+    {
+      "id": "reading_club_control",
+      "image": "images/reading_club_control.jpg",
+      "sha256": "ae6457045f2dd5b92ebd8bddd54dbc0720a6b6d7c140ee0e083a12adbd3c044f",
+      "expected_events": [
+        {
+          "name_contains": [
+            "Clube de Leitura",
+            "Livros que inspiram"
+          ],
+          "start_date": "14/11/2026",
+          "start_time": "18:00",
+          "location_contains": "Biblioteca Municipal",
+          "price_type": "Desconhecido"
+        }
+      ],
+      "expected_event_count": 1,
+      "regressions": [
+        "Control: a clear ordinary flyer must reach direct OCR and return its one supported event.",
+        "Do not require a month heading or apply monthly miniatures processing."
+      ],
+      "interpretation_notes": [
+        "Municipal logo attribution only; exact organizer is not independently asserted."
+      ]
+    }
+  ],
+  "date_placeholders": {
+    "{fallback_year}": "The fallback year supplied by the analysis context when the source does not print one."
+  },
+  "supersedes": {
+    "path": "cases.json",
+    "sha256": "60c80fe769e047520b2c30ed75d25011e33685dfa8e447158be41b0c8f2aeda9",
+    "historical_expected_events": 53,
+    "historical_results_unchanged": true
+  }
+}
