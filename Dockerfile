@@ -54,7 +54,7 @@ FROM basedev AS dev
 
 WORKDIR /
 
-ENV BUNDLE_AUTO_INSTALL=true \
+ENV BUNDLE_AUTO_INSTALL=false \
     BUNDLE_CLEAN=true
 
 RUN mkdir -p "$BUNDLE_PATH" && \

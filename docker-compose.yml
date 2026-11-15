@@ -4,6 +4,15 @@ x-app: &x-app
     context: .
     target: dev
   tty: true
+  init: true
+  image: ${COMPOSE_PROJECT_NAME:?Use ./dockerized.sh}-app
+  environment: &ruby-environment
+    BUNDLE_PATH: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
+    GEM_HOME: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
+    XDG_CACHE_HOME: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}
+    RUBOCOP_CACHE_ROOT: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}/rubocop
+    BUNDLE_IGNORE_CONFIG: "true"
+    BUNDLE_AUTO_INSTALL: "false"
   # Rootless Docker maps container root to the unprivileged host user.
   user: "0:0"
   working_dir: ${PWD:?Run Compose from the project root}
@@ -11,7 +20,8 @@ x-app: &x-app
     - type: bind
       source: .
       target: ${PWD:?Run Compose from the project root}
-    - bundler:/bundle
+      bind:
+        create_host_path: false
 
 services:
   app:
@@ -29,6 +39,7 @@ services:
       - "127.0.0.1:4001:4000"
       - "127.0.0.1:35729:35729"
     environment:
+      <<: *ruby-environment
       BACKEND_HOST: "http://localhost:4001"
       JEKYLL_ENV: development
     command:
@@ -62,6 +73,7 @@ services:
     env_file:
       - .env
     environment:
+      <<: *ruby-environment
       ALLOWED_ORIGIN: "http://localhost:4001"
     command:
       - watchexec
@@ -78,6 +90,26 @@ services:
       - ruby
       - bin/server.rb
 
-
-volumes:
-  bundler:
+  # Share development files/image, with no app boot, network or app credentials.
+  editor:
+    extends:
+      service: app
+    profiles: [editor]
+    network_mode: none
+    # No build definition: --pull never cannot fall back to building an editor image.
+    build: !reset null
+    ports: !reset []
+    env_file: !reset []
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:mode=1777,exec
+    environment:
+      HOME: /tmp
+      BUNDLE_FROZEN: "true"
+      BUNDLE_GEMFILE: ${PWD:?Use ./dockerized.sh}/Gemfile
+    entrypoint: !reset []
+    command: ["bundle", "exec", "ruby-lsp"]
