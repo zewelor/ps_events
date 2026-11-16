@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
   },
   {% if page.image and page.image != "" %}
   "image": [
-    "{{ page.image | absolute_url }}"
+    {{ page.image | absolute_url | jsonify | replace: '<', '\u003c' }}
   ],
   {% endif %}
   "description": {{ page.description | jsonify }}{% if organizer != "" %},

@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:3074be666735468f26a1c28d4b90458181546166fb196047081db1ca645ae49c AS base
 
 WORKDIR /app
@@ -29,11 +31,13 @@ FROM base AS basedev
 
 # install dev dependencies
 # hadolint ignore=SC2086,DL3008
-RUN apt-get update && \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     $DEV_PACKAGES && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf /tmp/* /var/tmp/*
 
 # Install watchexec for development containers (replaces rerun)
 # hadolint ignore=DL3003
