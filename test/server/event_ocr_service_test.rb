@@ -33,7 +33,9 @@ class TestEventOcrService < Minitest::Test
   end
 
   def with_stubbed_llm
-    RubyLLM.stub(:chat, @dummy_chat) { yield }
+    EventOcrService.stub(:llm_client, RubyLLM) do
+      RubyLLM.stub(:chat, @dummy_chat) { yield }
+    end
   end
 
   def test_analyze_returns_single_event_from_collection
