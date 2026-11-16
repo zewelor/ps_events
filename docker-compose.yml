@@ -4,7 +4,6 @@ x-app: &x-app
     context: .
     target: dev
   tty: true
-  init: true
   image: ${COMPOSE_PROJECT_NAME:?Use ./dockerized.sh}-app
   environment: &ruby-environment
     BUNDLE_PATH: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}

@@ -84,7 +84,7 @@ dockerized_setup() (
   dockerized_require_rootless || exit
   mkdir -p "$DOCKER_BUNDLE_DIR" "$DOCKER_CACHE_DIR" || exit
   docker compose --progress quiet build app || exit
-  exec docker compose --progress quiet run --rm --no-deps -T --entrypoint '' app bundle install
+  exec docker compose --progress quiet run --rm --no-deps -T app bundle install
 )
 
 # A prepared bundle is required: opening an editor must never build or install.

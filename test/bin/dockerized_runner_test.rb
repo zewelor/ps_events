@@ -217,6 +217,7 @@ class DockerizedRunnerTest < Minitest::Test
     assert_equal [["yes", "yes"]], File.readlines("#{@calls_path}.context", chomp: true).drop(1).map { |line| line.split("\t")[3, 2] }.uniq
     assert_includes launches.fetch(0), "build"
     assert_includes launches.fetch(1), "install"
+    refute_includes launches.fetch(1), "--entrypoint"
   end
 
   %w[bash zsh].each do |shell|
