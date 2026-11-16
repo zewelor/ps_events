@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:3074be666735468f26a1c28d4b90458181546166fb196047081db1ca645ae49c AS base
+FROM ghcr.io/zewelor/ruby:4.0.9-slim@sha256:7fe782af8e5ca83e9a72899f245fd9fbff797f89c84e899cf355c68a21b7fda2 AS base
 
 WORKDIR /app
 
