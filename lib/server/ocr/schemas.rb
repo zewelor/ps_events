@@ -18,38 +18,6 @@ module Ocr
 
     module_function
 
-    def geometry_schema
-      rectangle = {
-        "type" => "object",
-        "properties" => %w[left top right bottom].to_h { |name| [name, {"type" => "integer", "minimum" => 0, "maximum" => 1000}] },
-        "required" => %w[left top right bottom],
-        "additionalProperties" => false
-      }
-      panel = {
-        "type" => "object",
-        "properties" => {
-          "id" => {"type" => "integer"},
-          "title_hint" => {"type" => "string"},
-          "box" => rectangle,
-          "miniatures" => {"type" => "array", "items" => rectangle},
-          "cleanup" => {"type" => "string", "enum" => %w[keep_colour whiten_light_background]}
-        },
-        "required" => %w[id title_hint box miniatures cleanup],
-        "additionalProperties" => false
-      }
-      {
-        "type" => "object",
-        "properties" => {
-          "heading_text" => {"type" => "string"},
-          "month" => {"type" => "integer"},
-          "year" => {"type" => %w[integer null]},
-          "panels" => {"type" => "array", "items" => panel}
-        },
-        "required" => %w[heading_text month year panels],
-        "additionalProperties" => false
-      }
-    end
-
     def reader_schema(panel_ids, additional_text: nil)
       candidate_schema = build_candidate_schema
       if additional_text.blank?

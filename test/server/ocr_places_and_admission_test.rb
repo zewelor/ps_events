@@ -95,9 +95,8 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
         ]
       }
     ]
-    panel_meta = {1 => {id: 1, title_hint: "Workshop e Dia dos Avós", banner_policy: {action: "mask", allowed_fields: []}}}
 
-    result = Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
+    result = Ocr::Admission.evaluate(panels_data, panel_ids: [1])
 
     assert_equal 1, result[:events].length
     assert_equal "Workshop de Comunicação", result[:events].first[:name]
@@ -114,7 +113,7 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_equal false, item.dig(:trace, :verified)
   end
 
-  def test_admission_downgrades_service_fee_to_desconhecido_and_blocks_unauthorized_banner_facts
+  def test_admission_downgrades_service_fee_to_desconhecido
     panels_data = [
       {
         "panel_id" => 1,
@@ -144,42 +143,16 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
             "price_source" => "service_fee_only",
             "review_reason" => "none",
             "review_detail" => nil
-          },
-          {
-            "name" => "Atuação Extra",
-            "start_date" => "11/07/2025",
-            "start_time" => nil,
-            "end_date" => nil,
-            "end_time" => nil,
-            "location" => "Largo das Palmeiras",
-            "description" => "Atuação musical de verão.",
-            "category" => "Música",
-            "organizer" => "Município",
-            "contact_email" => nil,
-            "contact_tel" => nil,
-            "price_type" => nil,
-            "event_link1" => nil,
-            "event_link2" => nil,
-            "event_link3" => nil,
-            "event_link4" => nil,
-            "location_evidence" => "Largo das Palmeiras",
-            "location_source" => "banner",
-            "date_source" => "banner",
-            "price_source" => "none",
-            "review_reason" => "none",
-            "review_detail" => nil
           }
         ]
       }
     ]
-    panel_meta = {1 => {id: 1, title_hint: "Festas", banner_policy: {action: "preserve", allowed_fields: %w[location time]}}}
 
-    result = Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
+    result = Ocr::Admission.evaluate(panels_data, panel_ids: [1])
 
     assert_equal 1, result[:events].length
     assert_equal "Desconhecido", result[:events].first[:price_type]
-    assert_equal 1, result[:review_items].length
-    assert_equal "unauthorized_banner_date", result[:review_items].first[:reason]
+    assert_empty result[:review_items]
   end
 
   def test_admission_hard_fails_invalid_emitted_ready_event
@@ -217,93 +190,10 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
         ]
       }
     ]
-    panel_meta = {1 => {id: 1, title_hint: "Palmito", banner_policy: {action: "direct", allowed_fields: []}}}
 
     assert_raises(EventValidationError) do
-      Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
+      Ocr::Admission.evaluate(panels_data, panel_ids: [1])
     end
-  end
-
-  def test_admission_enforces_banner_permissions_even_when_mixed_with_masked_inset_including_time
-    panels_data = [
-      {
-        "panel_id" => 1,
-        "panel_review_reason" => "none",
-        "panel_review_detail" => nil,
-        "candidates" => [
-          {
-            "name" => "Concerto com Hora do Banner",
-            "start_date" => "10/07/2025",
-            "start_time" => "22:00",
-            "end_date" => nil,
-            "end_time" => nil,
-            "location" => "Largo das Palmeiras",
-            "description" => "Concerto noturno com local permitido mas hora não autorizada.",
-            "category" => "Música",
-            "organizer" => "Município",
-            "contact_email" => nil,
-            "contact_tel" => nil,
-            "price_type" => "Desconhecido",
-            "event_link1" => nil,
-            "event_link2" => nil,
-            "event_link3" => nil,
-            "event_link4" => nil,
-            "location_evidence" => "Largo das Palmeiras",
-            "location_source" => "banner",
-            "date_source" => "main_text",
-            "time_source" => "banner",
-            "price_source" => "none",
-            "review_reason" => "none",
-            "review_detail" => nil
-          },
-          {
-            "name" => "Concerto com Local e Hora do Texto Principal",
-            "start_date" => "12/07/2025",
-            "start_time" => "21:30",
-            "end_date" => nil,
-            "end_time" => nil,
-            "location" => "Largo das Palmeiras",
-            "description" => "Concerto com local do banner autorizado e hora no texto principal.",
-            "category" => "Música",
-            "organizer" => "Município",
-            "contact_email" => nil,
-            "contact_tel" => nil,
-            "price_type" => "Desconhecido",
-            "event_link1" => nil,
-            "event_link2" => nil,
-            "event_link3" => nil,
-            "event_link4" => nil,
-            "location_evidence" => "Largo das Palmeiras",
-            "location_source" => "banner",
-            "date_source" => "main_text",
-            "time_source" => "main_text",
-            "price_source" => "none",
-            "review_reason" => "none",
-            "review_detail" => nil
-          }
-        ]
-      }
-    ]
-    panel_meta = {
-      1 => {
-        id: 1,
-        title_hint: "Festas + Miniatura",
-        banner_policy: {
-          action: "mask_unverified_inset",
-          has_preserved_banner: true,
-          unverified_inset_masked: true,
-          allowed_fields: %w[location]
-        }
-      }
-    }
-
-    result = Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
-
-    assert_equal 1, result[:events].length
-    assert_equal "Concerto com Local e Hora do Texto Principal", result[:events].first[:name]
-    assert_equal 1, result[:review_items].length
-    assert_equal "unauthorized_banner_time", result[:review_items].first[:reason]
-    assert_equal "Concerto com Hora do Banner", result[:review_items].first.dig(:candidate, :name)
   end
 
   def test_admission_honors_panel_conflicting_main_text_and_illegible_flags_even_when_candidate_claims_ready
@@ -341,9 +231,8 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
         ]
       }
     ]
-    panel_meta = {1 => {id: 1, title_hint: "Golfe", banner_policy: {action: "mask", allowed_fields: []}}}
 
-    result = Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
+    result = Ocr::Admission.evaluate(panels_data, panel_ids: [1])
 
     assert_empty result[:events]
     assert_equal 1, result[:review_items].length
@@ -355,7 +244,7 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_equal "conflicting_main_text", item.dig(:trace, :panel_review_reason)
   end
 
-  def test_admission_blocks_banner_sources_on_monthly_panels_without_preserved_banner_and_allows_direct_banner_facts
+  def test_admission_allows_banner_facts_from_the_whole_source
     base_candidate = {
       "name" => "Concerto do Porto Santo",
       "start_date" => "10/07/2025",
@@ -382,20 +271,6 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
       "review_detail" => nil
     }
 
-    [
-      {action: "none", source_key: "date_source", expected_reason: "unauthorized_banner_date"},
-      {action: "mask", source_key: "time_source", expected_reason: "unauthorized_banner_time"},
-      {action: "mask_unverified_inset", source_key: "location_source", expected_reason: "unauthorized_banner_location"}
-    ].each do |scenario|
-      candidate = base_candidate.merge(scenario[:source_key] => "banner")
-      panels_data = [{"panel_id" => 1, "panel_review_reason" => "none", "panel_review_detail" => nil, "candidates" => [candidate]}]
-      panel_meta = {1 => {id: 1, title_hint: "Grupo", banner_policy: {action: scenario[:action], has_preserved_banner: false, allowed_fields: []}}}
-
-      result = Ocr::Admission.evaluate(panels_data, panel_meta: panel_meta)
-      assert_empty result[:events], "Expected #{scenario[:action]} + #{scenario[:source_key]}=banner to be blocked"
-      assert_equal scenario[:expected_reason], result[:review_items].first[:reason]
-    end
-
     direct_candidate = base_candidate.merge(
       "location_source" => "banner",
       "date_source" => "banner",
@@ -403,7 +278,7 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     )
     direct_result = Ocr::Admission.evaluate(
       [{"panel_id" => 1, "panel_review_reason" => "none", "panel_review_detail" => nil, "candidates" => [direct_candidate]}],
-      panel_meta: {1 => {id: 1, title_hint: "Direto", banner_policy: {action: "direct", allowed_fields: []}}}
+      panel_ids: [1]
     )
     assert_equal 1, direct_result[:events].length
     assert_empty direct_result[:review_items]
@@ -418,18 +293,17 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
       "location_evidence" => "CASA DO POVO DE NOSSA SENHORA DA PIEDADE", "location_source" => "additional_text",
       "date_source" => "main_text", "time_source" => "none", "price_source" => "none", "review_reason" => "none"
     }
-    meta = {2 => {title_hint: "Workshop e Oficina", banner_policy: {action: "direct"}}}
     %w[location_source date_source time_source price_source].each do |source|
       modified = candidate.merge("location_source" => "main_text", "price_type" => "Gratuito", source => "additional_text")
       sibling = candidate.merge("location_source" => "main_text")
       panels = [{"panel_id" => 2, "panel_review_reason" => "none", "candidates" => [modified, sibling]}]
       [nil, "", "  \n"].each do |text|
-        result = Ocr::Admission.evaluate(panels, panel_meta: meta, additional_text: text)
+        result = Ocr::Admission.evaluate(panels, panel_ids: [2], additional_text: text)
         assert_equal 1, result[:events].length
         assert_equal "unavailable_additional_text", result[:review_items].first[:reason]
         assert_equal "additional_text", result[:review_items].first.dig(:trace, source.to_sym)
       end
-      result = Ocr::Admission.evaluate(panels, panel_meta: meta, additional_text: "Informação fornecida")
+      result = Ocr::Admission.evaluate(panels, panel_ids: [2], additional_text: "Informação fornecida")
       assert_equal 2, result[:events].length
       assert_empty result[:review_items]
     end

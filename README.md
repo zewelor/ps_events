@@ -69,11 +69,8 @@ Run extraction without saving events:
 ```bash
 ./dockerized.sh ruby bin/ocr path/to/poster.jpg
 ./dockerized.sh ruby bin/ocr --workflow source --json path/to/poster.jpg
-./dockerized.sh ruby bin/ocr --workflow selected --json path/to/poster.jpg
 ./dockerized.sh ruby bin/ocr_benchmark --model gpt-6.1-terra --effort low \
   --repeat 3 --output tmp/ocr-results.json path/to/poster.jpg path/to/programme.jpg
-./dockerized.sh ruby bin/ocr_benchmark --workflow selected --cases test/fixtures/ocr/cases.json \
-  --repeat 3 --artifacts-dir tmp/ocr-selected-artifacts --output tmp/ocr-selected-results.json
 ./dockerized.sh ruby bin/ocr_benchmark --workflow source --cases test/fixtures/ocr/cases_v2.json \
   --repeat 1 --artifacts-dir tmp/ocr-source-artifacts --output tmp/ocr-source-results.json
 ```
@@ -87,8 +84,8 @@ proposal, not independently verified source truth. Use a new or empty artifact
 directory for each run; artifacts contain the exact input, request and response
 or request failure. PDF remains available through the default legacy workflow.
 
-`--workflow selected` retains the earlier staged workflow for comparison.
-Production `/events_ocr` does not use either experimental workflow. The benchmark
+Production `/events_ocr` uses legacy. The benchmark defaults to `source` with
+`--cases` and to `legacy` for positional inputs. The benchmark
 makes paid provider calls unless `--dry-run` or `--score-only` is used; it never
 uploads images to GitHub or writes spreadsheet rows. `cases.json` preserves the
 historical reference; `cases_v2.json` corrects source-role expectations without
@@ -96,7 +93,7 @@ rewriting historical measurements. The separate archived-image holdout has its
 own fixed reference and is not a full-resolution upload benchmark.
 `bin/llm_ocr_benchmark` is the older OpenCode Go experiment; its OpenAI-compatible
 endpoint and prices are unrelated to this official API comparison.
-See the [OCR notes](docs/ocr.md) for the selected workflow, measured limits,
+See the [OCR notes](docs/ocr.md) for measured limits,
 regression fixtures and benchmark instructions.
 
 An event may omit `organizer` or supply an empty string. A supplied name must

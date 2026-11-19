@@ -8,7 +8,6 @@ require "optparse"
 require "digest"
 require "fileutils"
 require_relative "../lib/server/event_ocr_service"
-require_relative "../lib/server/ocr/workflow"
 require_relative "../lib/server/ocr/source_workflow"
 require_relative "../lib/server/ocr/benchmark_scorer"
 
@@ -76,7 +75,7 @@ def run_legacy_benchmark(paths:, options:)
   end
 end
 
-def run_selected_benchmark(targets:, options:)
+def run_source_benchmark(targets:, options:)
   options[:repeat].times.flat_map do |run_idx|
     run_num = run_idx + 1
     targets.each_with_index.map do |target, target_idx|
@@ -85,22 +84,7 @@ def run_selected_benchmark(targets:, options:)
       artifact_name = case_id || "#{target_idx + 1}-#{File.basename(path, ".*")}"
       artifact_dir = options[:artifacts_dir] ? File.join(options[:artifacts_dir], "run-#{run_num}", artifact_name) : nil
 
-      workflow = if options[:workflow] == "source"
-        Ocr::SourceWorkflow.new(model: options[:model], reasoning_effort: options[:effort])
-      else
-        Ocr::Workflow.new(
-          model: options[:model],
-          reasoning_effort: options[:effort],
-          router_model: options[:router_model],
-          geometry_model: options[:geometry_model],
-          geometry_effort: options[:geometry_effort],
-          judge_model: options[:judge_model],
-          image_detail: options[:image_detail],
-          upscale: options[:upscale],
-          llm_recovery: :none,
-          request_timeout: 180
-        )
-      end
+      workflow = Ocr::SourceWorkflow.new(model: options[:model], reasoning_effort: options[:effort])
 
       row = {
         case_id: case_id,
@@ -157,16 +141,9 @@ def resolve_targets(options, argv_paths)
 end
 
 options = {
-  selected_flags: [],
   workflow: nil,
   model: EventOcrService::MODEL,
   effort: EventOcrService::REASONING_EFFORT.to_s,
-  router_model: Ocr::Workflow::DEFAULT_ROUTER_MODEL,
-  geometry_model: Ocr::Workflow::DEFAULT_GEOMETRY_MODEL,
-  geometry_effort: Ocr::Workflow::DEFAULT_GEOMETRY_EFFORT.to_s,
-  judge_model: Ocr::Workflow::DEFAULT_JUDGE_MODEL,
-  image_detail: nil,
-  upscale: nil,
   output: nil,
   repeat: 1,
   cases: nil,
@@ -180,33 +157,15 @@ options = {
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: ./dockerized.sh ruby bin/ocr_benchmark [options] [IMAGE ...]"
-  opts.on("--workflow MODE", %w[legacy selected source], "Workflow: legacy (direct EventOcrService) or selected (router + monthly/direct)") { |value| options[:workflow] = value }
+  opts.on("--workflow MODE", %w[legacy source], "OCR workflow: legacy (default with positional inputs) or source (default with --cases)") { |value| options[:workflow] = value }
   opts.on("--model MODEL", "Reader OpenAI or Gemini model ID (default: #{options[:model]})") { |value| options[:model] = value }
   opts.on("--effort EFFORT", "Reader reasoning effort (default: #{options[:effort]})") { |value| options[:effort] = value }
-  opts.on("--router-model MODEL", "Router Judge model (default: #{options[:router_model]})") { |value|
-    options[:router_model] = value
-    options[:selected_flags] << "--router-model"
-  }
-  opts.on("--geometry-model MODEL", "Monthly geometry model (default: #{options[:geometry_model]})") { |value|
-    options[:geometry_model] = value
-    options[:selected_flags] << "--geometry-model"
-  }
-  opts.on("--geometry-effort EFFORT", "Monthly geometry reasoning effort (default: #{options[:geometry_effort]})") { |value|
-    options[:geometry_effort] = value
-    options[:selected_flags] << "--geometry-effort"
-  }
-  opts.on("--judge-model MODEL", "Miniature Judge model (default: #{options[:judge_model]})") { |value|
-    options[:judge_model] = value
-    options[:selected_flags] << "--judge-model"
-  }
-  opts.on("--image-detail DETAIL", Ocr::Workflow::IMAGE_DETAILS, "Image detail level for selected workflow: auto, low, high, original (default)") { |value| options[:image_detail] = value }
-  opts.on("--[no-]upscale", "Scale reader inputs in selected workflow (default: --no-upscale)") { |value| options[:upscale] = value }
   opts.on("--cases PATH", "Score/run against cases.json fixture manifest") { |value| options[:cases] = value }
   opts.on("--case IDS", "Filter case IDs from --cases (comma-separated or repeatable)") { |value| options[:case_ids].concat(value.split(",").map(&:strip)) }
-  opts.on("--repeat COUNT", Integer, "Repeat every input with fresh router/geometry/judge/reader calls (default: 1)") { |value| options[:repeat] = value }
+  opts.on("--repeat COUNT", Integer, "Repeat every input with fresh reader calls (default: 1)") { |value| options[:repeat] = value }
   opts.on("--fallback-year YEAR", Integer, "Fallback year when source omits year (default: current year)") { |value| options[:fallback_year] = value }
   opts.on("--text TEXT", "Optional additional_text passed to OCR") { |value| options[:text] = value }
-  opts.on("--artifacts-dir DIR", "Persist intermediate and exact final reader input images per run") { |value| options[:artifacts_dir] = value }
+  opts.on("--artifacts-dir DIR", "Persist source inputs, requests and responses per run") { |value| options[:artifacts_dir] = value }
   opts.on("--output PATH", "Write full JSON results (and score report when --cases is set) to this file") { |value| options[:output] = value }
   opts.on("--score-only PATH", "Offline score an existing benchmark JSON output against --cases without API calls") { |value| options[:score_only] = value }
   opts.on("--dry-run", "Offline check inputs/hashes and print execution plan without making paid API calls") { options[:dry_run] = true }
@@ -226,45 +185,23 @@ if options[:score_only]
   exit 0
 end
 
-workflow_mode = options[:workflow] || (options[:cases] ? "selected" : "legacy")
-options[:workflow] = workflow_mode
-if workflow_mode == "source"
-  abort "#{options[:selected_flags].first} is only supported with --workflow selected" if options[:selected_flags].any?
-end
-if workflow_mode != "selected"
-  abort "--image-detail is only supported with --workflow selected" unless options[:image_detail].nil?
-  abort "--[no-]upscale is only supported with --workflow selected" unless options[:upscale].nil?
-end
-options[:image_detail] ||= Ocr::Workflow::DEFAULT_IMAGE_DETAIL
-effective_upscale = options[:upscale].nil? ? Ocr::Workflow::DEFAULT_UPSCALE : options[:upscale]
-options[:upscale] = effective_upscale
+workflow_mode = options[:workflow] || (options[:cases] ? "source" : "legacy")
 abort parser.to_s if options[:cases].nil? && ARGV.empty?
 abort "Repeat count must be positive" unless options[:repeat].positive?
 
 targets = resolve_targets(options, ARGV)
+reader = {reader: options[:model], reader_effort: options[:effort]}
 
 if options[:dry_run]
   plan = {
     dry_run: true,
     paid_api_calls: false,
     workflow: workflow_mode,
-    image_detail: if workflow_mode == "source"
-                    "original"
-                  else
-                    ((workflow_mode == "selected") ? options[:image_detail] : nil)
-                  end,
-    upscale: (workflow_mode == "selected") ? effective_upscale : nil,
+    image_detail: ("original" if workflow_mode == "source"),
     repeat: options[:repeat],
     fallback_year: options[:fallback_year],
     planned_runs: targets.length * options[:repeat],
-    models: (workflow_mode == "source") ? {reader: options[:model], reader_effort: options[:effort]} : {
-      router: options[:router_model],
-      geometry: options[:geometry_model],
-      geometry_effort: options[:geometry_effort],
-      judge: options[:judge_model],
-      reader: options[:model],
-      reader_effort: options[:effort]
-    },
+    models: reader,
     cases: targets.map do |target|
       {
         case_id: target[:case_id],
@@ -279,27 +216,15 @@ if options[:dry_run]
   exit 0
 end
 
-if %w[selected source].include?(workflow_mode)
-  runs = run_selected_benchmark(targets: targets, options: options)
+if workflow_mode == "source"
+  runs = run_source_benchmark(targets: targets, options: options)
   payload = {
     workflow: workflow_mode,
-    image_detail: if workflow_mode == "source"
-                    "original"
-                  else
-                    ((workflow_mode == "selected") ? options[:image_detail] : nil)
-                  end,
-    upscale: (workflow_mode == "selected") ? effective_upscale : nil,
+    image_detail: "original",
     cases_path: options[:cases],
     repeat: options[:repeat],
     fallback_year: options[:fallback_year],
-    models: (workflow_mode == "source") ? {reader: options[:model], reader_effort: options[:effort]} : {
-      router: options[:router_model],
-      geometry: options[:geometry_model],
-      geometry_effort: options[:geometry_effort],
-      judge: options[:judge_model],
-      reader: options[:model],
-      reader_effort: options[:effort]
-    },
+    models: reader,
     runs: runs
   }.compact
   if options[:cases]

@@ -29,15 +29,17 @@ class OcrCliTest < Minitest::Test
     assert_equal %w[reader reader_effort], plan.fetch("models").keys.sort
   end
 
-  def test_source_rejects_selected_only_options
-    _stdout, stderr, status = Open3.capture3("bundle", "exec", "ruby", BIN_OCR,
-      "--workflow", "source", "--router-model", "gpt-6-luna", FIXTURE_IMAGE)
-    refute status.success?
-    assert_includes stderr, "only supported with --workflow selected"
+  def test_removed_workflow_is_rejected_by_both_cli_entry_points
+    [BIN_OCR, BIN_BENCHMARK].each do |command|
+      _stdout, stderr, status = Open3.capture3("bundle", "exec", "ruby", command, "--workflow", "selected", "--help")
+
+      refute status.success?, command
+      assert_includes stderr, "invalid argument: --workflow selected"
+    end
   end
 
   def test_source_cli_reads_one_original_image
-    preload = write_offline_stub_preload(mode: :selected_direct)
+    preload = write_offline_stub_preload(mode: :source)
     artifacts = File.join(@dir, "artifacts")
     stdout, stderr, status = Open3.capture3({"OPENAI_API_KEY" => "offline-test-key"},
       "bundle", "exec", "ruby", "-r", preload, BIN_OCR, "--workflow", "source", "--json",
@@ -51,7 +53,7 @@ class OcrCliTest < Minitest::Test
   end
 
   def test_source_benchmark_continues_after_pdf_error
-    preload = write_offline_stub_preload(mode: :selected_direct)
+    preload = write_offline_stub_preload(mode: :source)
     pdf = File.join(@dir, "sample.pdf")
     File.write(pdf, "%PDF-1.4")
     output = File.join(@dir, "source-results.json")
@@ -64,36 +66,6 @@ class OcrCliTest < Minitest::Test
     assert_equal "init", runs[1].dig("error", "stage")
     assert_empty runs[1].fetch("calls")
     assert_equal ["reader"], runs[2].fetch("calls").map { |call| call.fetch("stage") }
-  end
-
-  def test_bin_ocr_selected_workflow_rejects_pdf_pointing_to_legacy_path
-    pdf_path = File.join(@dir, "sample.pdf")
-    File.write(pdf_path, "%PDF-1.4")
-
-    stdout, stderr, status = Open3.capture3("bundle", "exec", "ruby", BIN_OCR, "--workflow", "selected", pdf_path)
-
-    refute status.success?
-    combined = stdout + stderr
-    assert_includes combined, "PDF"
-    assert_includes combined, "EventOcrService"
-  end
-
-  def test_bin_ocr_selected_workflow_outputs_detailed_json_with_stubbed_network
-    preload = write_offline_stub_preload(mode: :selected_direct)
-    stdout, stderr, status = Open3.capture3(
-      {"OPENAI_API_KEY" => "offline-test-key"},
-      "bundle", "exec", "ruby", "-r", preload, BIN_OCR,
-      "--workflow", "selected", "--text", "Entrada gratuita.", "--fallback-year", "2027", "--json", FIXTURE_IMAGE
-    )
-
-    assert status.success?, "stderr: #{stderr}\nstdout: #{stdout}"
-    parsed = JSON.parse(stdout)
-    assert_equal "direct_ocr", parsed["route"]
-    assert_equal 2027, parsed["fallback_year"]
-    assert_equal 1, parsed["events"].length
-    assert_equal [], parsed["review_items"]
-    assert parsed.dig("hashes", "source_sha256")
-    assert parsed.dig("timing", "total_seconds")
   end
 
   def test_bin_ocr_legacy_gemini_override_does_not_require_openai_key
@@ -121,33 +93,6 @@ class OcrCliTest < Minitest::Test
     assert_includes stderr, "Retry attempt"
   end
 
-  def test_selected_benchmark_preserves_results_and_continues_after_unsupported_pdf
-    pdf_path = File.join(@dir, "sample.pdf")
-    File.write(pdf_path, "%PDF-1.4")
-    preload = write_offline_stub_preload(mode: :selected_direct)
-    output_path = File.join(@dir, "results.json")
-    stdout, stderr, status = Open3.capture3(
-      {"OPENAI_API_KEY" => "offline-test-key"},
-      "bundle", "exec", "ruby", "-r", preload, BIN_BENCHMARK,
-      "--workflow", "selected", "--output", output_path, FIXTURE_IMAGE, pdf_path, FIXTURE_IMAGE
-    )
-
-    assert_equal 1, status.exitstatus
-    assert File.file?(output_path), "stderr: #{stderr}\nstdout: #{stdout}"
-    runs = JSON.parse(File.read(output_path)).fetch("runs")
-    assert_equal 3, runs.length
-    [runs.first, runs.last].each do |run|
-      assert_equal 1, run.fetch("events").length
-      refute run.key?("error")
-    end
-    failed = runs[1]
-    assert_equal "ArgumentError", failed.dig("error", "type")
-    assert_includes failed.dig("error", "message"), "does not support PDF"
-    assert_equal "init", failed.dig("error", "stage")
-    assert_empty failed.fetch("calls")
-    assert_empty failed.dig("timing", "stages")
-  end
-
   def test_benchmark_keeps_distinct_artifacts_for_inputs_with_the_same_basename
     images = %w[first second].map do |folder|
       directory = File.join(@dir, folder)
@@ -158,22 +103,22 @@ class OcrCliTest < Minitest::Test
     end
     _stdout, stderr, status = Open3.capture3("convert", images.last, "-negate", images.last)
     assert status.success?, stderr
-    preload = write_offline_stub_preload(mode: :selected_direct)
+    preload = write_offline_stub_preload(mode: :source)
     output_path = File.join(@dir, "artifacts_results.json")
     stdout, stderr, status = Open3.capture3(
       {"OPENAI_API_KEY" => "offline-test-key"},
       "bundle", "exec", "ruby", "-r", preload, BIN_BENCHMARK,
-      "--workflow", "selected", "--artifacts-dir", File.join(@dir, "artifacts"),
+      "--workflow", "source", "--artifacts-dir", File.join(@dir, "artifacts"),
       "--output", output_path, *images, images.first
     )
 
     assert status.success?, "stderr: #{stderr}\nstdout: #{stdout}"
     runs = JSON.parse(File.read(output_path)).fetch("runs")
-    reader_inputs = runs.map { |run| run.dig("hashes", "reader_inputs", 0) }
-    assert_equal 3, reader_inputs.map { |input| input.fetch("path") }.uniq.length
-    assert_equal 2, reader_inputs.map { |input| input.fetch("sha256") }.uniq.length
-    reader_inputs.each do |input|
-      assert_equal input.fetch("sha256"), Digest::SHA256.file(input.fetch("path")).hexdigest
+    artifacts = runs.map { |run| File.join(run.dig("diagnostics", "artifact_dir"), "source.png") }
+    assert_equal 3, artifacts.uniq.length
+    assert_equal 2, runs.map { |run| run.dig("hashes", "source_sha256") }.uniq.length
+    runs.zip(artifacts).each do |run, artifact|
+      assert_equal run.dig("hashes", "source_sha256"), Digest::SHA256.file(artifact).hexdigest
     end
   end
 
@@ -182,74 +127,18 @@ class OcrCliTest < Minitest::Test
     stdout, stderr, status = Open3.capture3(
       {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
       "bundle", "exec", "ruby", BIN_BENCHMARK,
-      "--workflow", "selected", "--cases", CASES_PATH, "--repeat", "3",
-      "--image-detail", "original", "--output", nested_plan, "--dry-run"
+      "--cases", CASES_PATH, "--repeat", "3", "--output", nested_plan, "--dry-run"
     )
 
     assert status.success?, "stderr: #{stderr}\nstdout: #{stdout}"
     assert File.file?(nested_plan)
     parsed = JSON.parse(File.read(nested_plan))
     assert_equal true, parsed["dry_run"]
-    assert_equal "selected", parsed["workflow"]
+    assert_equal "source", parsed["workflow"]
     assert_equal "original", parsed["image_detail"]
-    assert_equal false, parsed["upscale"]
     assert_equal 3, parsed["repeat"]
     assert_equal 10, parsed["cases"].length
     assert_equal 30, parsed["planned_runs"]
-  end
-
-  def test_no_upscale_option_dry_run_selected_run_and_legacy_rejection
-    _stdout, stderr_ocr, status_ocr = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_OCR, "--no-upscale", FIXTURE_IMAGE
-    )
-    refute status_ocr.success?
-    assert_includes stderr_ocr, "selected"
-
-    _stdout, stderr_bench, status_bench = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_BENCHMARK, "--no-upscale", FIXTURE_IMAGE
-    )
-    refute status_bench.success?
-    assert_includes stderr_bench, "selected"
-
-    plan_path = File.join(@dir, "plan_no_upscale.json")
-    stdout_plan, stderr_plan, status_plan = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_BENCHMARK,
-      "--workflow", "selected", "--cases", CASES_PATH, "--no-upscale", "--image-detail", "original", "--output", plan_path, "--dry-run"
-    )
-    assert status_plan.success?, "stderr: #{stderr_plan}\nstdout: #{stdout_plan}"
-    plan = JSON.parse(File.read(plan_path))
-    assert_equal false, plan["upscale"]
-    assert_equal "original", plan["image_detail"]
-
-    preload = write_offline_stub_preload(mode: :selected_direct)
-    output_path = File.join(@dir, "no_upscale_results.json")
-    artifacts_dir = File.join(@dir, "no_upscale_artifacts")
-    stdout_run, stderr_run, status_run = Open3.capture3(
-      {"OPENAI_API_KEY" => "offline-test-key"},
-      "bundle", "exec", "ruby", "-r", preload, BIN_BENCHMARK,
-      "--workflow", "selected", "--cases", CASES_PATH, "--case", "reading_club_control",
-      "--no-upscale", "--image-detail", "original", "--artifacts-dir", artifacts_dir, "--output", output_path
-    )
-    assert status_run.success?, "stderr: #{stderr_run}\nstdout: #{stdout_run}"
-    report = JSON.parse(File.read(output_path))
-    assert_equal false, report["upscale"]
-    assert_equal "original", report["image_detail"]
-    run = report["runs"].first
-    assert_equal false, run["upscale"]
-    assert_equal "original", run["image_detail"]
-
-    stdout_cli, stderr_cli, status_cli = Open3.capture3(
-      {"OPENAI_API_KEY" => "offline-test-key"},
-      "bundle", "exec", "ruby", "-r", preload, BIN_OCR,
-      "--workflow", "selected", "--no-upscale", "--image-detail", "original", "--json", FIXTURE_IMAGE
-    )
-    assert status_cli.success?, "stderr: #{stderr_cli}\nstdout: #{stdout_cli}"
-    cli_json = JSON.parse(stdout_cli)
-    assert_equal false, cli_json["upscale"]
-    assert_equal "original", cli_json["image_detail"]
   end
 
   def test_benchmark_score_only_scores_saved_runs_offline_and_creates_nested_output_dir
@@ -291,51 +180,28 @@ class OcrCliTest < Minitest::Test
     assert_equal 0, report.dig("aggregates", "unmatched_extra_count")
   end
 
-  def test_image_detail_rejects_legacy_mode_and_invalid_values_without_http
-    _stdout, stderr_ocr, status_ocr = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_OCR, "--image-detail", "original", FIXTURE_IMAGE
-    )
-    refute status_ocr.success?
-    assert_includes stderr_ocr, "selected"
-
-    _stdout, stderr_bench, status_bench = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_BENCHMARK, "--image-detail", "original", FIXTURE_IMAGE
-    )
-    refute status_bench.success?
-    assert_includes stderr_bench, "selected"
-
-    _stdout, _stderr_invalid, status_invalid = Open3.capture3(
-      {"OPENAI_API_KEY" => nil, "GEMINI_API_KEY" => nil},
-      "bundle", "exec", "ruby", BIN_BENCHMARK, "--workflow", "selected", "--image-detail", "bogus", "--cases", CASES_PATH, "--dry-run"
-    )
-    refute status_invalid.success?
-  end
-
-  def test_benchmark_selected_workflow_runs_repeats_persists_artifacts_and_scores_cases
-    preload = write_offline_stub_preload(mode: :selected_direct)
+  def test_source_benchmark_runs_repeats_persists_artifacts_and_scores_cases
+    preload = write_offline_stub_preload(mode: :source)
     output_path = File.join(@dir, "results.json")
     artifacts_dir = File.join(@dir, "artifacts")
 
     stdout, stderr, status = Open3.capture3(
       {"OPENAI_API_KEY" => "offline-test-key"},
       "bundle", "exec", "ruby", "-r", preload, BIN_BENCHMARK,
-      "--workflow", "selected", "--cases", CASES_PATH, "--case", "reading_club_control",
-      "--repeat", "2", "--image-detail", "original", "--artifacts-dir", artifacts_dir, "--output", output_path
+      "--workflow", "source", "--cases", CASES_PATH, "--case", "reading_club_control",
+      "--repeat", "2", "--artifacts-dir", artifacts_dir, "--output", output_path
     )
 
     assert status.success?, "stderr: #{stderr}\nstdout: #{stdout}"
     report = JSON.parse(File.read(output_path))
-    assert_equal "selected", report["workflow"]
+    assert_equal "source", report["workflow"]
     assert_equal "original", report["image_detail"]
     assert_equal 2, report["runs"].length
     assert_equal 2, report.dig("score", "aggregates", "matched_occurrences")
     report["runs"].each do |run|
       assert_equal "original", run["image_detail"]
-      reader_inputs = run.dig("hashes", "reader_inputs")
-      assert_equal 1, reader_inputs.length
-      assert File.exist?(reader_inputs.first["path"])
+      assert_equal ["reader"], run.fetch("calls").map { |call| call.fetch("stage") }
+      assert File.file?(File.join(run.dig("diagnostics", "artifact_dir"), "source.jpg"))
     end
   end
 
@@ -392,19 +258,7 @@ class OcrCliTest < Minitest::Test
       WebMock.enable!
       WebMock.disable_net_connect!(allow_localhost: true)
 
-      if "#{mode}" == "selected_direct"
-        WebMock.stub_request(:post, "https://api.openai.com/v1/decisions").to_return(
-          status: 200,
-          headers: {"Content-Type" => "application/json"},
-          body: JSON.generate(
-            model: "gpt-6-luna",
-            answers: [
-              {name: "kind", choice: "other", probabilities: [{value: "other", probability: 1.0}], confidence: 1.0},
-              {name: "month", choice: "uncertain", probabilities: [{value: "uncertain", probability: 1.0}], confidence: 1.0}
-            ],
-            usage: {input_tokens: 100, output_tokens: 10}
-          )
-        )
+      if "#{mode}" == "source"
         candidate = {
           name: "Clube de Leitura — Livros que inspiram",
           start_date: "14/11/2026",

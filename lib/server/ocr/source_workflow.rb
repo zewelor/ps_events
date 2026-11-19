@@ -11,6 +11,8 @@ require_relative "schemas"
 
 module Ocr
   class SourceWorkflow
+    PANEL_IDS = [1].freeze
+
     def self.call(path, **options)
       analyze_options = options.slice(:additional_text, :fallback_year, :artifact_dir)
       new(**options.except(:additional_text, :fallback_year, :artifact_dir)).analyze(path, **analyze_options)
@@ -54,9 +56,9 @@ module Ocr
 
       @hashes[:source_sha256] = Digest::SHA256.hexdigest(bytes)
       year = Integer(fallback_year)
-      schema = Schemas.reader_schema([1], additional_text: additional_text)
-      instructions = Prompts.reader_instructions(route: "whole_source", fallback_year: year)
-      prompt = Prompts.build_reader_prompt(route: "whole_source", heading: nil, panel_ids: [1], additional_text: additional_text)
+      schema = Schemas.reader_schema(PANEL_IDS, additional_text: additional_text)
+      instructions = Prompts.reader_instructions(fallback_year: year)
+      prompt = Prompts.build_reader_prompt(panel_ids: PANEL_IDS, additional_text: additional_text)
       @hashes[:reader_prompt_sha256] = Digest::SHA256.hexdigest(instructions)
       @hashes[:reader_request_sha256] = Digest::SHA256.hexdigest(prompt)
       @hashes[:reader_schema_sha256] = Digest::SHA256.hexdigest(JSON.generate(schema))
@@ -97,7 +99,7 @@ module Ocr
       raise WorkflowError.new("Formato de resposta OCR inválido: #{errors.join("; ")}", stage: :reader, details: errors) unless errors.empty?
 
       @stage = "admission"
-      admitted = Admission.evaluate(parsed.fetch("panels"), panel_meta: {1 => {banner_policy: {action: "direct"}}}, additional_text: additional_text)
+      admitted = Admission.evaluate(parsed.fetch("panels"), panel_ids: PANEL_IDS, additional_text: additional_text)
       {route: "whole_source", fallback_year: year, events: admitted[:events], review_items: admitted[:review_items], diagnostics: {panels: admitted[:panels], artifact_dir: artifact_dir}}.merge(run_evidence)
     end
 

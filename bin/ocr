@@ -10,47 +10,26 @@ require "optparse"
 require "pp"
 require "ruby_llm"
 require_relative "../lib/server/event_ocr_service"
-require_relative "../lib/server/ocr/workflow"
 require_relative "../lib/server/ocr/source_workflow"
 
 options = {
-  selected_flags: [],
   workflow: "legacy",
   text: nil,
   fallback_year: Time.now.year,
   model: nil,
   effort: nil,
-  router_model: Ocr::Workflow::DEFAULT_ROUTER_MODEL,
-  geometry_model: Ocr::Workflow::DEFAULT_GEOMETRY_MODEL,
-  judge_model: Ocr::Workflow::DEFAULT_JUDGE_MODEL,
-  image_detail: nil,
-  upscale: nil,
   artifacts_dir: nil,
   json: false
 }
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options] <file_path>"
-  opts.on("--workflow MODE", %w[legacy selected source], "OCR workflow: legacy (default, supports PDF), source (whole image), selected (crops)") { |value| options[:workflow] = value }
+  opts.on("--workflow MODE", %w[legacy source], "OCR workflow: legacy (default, supports PDF) or source (whole image)") { |value| options[:workflow] = value }
   opts.on("--text TEXT", "--additional-text TEXT", "Additional event context supplied by the operator") { |value| options[:text] = value }
   opts.on("--fallback-year YEAR", Integer, "Fallback year when source omits year (default: current year)") { |value| options[:fallback_year] = value }
   opts.on("--model MODEL", "Reader model ID override") { |value| options[:model] = value }
   opts.on("--effort EFFORT", "Reader reasoning effort override") { |value| options[:effort] = value }
-  opts.on("--router-model MODEL", "Router Judge model (selected workflow)") { |value|
-    options[:router_model] = value
-    options[:selected_flags] << "--router-model"
-  }
-  opts.on("--geometry-model MODEL", "Monthly geometry model (selected workflow)") { |value|
-    options[:geometry_model] = value
-    options[:selected_flags] << "--geometry-model"
-  }
-  opts.on("--judge-model MODEL", "Monthly miniature Judge model (selected workflow)") { |value|
-    options[:judge_model] = value
-    options[:selected_flags] << "--judge-model"
-  }
-  opts.on("--image-detail DETAIL", Ocr::Workflow::IMAGE_DETAILS, "Image detail level for selected workflow: auto, low, high, original (default)") { |value| options[:image_detail] = value }
-  opts.on("--[no-]upscale", "Scale reader inputs in selected workflow (default: --no-upscale)") { |value| options[:upscale] = value }
-  opts.on("--artifacts-dir DIR", "Artifact directory for selected/source; must be empty for source") { |value| options[:artifacts_dir] = value }
+  opts.on("--artifacts-dir DIR", "New or empty artifact directory for the source workflow") { |value| options[:artifacts_dir] = value }
   opts.on("--json", "Print machine-readable JSON output") { options[:json] = true }
 end
 
@@ -62,17 +41,11 @@ rescue OptionParser::ParseError => e
   exit 1
 end
 
-if options[:workflow] != "selected"
-  abort "#{options[:selected_flags].first} is only supported with --workflow selected" if options[:workflow] == "source" && options[:selected_flags].any?
-  abort "--image-detail is only supported with --workflow selected" unless options[:image_detail].nil?
-  abort "--[no-]upscale is only supported with --workflow selected" unless options[:upscale].nil?
-end
-
 if ARGV.length != 1
   puts "Usage: #{$0} [options] <file_path>"
   puts "Example image: #{$0} ./my_image.jpg"
   puts "Example PDF: #{$0} /tmp/my_events.pdf"
-  puts "Example selected workflow: #{$0} --workflow selected --json ./my_image.jpg"
+  puts "Example source workflow: #{$0} --workflow source --json ./my_image.jpg"
   exit 1
 end
 
@@ -90,32 +63,6 @@ begin
     workflow_options[:reasoning_effort] = options[:effort] if options[:effort]
     result = Ocr::SourceWorkflow.call(input_path, additional_text: options[:text], fallback_year: options[:fallback_year], artifact_dir: options[:artifacts_dir], **workflow_options)
     puts(options[:json] ? JSON.pretty_generate(result) : result.pretty_inspect)
-  elsif options[:workflow] == "selected"
-    workflow_options = {
-      router_model: options[:router_model],
-      geometry_model: options[:geometry_model],
-      judge_model: options[:judge_model],
-      image_detail: options[:image_detail] || Ocr::Workflow::DEFAULT_IMAGE_DETAIL,
-      upscale: options[:upscale].nil? ? Ocr::Workflow::DEFAULT_UPSCALE : options[:upscale]
-    }
-    workflow_options[:model] = options[:model] if options[:model]
-    workflow_options[:reasoning_effort] = options[:effort] if options[:effort]
-
-    result = Ocr::Workflow.call(
-      input_path,
-      additional_text: options[:text],
-      fallback_year: options[:fallback_year],
-      artifact_dir: options[:artifacts_dir],
-      **workflow_options
-    )
-    if options[:json]
-      puts JSON.pretty_generate(result)
-    else
-      puts "Analyzing file: #{input_path} (workflow: selected, route: #{result[:route]})"
-      puts "=" * 50
-      pp result
-      puts "=" * 50
-    end
   else
     service_options = {}
     service_options[:model] = options[:model] if options[:model]

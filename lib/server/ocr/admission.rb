@@ -17,29 +17,16 @@ module Ocr
     end
   end
 
-  class GeometryError < WorkflowError
-    def initialize(message, panel_id: nil, details: nil)
-      super(message, stage: :geometry, panel_id: panel_id, details: details)
-    end
-  end
-
-  class CropError < WorkflowError
-    def initialize(message, panel_id: nil, details: nil)
-      super(message, stage: :crop, panel_id: panel_id, details: details)
-    end
-  end
-
   module Admission
     EVENT_KEYS = (EventValidation::SCHEMA.fetch("properties").keys - ["responsibility_agreement"]).freeze
-    EVENT_SYMBOL_KEYS = EVENT_KEYS.map(&:to_sym).freeze
     REQUIRED_FIELDS = (EventValidation::SCHEMA.fetch("required") - ["responsibility_agreement"]).map(&:to_sym).freeze
     NON_VENUE_SOURCES = %w[organizer_only booking_only sponsor_only inset none].freeze
     VALID_PANEL_REVIEW_REASONS = %w[none illegible_panel conflicting_main_text insufficient_information].freeze
 
     module_function
 
-    def evaluate(panels_data, panel_meta:, additional_text: nil)
-      validate_panel_coverage!(panels_data, panel_meta)
+    def evaluate(panels_data, panel_ids:, additional_text: nil)
+      validate_panel_coverage!(panels_data, panel_ids)
 
       events = []
       review_items = []
@@ -47,9 +34,6 @@ module Ocr
 
       panels_data.each do |panel|
         panel_id = panel.fetch("panel_id")
-        meta = panel_meta.fetch(panel_id)
-        banner_policy = meta[:banner_policy] || {}
-        title_hint = meta[:title_hint]
         panel_reason = panel.fetch("panel_review_reason")
         panel_detail = Places.clean_visible_text(panel["panel_review_detail"])
         candidates = panel.fetch("candidates")
@@ -62,8 +46,6 @@ module Ocr
             raw_candidate,
             panel_id: panel_id,
             candidate_index: idx + 1,
-            title_hint: title_hint,
-            banner_policy: banner_policy,
             panel_reason: panel_reason,
             panel_detail: panel_detail,
             additional_text: additional_text
@@ -77,17 +59,14 @@ module Ocr
           end
         end
 
-        if candidates.empty? && (panel_reason != "none" || banner_policy[:unverified_inset_masked])
-          effective_reason = (panel_reason == "none") ? "insufficient_information" : panel_reason
+        if candidates.empty? && panel_reason != "none"
           review_items << {
             stage: "admission",
             group_id: panel_id,
-            title_hint: title_hint,
-            reason: effective_reason,
-            message: panel_detail || banner_policy[:note],
+            reason: panel_reason,
+            message: panel_detail,
             candidate: nil,
             trace: {
-              banner_policy: banner_policy.slice(:action, :original_judge_action, :has_preserved_banner, :allowed_fields),
               verified: false
             }
           }
@@ -96,7 +75,6 @@ module Ocr
 
         panel_summaries << {
           panel_id: panel_id,
-          title_hint: title_hint,
           ready_count: panel_ready,
           review_count: panel_reviewed,
           panel_review_reason: panel_reason
@@ -106,12 +84,12 @@ module Ocr
       {events: events, review_items: review_items, panels: panel_summaries}
     end
 
-    def validate_panel_coverage!(panels_data, panel_meta)
+    def validate_panel_coverage!(panels_data, panel_ids)
       unless panels_data.is_a?(Array)
         raise WorkflowError.new("Formato de resposta OCR inválido: panels deve ser uma lista", stage: :reader)
       end
 
-      expected_ids = panel_meta.keys.sort
+      expected_ids = panel_ids.sort
       actual_ids = panels_data.map do |panel|
         unless panel.is_a?(Hash) && panel["candidates"].is_a?(Array) && VALID_PANEL_REVIEW_REASONS.include?(panel["panel_review_reason"])
           raise WorkflowError.new("Formato de resposta OCR inválido num painel", stage: :reader, details: panel)
@@ -128,7 +106,7 @@ module Ocr
       )
     end
 
-    def evaluate_candidate(raw, panel_id:, candidate_index:, title_hint:, banner_policy:, panel_reason: "none", panel_detail: nil, additional_text: nil)
+    def evaluate_candidate(raw, panel_id:, candidate_index:, panel_reason:, panel_detail:, additional_text:)
       unless raw.is_a?(Hash)
         raise WorkflowError.new("Candidato inválido no painel #{panel_id}", stage: :reader, panel_id: panel_id)
       end
@@ -158,7 +136,6 @@ module Ocr
         time_source: time_source,
         price_source: price_source,
         review_reason: review_reason,
-        banner_policy: banner_policy,
         panel_reason: panel_reason,
         additional_text: additional_text
       )
@@ -178,7 +155,6 @@ module Ocr
             stage: "admission",
             group_id: panel_id,
             candidate_index: candidate_index,
-            title_hint: title_hint,
             reason: block_reason,
             message: combined_message.empty? ? nil : combined_message,
             candidate: candidate,
@@ -190,7 +166,6 @@ module Ocr
               price_source: price_source,
               panel_review_reason: panel_reason,
               panel_review_detail: panel_detail,
-              banner_policy: banner_policy.slice(:action, :original_judge_action, :has_preserved_banner, :allowed_fields),
               verified: false
             }
           }
@@ -221,24 +196,13 @@ module Ocr
       end
     end
 
-    def determine_block_reason(candidate:, canonical_location:, location_evidence:, location_source:, date_source:, time_source:, price_source:, review_reason:, banner_policy:, panel_reason: "none", additional_text: nil)
+    def determine_block_reason(candidate:, canonical_location:, location_evidence:, location_source:, date_source:, time_source:, price_source:, review_reason:, panel_reason:, additional_text:)
       return "unavailable_additional_text" if additional_text.blank? && [location_source, date_source, time_source, price_source].include?("additional_text")
       return review_reason if review_reason != "none" && !review_reason.empty?
       return "conflicting_inset" if date_source == "inset" || time_source == "inset"
 
-      allowed = Array(banner_policy[:allowed_fields]).map(&:to_s)
-      restrict_banner_sources = banner_policy[:action].to_s != "direct" || banner_policy[:has_preserved_banner]
-      if restrict_banner_sources
-        return "unauthorized_banner_date" if date_source == "banner" && !allowed.include?("date")
-        return "unauthorized_banner_time" if time_source == "banner" && !allowed.include?("time")
-      end
-
       return "missing_start_date" if candidate[:start_date].nil?
       return "missing_location" if canonical_location.nil? || location_evidence.nil? || NON_VENUE_SOURCES.include?(location_source)
-
-      if restrict_banner_sources
-        return "unauthorized_banner_location" if location_source == "banner" && !allowed.include?("location")
-      end
 
       missing_required = REQUIRED_FIELDS.any? { |field| candidate[field].nil? }
       return "missing_required_fields" if missing_required

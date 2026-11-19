@@ -1,5 +1,13 @@
 # OCR — diagnoza, architektura i selektywny plan ulepszeń
 
+## Wycofanie `selected` — 19 listopada 2026
+
+CLI i benchmark obsługują `legacy` i `source`. Usunięto eksperymentalny
+`selected` wraz z routerem, geometrią, kadrowaniem, maskowaniem i Judge
+miniatur. Benchmark z `--cases` domyślnie wybiera `source`. Polecenie
+`--score-only` nadal ocenia zapisane wyniki `selected` na historycznej referencji.
+API używa `legacy`. Integracja `source` z API pozostaje w zakresie MCA-173.
+
 ## Aktualny wynik: prosty odczyt źródła — 15 listopada 2026
 
 Wdrożono **lokalny, jawnie wybierany `--workflow source`**: jeden pełny obraz,
@@ -7,8 +15,7 @@ jeden reader, walidacja kanonicznego kontraktu i `review_items`. Bez routera,
 geometrii, maskowania, Judge, końcowego verifiera ani automatycznych ponowień.
 Nadal powstają osobne rekordy wydarzeń; **nie wycinamy ich obrazów**.
 `source` nie jest podłączony do API ani zapisu arkusza. Domyślne `legacy`
-i jego obsługa PDF pozostają; `selected` zachowano do porównania, do wycofania
-po odbiorze zamiennika. Nie należy dalej rozbudowywać jego wyjątków.
+obsługuje PDF. Wyniki `selected` poniżej dokumentują wcześniejsze pomiary.
 
 ```sh
 ./dockerized.sh bundle exec ruby bin/ocr --workflow source --effort medium \
@@ -98,9 +105,8 @@ sprawdza kontrakt i deklaracje, nie prawdziwość faktów. Następna mała paczk
 uściślić rolę opcjonalnego organizatora oraz dwie daty versus ciągły zakres,
 zachować ujawnione błędy jako regresje; ocenić na kolejnym zamrożonym zestawie.
 Nie stroić promptu i ponownie nazywać tych samych 10 obrazów holdoutem.
-Dopiero później integracja API z jawnym review i E2E granicy zapisu oraz usunięcie
-starej geometrii/Judge. MCA-173/174 pozostają otwarte; MCA-175/176 nie naprawiono
-ani nie zamknięto przez zmianę kryteriów.
+Dopiero później integracja API z jawnym review i E2E granicy zapisu.
+MCA-173/174 pozostają otwarte. MCA-175/176 dotyczą wycofanego `selected`.
 
 ### Odbiór kodu i materiały
 
@@ -139,14 +145,11 @@ Terra wynosi $0.01477 + 10 × $0.00508 ≈ **$0.066**. Nie zmierzono jeszcze
 tego pełnego zestawu kroków razem; koszt zależy od obrazu i długości odpowiedzi.
 [Rozbicie po źródłach](../tmp/ocr-final-verifier-review/cost-per-source.json).
 
-**Stan kadrowania:** eksperyment pełnego oryginału nie wycina wydarzeń; reader
-sam zwraca oddzielne rekordy. Dotychczasowy `--workflow selected` nadal wycina
-grupy miesięcznej agendy i ocenia miniatury. Ten kod nie został jeszcze
-usunięty. Domyślna lokalna ścieżka API/CLI (`legacy`) nie używa geometrii ani
-tych wycinków, lecz ma własne przygotowanie obrazu i prompt. Uproszczony
-eksperyment nie jest więc już wdrożonym zamiennikiem całego runtime.
+**Kadrowanie w porównaniu:** reader pełnego oryginału sam zwracał oddzielne
+rekordy. Eksperymentalny `selected` wycinał grupy miesięcznej agendy i oceniał
+miniatury. Domyślne `legacy` ma własne przygotowanie całego obrazu i prompt.
 
-Kolejność następnej pracy:
+Plan przyjęty na etapie tego porównania:
 
 1. Mały test **Gemini 4 Hydrogen jako readera pełnego oryginału**, potem Terra
    jako porównanie lub jawne zastępstwo po awarii. Bez automatycznej kaskady
@@ -366,7 +369,7 @@ MCA-175/176 pozostają otwarte; priorytet ma MCA-174 i wspólny kontrakt źróde
 
 ---
 
-Stan wdrożenia na 15 listopada 2026; pomiary historyczne opisano z datami. To jeden utrzymywany dokument OCR. Poniżej opisano architekturę oraz stan wdrożenia selektywnego workflow P0–P3 w CLI i benchmarku (`Ocr::Workflow`, `bin/ocr --workflow selected`, `bin/ocr_benchmark --workflow selected`). **Ingestia produkcyjna (`POST /events_ocr` / `EventOcrService.call`) pozostaje na dotychczasowej ścieżce bezpośredniej** do czasu jawnej obsługi `review_items` przez API i klienta. Testy jednostkowe i E2E działają offline na zamockowanych granicach modeli. Po podniesieniu limitu OpenAI wykonano również 120 rzeczywistych przebiegów całego workflow; wynik poniżej nie spełnia jeszcze kryterium pokrycia.
+Poniższe pomiary historyczne obejmują eksperymentalny workflow P0–P3 w CLI i benchmarku. Testy jednostkowe i E2E działały offline na zamockowanych granicach modeli. Po podniesieniu limitu OpenAI wykonano również 120 rzeczywistych przebiegów całego workflow. Wynik nie spełnił ówczesnego kryterium pokrycia.
 
 ## Aktualny kontrakt — 15 listopada 2026
 
@@ -643,44 +646,25 @@ Oryginalne bajty 10 JPEG-ów, hashe, wybrane fakty i pominięcia są w [cases.js
 
 Palmito używa `{fallback_year}` z kontekstu analizy. CLI przyjmuje `--fallback-year 2026`; domyślnie jest to rok z zegara systemowego. Wartość uzupełnia wyłącznie brakujący rok, nie zastępuje roku podanego w źródle. Daty należy sprawdzać także przy innym roku zastępczym.
 
-Obecny benchmark, manualny i płatny:
+Benchmark odczytu całego obrazu z zapisem artefaktów:
 
 ```bash
-# Wybrany workflow (P0–P3) na pełnych 10 fixture'ach x 3 świeże przebiegi z artefaktami:
-./dockerized.sh ruby bin/ocr_benchmark --workflow selected \
-  --cases test/fixtures/ocr/cases.json --repeat 3 \
-  --artifacts-dir tmp/ocr-selected-artifacts \
-  --output tmp/ocr-selected-results.json
+./dockerized.sh ruby bin/ocr_benchmark --workflow source \
+  --cases test/fixtures/ocr/cases_v2.json --repeat 3 \
+  --artifacts-dir tmp/ocr-source-artifacts --output tmp/ocr-source-results.json
 
-# Macierz 4 wariantów wybranego workflow (upscale x image-detail):
-for upscale_flag in --upscale --no-upscale; do
-  for detail in auto original; do
-    tag="${upscale_flag#--}-${detail}"
-    ./dockerized.sh ruby bin/ocr_benchmark --workflow selected \
-      --cases test/fixtures/ocr/cases.json --repeat 3 \
-      "${upscale_flag}" --image-detail "${detail}" \
-      --artifacts-dir "tmp/ocr-selected-artifacts-${tag}" \
-      --output "tmp/ocr-selected-${tag}-results.json"
-  done
-done
-
-# Wariant legacy bezpośredni (zachowany dla porównania / PDF / Gemini):
-./dockerized.sh ruby bin/ocr_benchmark --model gpt-6.1-terra --effort low \
+./dockerized.sh ruby bin/ocr_benchmark --workflow legacy --model gpt-6.1-terra --effort low \
   --repeat 3 --output tmp/ocr-regression-results.json test/fixtures/ocr/images/*
 
-# Tryby offline bez wywołań płatnych modeli:
-./dockerized.sh ruby bin/ocr_benchmark --workflow selected --cases test/fixtures/ocr/cases.json --repeat 3 --dry-run
+# Bez płatnych wywołań:
+./dockerized.sh ruby bin/ocr_benchmark --cases test/fixtures/ocr/cases_v2.json --repeat 3 --dry-run
 ./dockerized.sh ruby bin/ocr_benchmark --score-only tmp/ocr-selected-results.json --cases test/fixtures/ocr/cases.json
 ```
 
-Granice wdrożenia P0–P3:
-
-- **Ingestia produkcyjna:** `bin/server.rb` i `EventOcrService.call` nie zostały przełączone na częściowe wyniki miesięczne; wdrożenie w API jest wstrzymane do czasu jawnej obsługi `review_items` przez klienta/API.
-- **Obsługa PDF:** nowy `Ocr::Workflow` (`--workflow selected`) obsługuje pojedyncze pliki obrazów i jawnie odrzuca PDF; wielostronicowe PDF-y nadal obsługuje dotychczasowy `EventOcrService` / domyślny `bin/ocr`.
-- **Niezależne powtórzenia:** każdy przebieg `--repeat` wywołuje świeży router, geometrię, Judge i reader bez ukrytego współdzielenia wcześniejszych odpowiedzi.
-- **Skalowanie wejścia czytnika (`--[no-]upscale`):** opcja wyłącznie dla `--workflow selected` (tryb legacy odrzuca ją jawnie). `--upscale` (`upscale: true`) włącza skalowanie wejścia czytnika `2x` / maks. 4096 px w gałęzi `direct` oraz `150%` przy wycinkach `monthly`; domyślne `--no-upscale` (`upscale: false`) ustawia `1x` (z limitem 4096 px) dla `direct` i `100%` dla `monthly`, nie zmieniając oryginału, routera, geometrii, par miniatur Judge, maskowania ani czyszczenia.
-- **Szczegółowość obrazu (`--image-detail auto|low|high|original`):** opcja wyłącznie dla `--workflow selected` (tryb legacy odrzuca ją jawnie). `auto` nie ustawia pola `detail` w żądaniu; domyślne `original` przekazuje `RubyLLM::Attachment(..., resolution: :original)` na istniejących etapach (router, geometria, para miniatur Judge, reader) bez zmiany `--[no-]upscale` ani wysiłku `reasoning: low`. Wybór `original` lub `high` może zmienić zużycie tokenów i koszt; wyniki rzeczywistej macierzy `upscale` × `image-detail` są powyżej.
-- **Akceptacja na żywych modelach:** po podniesieniu limitu wykonano wszystkie 120 przebiegów z oryginałów, bez błędów API. Bramki jakościowej 53/53 na przebieg nie zaliczono: główny problem to kontrakt pól wymaganych i nadmierne zatrzymywanie kandydatów. Dawne piloty zatrzymane limitem pozostają historycznym błędem infrastruktury, nie porażką OCR.
+Polecenia do odtworzenia dawnej macierzy `selected` są w historii Git
+(`git show 9d1079f:docs/ocr.md`). Wtedy wykonano 120 przebiegów z oryginałów.
+Bramki jakościowej 53/53 na przebieg nie zaliczono ze względu na kontrakt pól
+wymaganych i zatrzymywanie kandydatów.
 
 ## 8. Koszty i ślad analizy
 
