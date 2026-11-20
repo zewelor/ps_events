@@ -67,7 +67,7 @@ sitemap: false
 </section>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="/assets/js/upload_form.js"></script>
+<script src="/assets/js/upload_form.js?v={% cache_bust_param %}"></script>
 <script>
 {% unless jekyll.environment == 'development' %}
 {% include google_auth.js on_sign_in="warmUpOcrBackend" %}
@@ -281,6 +281,7 @@ sitemap: false
           .map((conflict) => ({ conflict, retry: null }));
         renderOcrReview();
       },
+      onOcrReview: (result, data) => PXOForms.renderHeldOcrEvents(duplicateReview, result, data.get('use_event_image') === 'on'),
       onSuccess: (result) => {
         PXOForms.showToast(result.message);
         ocrText.value = JSON.stringify(result.events, null, 2);

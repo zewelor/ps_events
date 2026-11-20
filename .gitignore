@@ -10,6 +10,7 @@
 
 /.env
 /tmp/
+/e2e/node_modules/
 .pry_history
 /coverage/
 

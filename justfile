@@ -45,12 +45,13 @@ test:
   @source dockerized.sh > /dev/null ; rake test
 
 e2e_install:
-  npx -y @playwright/test@latest install
+  npm --prefix e2e ci
+  npm --prefix e2e exec -- playwright install --only-shell chromium
 
-# Run Playwright e2e tests against http://localhost:4000
-# Ensure: docker compose up jekyll (in another terminal)
+# Test the production-rendered Jekyll form against a local HTTP server
 e2e:
-  npx -y @playwright/test@latest test e2e/tests --config=e2e/playwright.config.ts
+  ./dockerized.sh compose run --rm --no-deps -T -e JEKYLL_ENV=production -e BACKEND_HOST=http://localhost:4000 -e COMMIT_SHA=frontend-tests jekyll bundle exec jekyll build --source events_listing --destination tmp/frontend-tests/site
+  npm --prefix e2e test
 
 # Generate API key for OCR bearer auth
 gen_api_key:

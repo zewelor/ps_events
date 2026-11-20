@@ -44,12 +44,13 @@ sitemap: false
 
 <section id="add-event" class="max-w-3xl mx-auto py-8 px-4">
   <h1 class="page-title">Adicionar um novo evento</h1>
+  <p id="event-prefill-notice" class="mb-6 hidden rounded-lg border border-amber-300 bg-amber-50 p-4 text-slate-800" role="status"></p>
 
   <!-- Google Sign-In Section - Top of page -->
   <div class="mb-6 p-6 bg-white rounded-lg shadow-lg border-b-4 border-buttons">
     <div id="google-signin-section">
       <h3 class="section-subtitle">Iniciar sessão com o Google <span class="text-red-500">*</span></h3>
-      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Assim, confirmamos o endereço de e-mail associado à conta, conseguimos entrar em contacto consigo sobre o evento e protegemos o formulário contra utilizações automatizadas. Por predefinição, utilizaremos esse endereço como contacto do evento.</p>
+      <p class="muted-text">É obrigatório iniciar sessão com o Google para submeter um evento. Assim, confirmamos o endereço de e-mail associado à conta, conseguimos entrar em contacto consigo sobre o evento e protegemos o formulário contra utilizações automatizadas. <span id="google-contact-default">Por predefinição, utilizaremos esse endereço como contacto do evento.</span></p>
       <div id="google-signin-button"></div>
     </div>
     <div id="google-user-info" class="hidden">
@@ -83,10 +84,11 @@ sitemap: false
         id="name"
         value="{{ test_name }}"
         required
-        maxlength="100"
+        minlength="3"
+        maxlength="200"
         class="form-input"
       />
-      <p class="form-help">Nome ou título do evento (máx. 100 caracteres)</p>
+      <p class="form-help">Nome ou título do evento (entre 3 e 200 caracteres)</p>
     </div>
 
     <!-- Description -->
@@ -99,11 +101,11 @@ sitemap: false
         id="description"
         required
         minlength="10"
-        maxlength="500"
+        maxlength="2000"
         rows="6"
         class="form-input resize-none"
       >{{ test_description }}</textarea>
-      <p class="form-help">Breve descrição (máx. 500 caracteres)</p>
+      <p class="form-help">Breve descrição (entre 10 e 2000 caracteres)</p>
     </div>
 
     <!-- Category -->
@@ -227,7 +229,7 @@ sitemap: false
           maxlength="100"
           class="form-input"
         />
-        <p class="form-help">E-mail de contacto para o evento. Por defeito, será o seu e-mail do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</p>
+        <p class="form-help">E-mail de contacto para o evento. <span id="event-contact-default">Por defeito, será o seu e-mail do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</span></p>
       </div>
 
       <div>
@@ -389,7 +391,7 @@ sitemap: false
 
 <!-- Google Sign-In Library -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="/assets/js/upload_form.js"></script>
+<script src="/assets/js/upload_form.js?v={% cache_bust_param %}"></script>
 
 <!-- AJAX form submission and toast logic -->
 <script>
@@ -405,6 +407,11 @@ sitemap: false
     const contactEmailInput = document.getElementById('contact_email');
     const googleTokenInput = document.getElementById('google_token');
     const duplicateReview = document.getElementById('duplicate-review');
+    const reviewMode = PXOForms.prefillEventForm?.(form, document.getElementById('event-prefill-notice'));
+    if (reviewMode) {
+      document.getElementById('google-contact-default').classList.add('hidden');
+      document.getElementById('event-contact-default').classList.add('hidden');
+    }
 
     // Google Sign-In elements
     const googleSigninSection = document.getElementById('google-signin-section');
@@ -453,7 +460,7 @@ sitemap: false
         googleTokenInput.value = response.credential;
 
         // Auto-fill contact email with Google email (but allow editing)
-        contactEmailInput.value = payload.email;
+        if (!reviewMode) contactEmailInput.value = payload.email;
         contactEmailInput.removeAttribute('readonly');
 
         PXOForms.showToast(`Verificado com o Google como ${payload.email}`);

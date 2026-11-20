@@ -135,3 +135,26 @@ test('a partial failure with no conflicts still lists the unresolved events', as
   assert.match(flow.review.textContent, /Oficina ainda não tentada/);
   assert.equal(flow.posted.length, 1);
 });
+
+test('held OCR review reminds users to reattach the flyer only when requested', async () => {
+  const response = {code: 422, body: {error_code: 'ocr_review_required', events: [event('Concerto')], review_items: []}};
+  const withImage = reviewFlow([response]);
+  await withImage.submit();
+  assert.match(withImage.review.textContent, /Volte a anexar o cartaz/);
+
+  const withoutImage = reviewFlow([response], false);
+  await withoutImage.submit();
+  assert.doesNotMatch(withoutImage.review.textContent, /Volte a anexar o cartaz/);
+});
+
+test('held invalid candidates identify fields to correct without exposing validation details', async () => {
+  const flow = reviewFlow([{code: 422, body: {
+    error_code: 'ocr_review_required', events: [], review_items: [{
+      candidate: event('Concerto'), reason: 'invalid_event_fields', message: 'Reveja os dados.',
+      validation_errors: {start_date: ['internal detail'], location: ['internal detail'], unknown: ['internal detail']}
+    }]
+  }}]);
+  await flow.submit();
+  assert.match(flow.review.textContent, /Campos a corrigir: Data de início, Local\./);
+  assert.doesNotMatch(flow.review.textContent, /internal detail|unknown/);
+});
