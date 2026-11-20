@@ -30,6 +30,7 @@ config/credentials/*.key
 storage/
 public/assets
 test/
+e2e/
 .jekyll-cache/
 **/.jekyll-cache/
 _site/

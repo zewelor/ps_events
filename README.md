@@ -242,11 +242,11 @@ Integrating the feedback into r3x and persisting stable identities remain separa
 work. Do not automatically replay a flyer and assume wording/date changes are
 fully deduplicated. This change does not edit or hide existing sheet rows.
 
-Run Ruby coverage with `./dockerized.sh rake test`. Browser-independent JavaScript
-regressions use Node's built-in runner: `node test/upload_form_test.js` and
-`node test/ocr_review_test.js` (no npm dependencies).
-The OCR regressions exercise the page's review lifecycle and shared upload code,
-including persistent failure details and image reuse across successive decisions.
+Run the Ruby suite with `./dockerized.sh rake test` and the JavaScript unit tests
+with `node --test test/*_test.js`. Run `just e2e_install` to install Playwright
+and Chromium, then `just e2e` to build the Jekyll site and test the review form
+with simulated Google sign-in and submission. Frontend Checks runs both
+JavaScript suites in CI.
 
 Generate an ICS file from the default Google Sheets CSV:
 

@@ -1,0 +1,67 @@
+name: Frontend Checks
+
+on:
+  workflow_dispatch:
+  push: &frontend_changes
+    paths:
+      - 'events_listing/**'
+      - '!events_listing/assets/images/**'
+      - 'test/*_test.js'
+      - 'test/fixtures/ocr/images/pijama_2026_facebook_poster.jpg'
+      - 'e2e/**'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker-compose.ci.yml'
+      - '.github/workflows/frontend_checks.yml'
+  pull_request: *frontend_changes
+
+permissions: {}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Run JavaScript unit tests
+        run: node --test test/*_test.js
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build CI image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          target: ci
+          tags: ps-events-frontend:ci
+          cache-from: type=gha,scope=ci
+
+      - name: Render the Jekyll site
+        env:
+          COMPOSE_FILE: docker-compose.ci.yml
+          CI_IMAGE: ps-events-frontend:ci
+        run: |
+          mkdir -p tmp/frontend-tests
+          docker compose run --rm -T -e JEKYLL_ENV=production \
+            -e BACKEND_HOST=http://localhost:4000 -e COMMIT_SHA="$GITHUB_SHA" \
+            app bundle exec jekyll build --source events_listing --destination tmp/frontend-tests/site
+
+      - name: Run the review form in Chromium
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps --only-shell chromium
+          npm test

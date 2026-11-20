@@ -26,6 +26,10 @@ flowchart TD
     schedule_site["schedule / workflow_dispatch"] --> jekyll
     jekyll --> site_image["build local :ci image<br/>before Jekyll build"]
 
+    frontend_change["push / pull_request<br/>site code, frontend tests, OCR test fixture or build inputs"] --> frontend_checks["frontend_checks.yml<br/>Node and Chromium tests"]
+    dispatch_frontend["workflow_dispatch"] --> frontend_checks
+    frontend_checks --> frontend_image["build local :ci image<br/>render Jekyll for Chromium"]
+
     push_backend["push<br/>changes outside ignored event/site paths"] --> docker_checks
     pr_backend["pull_request<br/>changes outside ignored event/site paths"] --> docker_checks
     dispatch_backend["workflow_dispatch"] --> docker_checks
@@ -50,6 +54,7 @@ flowchart TD
 Design notes:
 
 - `jekyll_site.yml` intentionally stays independent from `docker_checks.yml`; the site deploy should not wait on backend-oriented checks unless a concrete breakage proves that coupling is needed.
+- `frontend_checks.yml` runs Node tests and builds a local Jekyll site for the Chromium form test. Changes to the test's OCR flyer fixture trigger the workflow. Changes limited to published flyer images skip it.
 - When the same push also triggers `regenerate_events.yml`, the push-triggered Jekyll deploy is skipped and the `workflow_run` path from `Regenerate events` becomes the canonical deploy path.
 - Changes limited to root `AGENTS.md`, `README*`, or files under `docs/` reach the `changes` job and skip Docker tests and image publication. Markdown elsewhere, including workflow, site, and runtime paths, still runs tests.
 - Renovate bot pull request events from same-repository `renovate/` branches skip Docker Checks jobs when the triggering actor is also Renovate. Human-triggered events and fork pull requests still run. Push checks compare the latest push, while pull request checks compare all branch changes against the base; skipping the bot pull request does not guarantee the same checks ran for an accumulated diff.
