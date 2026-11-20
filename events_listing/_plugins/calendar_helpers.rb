@@ -9,7 +9,7 @@ module Jekyll
     # Generate a Google Calendar URL for an event hash
     def google_calendar_url(event, timezone = "Europe/Lisbon")
       start_time = parse_time(event["start_date"], event["start_time"])
-      end_time = parse_time(event["end_date"], event["end_time"])
+      end_time = event_end_time(event)
 
       # Handle full-day events (when both times are empty)
       is_full_day = is_full_day_event?(event)
@@ -44,7 +44,7 @@ module Jekyll
     # Generate an ICS string for an event hash
     def event_to_ics(event)
       start_time = parse_time(event["start_date"], event["start_time"])
-      end_time = parse_time(event["end_date"], event["end_time"])
+      end_time = event_end_time(event)
 
       # Handle full-day events (when both times are empty)
       is_full_day = is_full_day_event?(event)
@@ -76,6 +76,12 @@ module Jekyll
     end
 
     private
+
+    def event_end_time(event)
+      end_date = event["end_date"]
+      end_date = event["start_date"] if end_date.nil? || end_date.to_s.strip.empty?
+      parse_time(end_date, event["end_time"])
+    end
 
     def is_full_day_event?(event)
       start_time = event["start_time"]

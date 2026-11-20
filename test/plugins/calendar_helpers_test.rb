@@ -130,6 +130,15 @@ class TestCalendarHelpers < Minitest::Test
     assert_includes ics, "DTEND:20251201T120000"
   end
 
+  def test_timed_event_without_end_date_uses_start_date_for_both_exports
+    [nil, "", "   "].each do |end_date|
+      event = @event.merge("start_time" => "19:00", "end_time" => "20:30", "end_date" => end_date)
+
+      assert_includes google_calendar_url(event), "20251201T190000%2F20251201T203000"
+      assert_includes event_to_ics(event), "DTEND:20251201T203000"
+    end
+  end
+
   def test_parse_date_only_invalid_date
     date = send(:parse_date_only, "invalid-date")
     assert_nil date
