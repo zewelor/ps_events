@@ -2,11 +2,11 @@ require "digest"
 require "fileutils"
 require "json"
 require "json-schema"
-require "ruby_llm"
+require "mini_magick"
 require "stringio"
 require "tmpdir"
-require_relative "../event_ocr_service"
 require_relative "admission"
+require_relative "client"
 require_relative "prompts"
 require_relative "schemas"
 
@@ -14,6 +14,7 @@ module Ocr
   class SourceWorkflow
     DEFAULT_MODEL = "gpt-6.1-terra".freeze
     DEFAULT_REASONING_EFFORT = "medium".freeze
+    IMAGE_MAX_SIZE = 4096
     PANEL_IDS = [1].freeze
 
     def self.call(path, **options)
@@ -21,10 +22,8 @@ module Ocr
       new(**options.except(:additional_text, :fallback_year, :artifact_dir)).analyze(path, **analyze_options)
     end
 
-    def initialize(model: DEFAULT_MODEL, reasoning_effort: DEFAULT_REASONING_EFFORT, llm_recovery: :none, request_timeout: 180)
-      raise ArgumentError, "source workflow does not support retries" unless llm_recovery == :none
-
-      @model = EventOcrService.resolve_model(model)
+    def initialize(model: DEFAULT_MODEL, reasoning_effort: DEFAULT_REASONING_EFFORT, request_timeout: 180)
+      @model = Client.resolve_model(model)
       @effort = reasoning_effort.to_sym
       @request_timeout = request_timeout
     end
@@ -85,7 +84,7 @@ module Ocr
         File.write(File.join(artifact_dir, "reader_request.json"), JSON.pretty_generate({instructions: instructions, prompt: prompt, schema: schema}) + "\n")
       end
       @stage = "reader"
-      chat = EventOcrService.llm_client(llm_recovery: :none, request_timeout: @request_timeout)
+      chat = Client.context(request_timeout: @request_timeout)
         .chat(model: @model.id, provider: @model.provider).with_schema(schema).with_thinking(effort: @effort).with_instructions(instructions)
       started = clock
       begin
@@ -143,12 +142,21 @@ module Ocr
         end
         supported_format = %w[image/jpeg image/png image/webp].include?(mime_type) ||
           (mime_type == "image/gif" && @model.provider == "openai")
-        return [bytes, nil] if supported_format && !animated_gif && dimensions.max <= EventOcrService::IMAGE_MAX_SIZE
+        return [bytes, nil] if supported_format && !animated_gif && dimensions.max <= IMAGE_MAX_SIZE
 
         sent_filename = (mime_type == "image/jpeg") ? "sent.jpg" : "sent.png"
         output_path = File.join(dir, sent_filename)
         coalesce = mime_type == "image/gif" && dimensions.first(2) != dimensions.last(2)
-        EventOcrService.prepare_image(original_path, output_path, coalesce: coalesce)
+        MiniMagick.convert do |convert|
+          convert << "#{original_path}[0]"
+          convert.coalesce if coalesce
+          convert.auto_orient
+          convert.filter "Lanczos"
+          # ImageMagick's > suffix shrinks oversized images and never upscales.
+          convert.resize "#{IMAGE_MAX_SIZE}x#{IMAGE_MAX_SIZE}>"
+          convert.strip
+          convert << output_path
+        end
         [File.binread(output_path), sent_filename]
       end
     end

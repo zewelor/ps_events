@@ -254,7 +254,6 @@ GEM
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
     retriable (4.2.0)
-    retryable (3.0.5)
     rexml (3.4.4)
     rouge (4.7.0)
     rubocop (1.91.0)
@@ -366,7 +365,6 @@ DEPENDENCIES
   puma (~> 8.0)
   rack-test (~> 2.2)
   rackup (~> 2.2)
-  retryable (~> 3.0)
   ruby-lsp
   ruby_llm (~> 2.2)
   sinatra

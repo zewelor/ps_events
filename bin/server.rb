@@ -20,7 +20,6 @@ require_relative "../lib/server/image_service"
 require_relative "../lib/server/github_service"
 require_relative "../lib/server/google_auth_service"
 require_relative "../lib/server/security_service"
-require_relative "../lib/server/event_ocr_service"
 require_relative "../lib/server/ocr/source_workflow"
 require_relative "../lib/server/add_event_service"
 require_relative "../lib/server/auth_registry"
@@ -29,6 +28,7 @@ require_relative "../lib/server/auth_guard"
 require_relative "../lib/server/param_utils"
 
 EVENT_ANALYSIS_LLM_TIMEOUT = 300
+EVENT_ANALYSIS_TEXT_MAX_LENGTH = 5000
 
 set :bind, "0.0.0.0"
 set :port, ENV["PORT"] || 4567
@@ -302,7 +302,7 @@ post "/events_ocr" do
   begin
     use_image = params[:use_event_image]
     additional_text = params[:event_text].to_s.strip.presence
-    if additional_text&.length.to_i > EventOcrService::ADDITIONAL_TEXT_MAX_LENGTH
+    if additional_text&.length.to_i > EVENT_ANALYSIS_TEXT_MAX_LENGTH
       return json_error("As informações adicionais não podem exceder 5000 caracteres")
     end
 

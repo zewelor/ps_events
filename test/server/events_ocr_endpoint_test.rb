@@ -120,7 +120,7 @@ class EventsOcrEndpointTest < Minitest::Test
       post "/events_ocr", {
         google_token: "token",
         event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"),
-        event_text: "a" * (EventOcrService::ADDITIONAL_TEXT_MAX_LENGTH + 1)
+        event_text: "a" * 5001
       }
     end
 
@@ -181,7 +181,6 @@ class EventsOcrEndpointTest < Minitest::Test
       end
     end
 
-    refute options_seen.key?(:llm_recovery)
     assert_equal 300, options_seen[:request_timeout]
     assert_equal 503, last_response.status
     assert_equal "ocr_temporarily_unavailable", JSON.parse(last_response.body)["error_code"]

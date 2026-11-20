@@ -19,14 +19,14 @@ class OcrImageLifecycleTest < Minitest::Test
     app.set :environment, :test
     app.set :google_sheets, MemorySheets.new
     @paths = []
-    @ocr_temp_dirs = Dir.glob("/tmp/event_ocr_image_*")
+    @ocr_temp_dirs = Dir.glob(File.join(Dir.tmpdir, "ocr_source_*"))
     @source = File.expand_path("../fixtures/ocr_events.png", __dir__)
     @original_key = RubyLLM.config.openai_api_key
     RubyLLM.config.openai_api_key = "offline-test-key"
   end
 
   def teardown
-    assert_equal @ocr_temp_dirs, Dir.glob("/tmp/event_ocr_image_*"), "Prepared OCR images leaked"
+    assert_equal @ocr_temp_dirs, Dir.glob(File.join(Dir.tmpdir, "ocr_source_*")), "Prepared OCR images leaked"
     @paths.each { |path| File.unlink(path) if File.exist?(path) }
     app.set :environment, @settings[0]
     app.set :google_sheets, @settings[1]
@@ -108,7 +108,6 @@ class OcrImageLifecycleTest < Minitest::Test
       publication_size ||= MiniMagick::Image.new(@paths.last).dimensions
       true
     end
-    before = Dir.glob("/tmp/event_ocr_image_*")
     submit(provider: true)
 
     assert_equal 200, last_response.status
@@ -116,7 +115,6 @@ class OcrImageLifecycleTest < Minitest::Test
     pixels = Base64.decode64(attachment.fetch("image_url").split(",", 2).last)
     assert_equal [1200, 1600], MiniMagick::Image.read(pixels).dimensions
     assert_equal [675, 900], publication_size
-    assert_equal before, Dir.glob("/tmp/event_ocr_image_*")
     assert_requested request, times: 1
     assert_cleaned
   ensure

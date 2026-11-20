@@ -1,5 +1,5 @@
 require "active_support/core_ext/object/blank"
-require_relative "../event_ocr_service"
+require_relative "../event_validation"
 require_relative "../llm_schema"
 require_relative "places"
 
@@ -52,16 +52,13 @@ module Ocr
     end
 
     def build_candidate_schema
-      base_item = Marshal.load(Marshal.dump(EventOcrService.build_schema.dig("properties", "events", "items")))
+      base_item = JSON.parse(File.read(EventValidation::SCHEMA_PATH))
       properties = base_item.fetch("properties")
       properties.delete("responsibility_agreement")
 
       properties.each_value do |property|
-        property["type"] = Array(property["type"]).uniq
-        property["type"] << "null" unless property["type"].include?("null")
-        if property.key?("enum") && !property["enum"].include?(nil)
-          property["enum"] << nil
-        end
+        property["type"] = [property.fetch("type"), "null"]
+        property["enum"] << nil if property.key?("enum")
       end
 
       properties["location"] = {

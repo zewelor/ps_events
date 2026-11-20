@@ -300,6 +300,24 @@ class OcrSourceWorkflowTest < Minitest::Test
     end
   end
 
+  def test_unsupported_provider_fails_before_any_request
+    error = assert_raises(ArgumentError) { Ocr::SourceWorkflow.call(@path, model: "claude-haiku-4-5") }
+
+    assert_includes error.message, "unsupported OCR provider: anthropic"
+    assert_not_requested :post, %r{\Ahttps://}
+  end
+
+  def test_missing_openai_key_does_not_route_to_a_configured_aggregator
+    original_router_key = RubyLLM.config.openrouter_api_key
+    RubyLLM.config.openai_api_key = nil
+    RubyLLM.config.openrouter_api_key = "offline-router-key"
+
+    assert_raises(RubyLLM::ConfigurationError) { Ocr::SourceWorkflow.call(@path, model: "gpt-6-luna") }
+    assert_not_requested :post, %r{\Ahttps://}
+  ensure
+    RubyLLM.config.openrouter_api_key = original_router_key
+  end
+
   def test_nonempty_artifact_directory_is_not_overwritten_or_reused
     Dir.mktmpdir do |dir|
       stub_reader(payload([candidate]))
