@@ -30,6 +30,8 @@ Katalog artefaktów musi być nowy lub pusty. Zapisywane są dokładne bajty obr
 Nieobrazowe wejście jest odrzucane przed wywołaniem modelu. Błąd próby zachowuje
 diagnostykę i jest widoczny jako błąd; nie oznacza pustej poprawnej ekstrakcji.
 
+Po udanym odczycie z `--artifacts-dir` katalog zawiera także `result.json`.
+
 ### Referencja i normalizacja
 
 Usunięto alias łączący instytucję Porta33 ze szkołami Escola da Vila/Escola do
