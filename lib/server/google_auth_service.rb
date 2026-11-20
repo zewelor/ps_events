@@ -56,14 +56,15 @@ module GoogleAuthService
         email: payload["email"],
         name: payload["name"]
       }
-    rescue JWT::DecodeError => e
-      {error: "Invalid token: #{e.message}"}
+    # Rescue specific claim errors first because they inherit from JWT::DecodeError.
     rescue JWT::ExpiredSignature
       {error: "Token expired"}
     rescue JWT::InvalidAudError
       {error: "Token audience mismatch"}
     rescue JWT::InvalidIssuerError
       {error: "Invalid token issuer"}
+    rescue JWT::DecodeError => e
+      {error: "Invalid token: #{e.message}"}
     rescue => e
       {error: "Token validation failed: #{e.message}"}
     end
