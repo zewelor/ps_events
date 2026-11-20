@@ -50,7 +50,7 @@ e2e_install:
 
 # Test the production-rendered Jekyll form against a local HTTP server
 e2e:
-  ./dockerized.sh compose run --rm --no-deps -T -e JEKYLL_ENV=production -e BACKEND_HOST=http://localhost:4000 -e COMMIT_SHA=frontend-tests jekyll bundle exec jekyll build --source events_listing --destination tmp/frontend-tests/site
+  ./dockerized.sh compose run --rm --no-deps -T --entrypoint '' -e JEKYLL_ENV=production -e BACKEND_HOST=http://localhost:4000 -e COMMIT_SHA=frontend-tests jekyll bundle exec jekyll build --source events_listing --destination tmp/frontend-tests/site
   npm --prefix e2e test
 
 # Generate API key for OCR bearer auth

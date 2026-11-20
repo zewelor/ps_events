@@ -1,0 +1,5 @@
+{%- assign length_schema = site.data.event_schema.properties[include.field] -%}
+{%- if length_schema.minLength and length_schema.maxLength %} (entre {{ length_schema.minLength }} e {{ length_schema.maxLength }} caracteres)
+{%- elsif length_schema.minLength %} (mín. {{ length_schema.minLength }} caracteres)
+{%- elsif length_schema.maxLength %} (máx. {{ length_schema.maxLength }} caracteres)
+{%- endif -%}

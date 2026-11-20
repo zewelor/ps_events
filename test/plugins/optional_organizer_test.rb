@@ -75,6 +75,7 @@ class OptionalOrganizerTest < Minitest::Test
     Dir.mktmpdir do |source_root|
       source = File.join(source_root, "events_listing")
       FileUtils.copy_entry(File.expand_path("../../events_listing", __dir__), source)
+      FileUtils.ln_s(File.expand_path("../../lib", __dir__), File.join(source_root, "lib"))
       FileUtils.rm_f(File.join(source, "_data", "events.csv"))
       FileUtils.cp(File.expand_path("../fixtures/event_span_events.csv", __dir__), File.join(source, "_data", "events.csv"))
       cases.each do |key, attributes|

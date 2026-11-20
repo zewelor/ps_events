@@ -77,6 +77,7 @@ class EventSpanMarkupTest < Minitest::Test
       fixture = File.expand_path("../fixtures/event_span_events.csv", __dir__)
 
       FileUtils.copy_entry(File.expand_path("../../events_listing", __dir__), source)
+      FileUtils.ln_s(File.expand_path("../../lib", __dir__), File.join(source_root, "lib"))
       FileUtils.rm_f(File.join(source, "_data", "events.csv"))
       FileUtils.cp(fixture, File.join(source, "_data", "events.csv"))
 

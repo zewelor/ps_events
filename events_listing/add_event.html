@@ -76,72 +76,69 @@ sitemap: false
     <!-- Name -->
     <div>
       <label for="name" class="form-label">
-        Nome <span class="text-red-500">*</span>
+        Nome{% include event_required_marker.html field="name" %}
       </label>
       <input
         type="text"
         name="name"
         id="name"
         value="{{ test_name }}"
-        required
-        minlength="3"
-        maxlength="200"
+        {% include event_field_attributes.html field="name" %}
         class="form-input"
       />
-      <p class="form-help">Nome ou título do evento (entre 3 e 200 caracteres)</p>
+      <p class="form-help">Nome ou título do evento{% include event_length_help.html field="name" %}</p>
     </div>
 
     <!-- Description -->
     <div>
       <label for="description" class="form-label">
-        Descrição <span class="text-red-500">*</span>
+        Descrição{% include event_required_marker.html field="description" %}
       </label>
       <textarea
         name="description"
         id="description"
-        required
-        minlength="10"
-        maxlength="2000"
+        {% include event_field_attributes.html field="description" %}
         rows="6"
         class="form-input resize-none"
       >{{ test_description }}</textarea>
-      <p class="form-help">Breve descrição (entre 10 e 2000 caracteres)</p>
+      <p class="form-help">Breve descrição{% include event_length_help.html field="description" %}</p>
     </div>
 
     <!-- Category -->
     <div>
       <label for="category" class="form-label">
-        Categoria <span class="text-red-500">*</span>
+        Categoria{% include event_required_marker.html field="category" %}
       </label>
       <select
         name="category"
         id="category"
-        required
+        {% include event_field_attributes.html field="category" %}
         class="form-input"
       >
         <option value="">Selecione uma categoria</option>
-        <option value="Música" {% if test_category == 'Música' %}selected{% endif %}>Música</option>
-        <option value="Comida" {% if test_category == 'Comida' %}selected{% endif %}>Comida</option>
-        <option value="Arte" {% if test_category == 'Arte' %}selected{% endif %}>Arte</option>
-        <option value="Natureza" {% if test_category == 'Natureza' %}selected{% endif %}>Natureza</option>
-        <option value="Saúde & Bem-Estar" {% if test_category == 'Saúde & Bem-Estar' %}selected{% endif %}>Saúde e bem-estar</option>
-        <option value="Desporto" {% if test_category == 'Desporto' %}selected{% endif %}>Desporto</option>
-        <option value="Aprendizagem & Workshops" {% if test_category == 'Aprendizagem & Workshops' %}selected{% endif %}>Aprendizagem e workshops</option>
-        <option value="Comunidade & Cultura" {% if test_category == 'Comunidade & Cultura' %}selected{% endif %}>Comunidade e cultura</option>
+        {% for category in site.data.event_schema.properties.category.enum %}
+          {% case category %}
+            {% when "Saúde & Bem-Estar" %}{% assign category_label = "Saúde e bem-estar" %}
+            {% when "Aprendizagem & Workshops" %}{% assign category_label = "Aprendizagem e workshops" %}
+            {% when "Comunidade & Cultura" %}{% assign category_label = "Comunidade e cultura" %}
+            {% else %}{% assign category_label = category %}
+          {% endcase %}
+          <option value="{{ category | escape }}"{% if test_category == category %} selected{% endif %}>{{ category_label | escape }}</option>
+        {% endfor %}
       </select>
     </div>
 
     <!-- Organizer -->
     <div>
       <label for="organizer" class="form-label">
-        Organizador
+        Organizador{% include event_required_marker.html field="organizer" %}
       </label>
       <input
         type="text"
         name="organizer"
         id="organizer"
         value="{{ test_organizer }}"
-        maxlength="100"
+        {% include event_field_attributes.html field="organizer" use_pattern=true %}
         class="form-input"
       />
     </div>
@@ -149,15 +146,14 @@ sitemap: false
     <!-- Location -->
     <div>
       <label for="location" class="form-label">
-        Local
+        Local{% include event_required_marker.html field="location" %}
       </label>
       <input
         type="text"
         name="location"
         id="location"
         value="{{ test_location }}"
-        minlength="3"
-        maxlength="100"
+        {% include event_field_attributes.html field="location" %}
         class="form-input"
       />
     </div>
@@ -167,49 +163,51 @@ sitemap: false
       <!-- Start date -->
       <div>
         <label for="start_date" class="form-label">
-          Data de início <span class="text-red-500">*</span>
+          Data de início{% include event_required_marker.html field="start_date" %}
         </label>
         <input
           type="date"
           name="start_date"
           id="start_date"
           value="{{ test_start_date }}"
-          required
+          {% include event_field_attributes.html field="start_date" %}
           class="form-input"
         />
         <label for="start_time" class="form-label mt-2">
-          Hora de início
+          Hora de início{% include event_required_marker.html field="start_time" %}
         </label>
         <input
           type="time"
           name="start_time"
           id="start_time"
           value="{{ test_start_time }}"
+          {% include event_field_attributes.html field="start_time" %}
           class="form-input"
         />
-        <p class="form-help">A data de início é obrigatória; a data de fim e as horas são opcionais</p>
       </div>
 
       <!-- End date -->
       <div>
         <label for="end_date" class="form-label">
-          Data de fim
+          Data de fim{% include event_required_marker.html field="end_date" %}
         </label>
         <input
           type="date"
           name="end_date"
           id="end_date"
           value="{{ test_end_date }}"
+          {% include event_field_attributes.html field="end_date" %}
           class="form-input"
         />
         <label for="end_time" class="form-label mt-2">
-          Hora de fim
+          Hora de fim{% include event_required_marker.html field="end_time" %}
         </label>
         <input
           type="time"
           name="end_time"
           id="end_time"
           value="{{ test_end_time }}"
+          {% include event_field_attributes.html field="end_time" %}
           class="form-input"
         />
       </div>
@@ -219,14 +217,14 @@ sitemap: false
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label for="contact_email" class="form-label">
-          E-mail de contacto
+          E-mail de contacto{% include event_required_marker.html field="contact_email" %}
         </label>
         <input
           type="email"
           name="contact_email"
           id="contact_email"
           value="{{ test_email }}"
-          maxlength="100"
+          {% include event_field_attributes.html field="contact_email" max_length=100 use_pattern=true %}
           class="form-input"
         />
         <p class="form-help">E-mail de contacto para o evento. <span id="event-contact-default">Por defeito, será o seu e-mail do Google, mas pode ser alterado se estiver a adicionar um evento para outra pessoa.</span></p>
@@ -234,14 +232,14 @@ sitemap: false
 
       <div>
         <label for="contact_tel" class="form-label">
-          Telefone de contacto / WhatsApp
+          Telefone de contacto / WhatsApp{% include event_required_marker.html field="contact_tel" %}
         </label>
         <input
           type="tel"
           name="contact_tel"
           id="contact_tel"
           value="{{ test_tel }}"
-          maxlength="20"
+          {% include event_field_attributes.html field="contact_tel" max_length=20 use_pattern=true %}
           class="form-input"
         />
       </div>
@@ -250,14 +248,14 @@ sitemap: false
     <!-- Price Type -->
     <div>
       <label for="price_type" class="form-label">
-        Tipo de preço
+        Tipo de preço{% include event_required_marker.html field="price_type" %}
       </label>
-      <select name="price_type" id="price_type" class="form-input">
-        <option value="Gratuito" {% if test_price_type == 'Gratuito' %}selected{% endif %}>Gratuito</option>
-        <option value="Pago" {% if test_price_type == 'Pago' %}selected{% endif %}>Pago</option>
-        <option value="Desconhecido" {% if test_price_type == 'Desconhecido' %}selected{% endif %}>Desconhecido</option>
+      <select name="price_type" id="price_type" {% include event_field_attributes.html field="price_type" %} class="form-input">
+        {% for price_type in site.data.event_schema.properties.price_type.enum %}
+          <option value="{{ price_type | escape }}"{% if test_price_type == price_type %} selected{% endif %}>{{ price_type | escape }}</option>
+        {% endfor %}
       </select>
-      <p class="form-help">Selecione se o evento é gratuito, pago ou desconhecido</p>
+      <p class="form-help">Indique se o evento tem custo.</p>
     </div>
 
     <!-- Event Image -->
@@ -283,56 +281,56 @@ sitemap: false
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div>
         <label for="event_link1" class="form-label">
-          Link do evento / redes sociais 1
+          Link do evento / redes sociais 1{% include event_required_marker.html field="event_link1" %}
         </label>
         <input
           type="url"
           name="event_link1"
           id="event_link1"
           value="{{ test_link1 }}"
-          maxlength="200"
+          {% include event_field_attributes.html field="event_link1" max_length=200 use_pattern=true %}
           placeholder="https://facebook.com/..."
           class="form-input"
         />
       </div>
       <div>
         <label for="event_link2" class="form-label">
-          Link do evento / redes sociais 2
+          Link do evento / redes sociais 2{% include event_required_marker.html field="event_link2" %}
         </label>
         <input
           type="url"
           name="event_link2"
           id="event_link2"
           value="{{ test_link2 }}"
-          maxlength="200"
+          {% include event_field_attributes.html field="event_link2" max_length=200 use_pattern=true %}
           placeholder="https://instagram.com/..."
           class="form-input"
         />
       </div>
       <div>
         <label for="event_link3" class="form-label">
-          Link do evento / redes sociais 3
+          Link do evento / redes sociais 3{% include event_required_marker.html field="event_link3" %}
         </label>
         <input
           type="url"
           name="event_link3"
           id="event_link3"
           value="{{ test_link3 }}"
-          maxlength="200"
+          {% include event_field_attributes.html field="event_link3" max_length=200 use_pattern=true %}
           placeholder="https://example.com"
           class="form-input"
         />
       </div>
       <div>
         <label for="event_link4" class="form-label">
-          Link do evento / redes sociais 4
+          Link do evento / redes sociais 4{% include event_required_marker.html field="event_link4" %}
         </label>
         <input
           type="url"
           name="event_link4"
           id="event_link4"
           value="{{ test_link4 }}"
-          maxlength="200"
+          {% include event_field_attributes.html field="event_link4" max_length=200 use_pattern=true %}
           placeholder="https://example.com"
           class="form-input"
         />
@@ -350,6 +348,7 @@ sitemap: false
           type="checkbox"
           id="responsibility_agreement"
           name="responsibility_agreement"
+          value="{{ site.data.event_schema.properties.responsibility_agreement.const | escape }}"
           required
           {% if jekyll.environment == 'development' %}checked{% endif %}
           class="mt-1 w-4 h-4 text-selected-filter bg-white border-gray-400 rounded focus:ring-selected-filter focus:ring-2"

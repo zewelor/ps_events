@@ -8,6 +8,7 @@ on:
       - 'events.csv'
       - '.github/workflows/jekyll_site.yml'
       - 'events_listing/**'
+      - 'lib/event_schema.json'
   workflow_dispatch:
   schedule:
     - cron: '0 5 */1 * *'

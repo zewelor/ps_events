@@ -22,11 +22,11 @@ flowchart TD
 
     push_events["push(main)<br/>events.csv"] --> jekyll
 
-    push_site["push(main)<br/>events_listing/**<br/>or jekyll_site.yml<br/>(unless regenerate handoff files changed)"] --> jekyll
+    push_site["push(main)<br/>events_listing/**, jekyll_site.yml,<br/>or lib/event_schema.json<br/>(unless regenerate handoff files changed)"] --> jekyll
     schedule_site["schedule / workflow_dispatch"] --> jekyll
     jekyll --> site_image["build local :ci image<br/>before Jekyll build"]
 
-    frontend_change["push / pull_request<br/>site code, frontend tests, OCR test fixture or build inputs"] --> frontend_checks["frontend_checks.yml<br/>Node and Chromium tests"]
+    frontend_change["push / pull_request<br/>site code, event schema, frontend tests,<br/>OCR test fixture or build inputs"] --> frontend_checks["frontend_checks.yml<br/>Node and Chromium tests"]
     dispatch_frontend["workflow_dispatch"] --> frontend_checks
     frontend_checks --> frontend_image["build local :ci image<br/>render Jekyll for Chromium"]
 
@@ -54,7 +54,7 @@ flowchart TD
 Design notes:
 
 - `jekyll_site.yml` intentionally stays independent from `docker_checks.yml`; the site deploy should not wait on backend-oriented checks unless a concrete breakage proves that coupling is needed.
-- `frontend_checks.yml` runs Node tests and builds a local Jekyll site for the Chromium form test. Changes to the test's OCR flyer fixture trigger the workflow. Changes limited to published flyer images skip it.
+- `frontend_checks.yml` runs Node tests and builds a local Jekyll site for the Chromium form test. Changes to the event schema and the test's OCR flyer fixture trigger the workflow. Changes limited to published flyer images skip it.
 - When the same push also triggers `regenerate_events.yml`, the push-triggered Jekyll deploy is skipped and the `workflow_run` path from `Regenerate events` becomes the canonical deploy path.
 - Changes limited to root `AGENTS.md`, `README*`, or files under `docs/` reach the `changes` job and skip Docker tests and image publication. Markdown elsewhere, including workflow, site, and runtime paths, still runs tests.
 - Renovate bot pull request events from same-repository `renovate/` branches skip Docker Checks jobs when the triggering actor is also Renovate. Human-triggered events and fork pull requests still run. Push checks compare the latest push, while pull request checks compare all branch changes against the base; skipping the bot pull request does not guarantee the same checks ran for an accumulated diff.

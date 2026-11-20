@@ -6,6 +6,7 @@ on:
     paths:
       - 'events_listing/**'
       - '!events_listing/assets/images/**'
+      - 'lib/event_schema.json'
       - 'test/*_test.js'
       - 'test/fixtures/ocr/images/pijama_2026_facebook_poster.jpg'
       - 'e2e/**'

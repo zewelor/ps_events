@@ -1,0 +1,6 @@
+{% assign field_schema = site.data.event_schema.properties[include.field] %}
+{% assign field_max_length = field_schema.maxLength | default: include.max_length %}
+{% if site.data.event_schema.required contains include.field %}required{% endif %}
+{% if field_schema.minLength %}minlength="{{ field_schema.minLength }}"{% endif %}
+{% if field_max_length %}maxlength="{{ field_max_length }}"{% endif %}
+{% if include.use_pattern and field_schema.pattern %}pattern="{{ field_schema.pattern | escape }}"{% endif %}
