@@ -54,9 +54,10 @@ module Ocr
         Use panel_review_reason=conflicting_main_text, illegible_panel or
         insufficient_information for unresolved panel-wide problems; use none when
         complete sibling candidates can still be admitted.
-        Venue needs supporting visible words (location_evidence). A generic island name,
-        organizer attribution, booking office or sponsor logo alone is not a venue:
-        use location=null, the appropriate location_source, and missing_location.
+        Venue is optional and needs supporting visible words (location_evidence).
+        Leave location=null when the only evidence is a generic island name,
+        organizer attribution, booking office or sponsor logo. Use the appropriate
+        location_source. An unconfirmed venue alone does not require review.
         Prefer a matching canonical venue/alias; the dictionary is a suggestion list,
         and a supported new venue is allowed. Omit "Porto Santo" from venue names.
         Location must contain at least three visible Latin letters.

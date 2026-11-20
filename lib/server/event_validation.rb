@@ -30,6 +30,8 @@ class EventValidation
   end
 
   def call(params)
+    location = params[:location]
+    params = params.except(:location) if location.is_a?(String) && location.strip.empty?
     errors = schema_errors(params)
 
     return Result.new(params, errors) if errors.any?

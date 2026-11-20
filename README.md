@@ -128,6 +128,10 @@ curl -X POST http://localhost:4567/events_ocr \
 ```
 
 
+An event can be saved with its venue blank. If a later submission supplies a
+venue for the same event, verify the duplicate candidate and update the existing
+spreadsheet row with the organizer's confirmed details.
+
 ### OCR failure responses
 
 OCR supports `llm_recovery: :automatic` (the default provider retries and validation

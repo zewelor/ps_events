@@ -50,8 +50,9 @@ class OcrSourceWorkflowTest < Minitest::Test
   def test_multiple_events_and_review_items_use_one_untouched_attachment
     stub_reader(payload([candidate, candidate(name: "Sem local", location: nil, location_evidence: nil, location_source: "none", review_reason: "missing_location"), candidate(name: "Conflito", date_source: "inset", review_reason: "conflicting_inset")]))
     result = Ocr::SourceWorkflow.new.analyze(@path)
-    assert_equal 1, result[:events].length
-    assert_equal %w[missing_location conflicting_inset], result[:review_items].map { |item| item[:reason] }
+    assert_equal ["Concerto", "Sem local"], result[:events].map { |event| event[:name] }
+    assert_nil result[:events].last[:location]
+    assert_equal ["conflicting_inset"], result[:review_items].map { |item| item[:reason] }
     assert_equal 1, @requests.length
     image = @requests.first.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
     assert_equal File.binread(@path), Base64.decode64(image.fetch("image_url").split(",", 2).last)

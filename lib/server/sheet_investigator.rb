@@ -196,7 +196,8 @@ class SheetInvestigator
   # with slightly different wording. Heuristic only: two genuinely different
   # events can share a venue, a day and a category.
   def suspicious_duplicates(events = @events)
-    duplicates_by(events) { |event| [event.canonical_start_date, normalize(event.location), normalize(event.category)] }
+    with_location = events.reject { |event| normalize(event.location).empty? }
+    duplicates_by(with_location) { |event| [event.canonical_start_date, normalize(event.location), normalize(event.category)] }
       .reject { |group| group.map(&:normalized_name).uniq.one? }
   end
 

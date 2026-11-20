@@ -22,13 +22,13 @@ class OpenaiOcrIntegrationTest < Minitest::Test
   end
 
   def test_openai_receives_image_text_effort_and_strict_schema_and_returns_events
-    request = stub_openai({events: [event.merge(end_time: nil)]})
+    request = stub_openai({events: [event.merge(end_time: nil, location: nil)]})
 
     result = Time.stub(:now, Time.local(2032, 6, 1)) do
       EventOcrService.call(@image, model: "gpt-6-luna", reasoning_effort: "low", additional_text: "Entrada gratuita.", llm_recovery: :none)
     end
 
-    assert_equal [event.merge(responsibility_agreement: "on")], result
+    assert_equal [event.except(:location).merge(responsibility_agreement: "on")], result
     assert_requested request, times: 1
     payload = @requests.first
     assert_equal "gpt-6-luna", payload["model"]
@@ -48,6 +48,7 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     items = schema.dig("properties", "events", "items")
     assert_equal items.fetch("properties").keys.sort, items.fetch("required").sort
     assert_includes items.dig("properties", "end_time", "type"), "null"
+    assert_includes items.dig("properties", "location", "type"), "null"
     assert_includes items.dig("properties", "price_type", "enum"), nil
     refute items.dig("properties", "contact_tel").key?("pattern")
   end

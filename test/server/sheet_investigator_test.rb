@@ -157,6 +157,12 @@ class TestSheetInvestigator < Minitest::Test
     assert_empty SheetInvestigator.new(rows, headers: HEADERS).suspicious_duplicates
   end
 
+  def test_suspicious_duplicates_require_a_known_venue
+    rows = [row_for("Concerto", "26/07/2025", ""), row_for("Espetáculo", "26/07/2025", " ")]
+
+    assert_empty SheetInvestigator.new(rows, headers: HEADERS).suspicious_duplicates
+  end
+
   def test_date_range_collapses_single_day_events
     same_day = row_for("Jantar", "23/10/2026")
     spanning = row_for("Mostra", "16/10/2026", end_date: "18/10/2026")

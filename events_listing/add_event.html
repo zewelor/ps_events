@@ -147,15 +147,15 @@ sitemap: false
     <!-- Location -->
     <div>
       <label for="location" class="form-label">
-        Local <span class="text-red-500">*</span>
+        Local
       </label>
       <input
         type="text"
         name="location"
         id="location"
         value="{{ test_location }}"
-        required
-        maxlength="150"
+        minlength="3"
+        maxlength="100"
         class="form-input"
       />
     </div>

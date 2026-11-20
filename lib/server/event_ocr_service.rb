@@ -44,6 +44,7 @@ class EventOcrService
       - Based on the provided materials, write concise information in European Portuguese (Portugal) about event(s), in order.
       - If you cannot extract the information, return an empty events collection according to the JSON schema.
       - For location, skip writing / adding "Porto Santo". We always assume the location is somewhere on island Porto Santo.
+      - Leave location null when the source does not identify the venue. Organizer, sponsor and booking credits alone do not establish the venue.
       - Return the events collection according to the JSON schema, even if there is only one event.
       - Focus on required fields. Only include information explicitly present in the provided materials and supported by the JSON schema.
       - If the additional text conflicts with the image, prefer the information shown in the image.

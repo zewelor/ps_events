@@ -147,6 +147,14 @@ class AddEventServiceTest < Minitest::Test
     assert_equal 1, @sheets.reads.count("Approved!A:S")
   end
 
+  def test_overlapping_events_without_venues_do_not_share_a_known_place
+    first = @event.except(:location).merge(start_date: "01/11/2026", end_date: "03/11/2026")
+    second = first.merge(name: "Outro evento", start_date: "02/11/2026")
+
+    assert_equal "added", save(first)[:status]
+    assert_equal "added", save(second)[:status]
+  end
+
   def test_approved_is_checked_even_when_target_is_another_tab
     save
     @sheets.approved_rows << @sheets.rows.pop

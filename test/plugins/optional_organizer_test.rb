@@ -9,7 +9,7 @@ require "yaml"
 class OptionalOrganizerTest < Minitest::Test
   def test_organizer_and_contacts_on_rendered_pages
     cases = {
-      "missing" => {"email" => "one@example.com", "phone" => "291 123 456", "image" => "/assets/flyer.webp"},
+      "missing" => {"location" => nil, "email" => "one@example.com", "phone" => "291 123 456", "image" => "/assets/flyer.webp"},
       "nil" => {"organizer" => nil, "email" => "one@example.com", "phone" => ""},
       "empty" => {"organizer" => "", "email" => "", "phone" => "291 123 456"},
       "whitespace" => {"organizer" => "  \t ", "email" => "", "phone" => ""},
@@ -19,6 +19,10 @@ class OptionalOrganizerTest < Minitest::Test
 
     build_site(cases) do |destination|
       pages = cases.to_h { |key, _| [key, File.read(File.join(destination, "organizer-#{key}.html"))] }
+
+      refute_match(/<strong[^>]*>Onde:<\/strong>/, pages.fetch("missing"))
+      refute event_schema(pages.fetch("missing")).key?("location")
+      assert_equal "Porto Santo", event_schema(pages.fetch("present")).fetch("location").fetch("name")
 
       %w[missing nil empty whitespace].each do |key|
         refute_match(/<strong[^>]*>Organizador:<\/strong>/, pages.fetch(key))
@@ -54,6 +58,9 @@ class OptionalOrganizerTest < Minitest::Test
       refute_includes label[1], "*"
       refute_nil input
       refute_match(/\brequired\b/, input[0])
+      location_input = form.match(%r{<input\b[^>]*\bid="location"[^>]*>}m)
+      refute_nil location_input
+      refute_match(/\brequired\b/, location_input[0])
     end
   end
 

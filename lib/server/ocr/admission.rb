@@ -121,23 +121,21 @@ module Ocr
       review_reason = raw["review_reason"].to_s
       review_detail = Places.clean_visible_text(raw["review_detail"])
 
-      canonical_location = Places.canonical_location(candidate[:location])
+      location_source = sources.fetch(:location_source)
+      venue_only_review = %w[missing_location ambiguous_venue_policy].include?(review_reason)
+      missing_location = location_evidence.nil? || NON_VENUE_SOURCES.include?(location_source) ||
+        (location_source == "additional_text" && additional_text.blank?) || venue_only_review
+      candidate[:location] = missing_location ? nil : Places.canonical_location(candidate[:location])
+      venue_reason = venue_review_reason(candidate[:location], location_evidence)
 
       block_reason = determine_block_reason(
         candidate: candidate,
-        canonical_location: canonical_location,
-        location_evidence: location_evidence,
+        venue_reason: venue_reason,
         sources: sources,
-        review_reason: review_reason,
+        review_reason: venue_only_review ? "none" : review_reason,
         panel_reason: panel_reason,
         additional_text: additional_text
       )
-
-      if block_reason == "missing_location"
-        candidate[:location] = nil
-      elsif canonical_location
-        candidate[:location] = canonical_location
-      end
 
       unless block_reason
         validation = EventValidation.call(candidate.compact_blank.merge(responsibility_agreement: "on"))
@@ -146,6 +144,9 @@ module Ocr
         block_reason = "invalid_event_fields"
         review_detail = "Alguns dados do evento são inválidos."
       end
+
+      # Keep a disputed venue only when the correction form can show its conflict.
+      candidate[:location] = nil if venue_reason == "conflicting_location_evidence" && block_reason != venue_reason
 
       if sources[:date_source] == "none"
         # The correction form leaves the start date empty for this reason.
@@ -186,17 +187,21 @@ module Ocr
       candidate
     end
 
-    def determine_block_reason(candidate:, canonical_location:, location_evidence:, sources:, review_reason:, panel_reason:, additional_text:)
+    def venue_review_reason(location, location_evidence)
+      return if location.nil?
+
+      location_match = Places.alias_map_folded[Places.folded_key(location)]
+      evidence_match = Places.alias_map_folded[Places.folded_key(location_evidence)]
+      "conflicting_location_evidence" if location_match && evidence_match && location_match != evidence_match
+    end
+
+    def determine_block_reason(candidate:, venue_reason:, sources:, review_reason:, panel_reason:, additional_text:)
       return "unavailable_additional_text" if additional_text.blank? && sources.value?("additional_text")
       return review_reason if review_reason != "none" && !review_reason.empty?
       return "conflicting_inset" if sources[:date_source] == "inset" || sources[:time_source] == "inset"
 
       return "missing_start_date" if candidate[:start_date].nil? || sources[:date_source] == "none"
-      return "missing_location" if canonical_location.nil? || location_evidence.nil? || NON_VENUE_SOURCES.include?(sources[:location_source])
-
-      location_match = Places.alias_map_folded[Places.folded_key(canonical_location)]
-      evidence_match = Places.alias_map_folded[Places.folded_key(location_evidence)]
-      return "conflicting_location_evidence" if location_match && evidence_match && location_match != evidence_match
+      return venue_reason if venue_reason
 
       missing_required = REQUIRED_FIELDS.any? { |field| candidate[field].nil? }
       return "missing_required_fields" if missing_required

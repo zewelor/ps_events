@@ -42,7 +42,7 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     end
   end
 
-  def test_admission_separates_valid_event_from_incomplete_candidate_in_same_group
+  def test_admission_keeps_event_without_using_organizer_credit_as_venue
     panels_data = [
       {
         "panel_id" => 1,
@@ -103,19 +103,10 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
 
     result = Ocr::Admission.evaluate(panels_data, panel_ids: [1])
 
-    assert_equal 1, result[:events].length
-    assert_equal "Workshop de Comunicação", result[:events].first[:name]
-    assert_equal "Casa do Povo de Nossa Senhora da Piedade", result[:events].first[:location]
-
-    assert_equal 1, result[:review_items].length
-    item = result[:review_items].first
-    assert_equal 1, item[:group_id]
-    assert_equal "admission", item[:stage]
-    assert_equal "missing_location", item[:reason]
-    assert_equal "Dia dos Avós", item.dig(:candidate, :name)
-    assert_equal "26/07/2025", item.dig(:candidate, :start_date)
-    assert_nil item.dig(:candidate, :location)
-    assert_equal false, item.dig(:trace, :verified)
+    workshop, celebration = result.fetch(:events)
+    assert_equal ["Workshop de Comunicação", "Casa do Povo de Nossa Senhora da Piedade"], workshop.values_at(:name, :location)
+    assert_equal ["Dia dos Avós", "26/07/2025", nil], celebration.values_at(:name, :start_date, :location)
+    assert_empty result.fetch(:review_items)
   end
 
   def test_admission_downgrades_service_fee_to_desconhecido
@@ -167,8 +158,8 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_empty ready.fetch(:review_items)
     assert_equal [nil, nil], ready.fetch(:events).first.values_at(:start_time, :end_time)
 
-    held = admit(candidate.merge("location_source" => "none"))
-    assert_equal "missing_location", held.fetch(:review_items).first.fetch(:reason)
+    held = admit(candidate.merge("date_source" => "none"))
+    assert_equal "missing_start_date", held.fetch(:review_items).first.fetch(:reason)
     assert_equal [nil, nil], held.fetch(:review_items).first.fetch(:candidate).values_at(:start_time, :end_time)
   end
 
@@ -270,13 +261,25 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
   end
 
   def test_admission_drops_unsupported_dates_from_candidates_held_for_another_reason
-    candidate = admission_candidate.merge("date_source" => "none", "end_date" => "11/07/2025", "review_reason" => "missing_location")
+    candidate = admission_candidate.merge("date_source" => "none", "end_date" => "11/07/2025", "review_reason" => "missing_required_fields")
 
     result = admit(candidate)
 
     review = result.fetch(:review_items).first
-    assert_equal "missing_location", review.fetch(:reason)
+    assert_equal "missing_required_fields", review.fetch(:reason)
     assert_equal [nil, nil], review.fetch(:candidate).values_at(:start_date, :end_date)
+  end
+
+  def test_admission_drops_organizer_only_venue_when_date_review_takes_precedence
+    candidate = admission_candidate.merge("start_date" => nil, "date_source" => "none", "location_source" => "organizer_only")
+
+    result = admit(candidate)
+
+    assert_empty result.fetch(:events)
+    review = result.fetch(:review_items).first
+    assert_equal "missing_start_date", review.fetch(:reason)
+    assert_nil review.fetch(:candidate).fetch(:location)
+    assert_equal "Biblioteca Municipal", review.fetch(:trace).fetch(:location_evidence)
   end
 
   def test_admission_reviews_conflicting_known_location_evidence
@@ -285,6 +288,17 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_empty result[:events]
     assert_equal "conflicting_location_evidence", result[:review_items].first[:reason]
     assert_equal "Biblioteca Municipal do Porto Santo", result[:review_items].first.dig(:candidate, :location)
+  end
+
+  def test_admission_drops_conflicting_venue_when_date_review_takes_precedence
+    candidate = admission_candidate.merge("start_date" => nil, "date_source" => "none", "location_evidence" => "Auditório do CCC")
+
+    result = admit(candidate)
+
+    review = result.fetch(:review_items).first
+    assert_equal "missing_start_date", review.fetch(:reason)
+    assert_nil review.fetch(:candidate).fetch(:location)
+    assert_equal "Auditório do CCC", review.fetch(:trace).fetch(:location_evidence)
   end
 
   def test_admission_keeps_aliases_and_unrecognised_free_text

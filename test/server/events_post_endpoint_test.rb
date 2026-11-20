@@ -231,6 +231,20 @@ class AddEventEndpointTest < Minitest::Test
     assert_equal 2, app.settings.google_sheets.rows.length
   end
 
+  def test_event_without_a_venue_can_be_saved_and_later_details_go_to_review
+    submit_event(valid_params.merge(location: ""))
+    assert_equal 200, last_response.status
+    assert_equal "", app.settings.google_sheets.rows.first[7]
+
+    replay = submit_event(valid_params.except(:location))
+    assert_equal "skipped", replay.fetch("outcome")
+
+    later = submit_event
+    assert_equal 409, last_response.status
+    assert_equal ["location"], later.fetch("results").first.fetch("candidates").first.fetch("differences")
+    assert_equal 1, app.settings.google_sheets.rows.length
+  end
+
   def test_form_replay_without_existing_contacts_and_links_is_skipped
     submit_event(valid_params.merge(contact_email: "info@example.com", event_link1: "https://example.com/Agenda"))
     body = submit_event

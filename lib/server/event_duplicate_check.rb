@@ -34,7 +34,7 @@ class EventDuplicateCheck
       stored = record[:canonical]
       same_day = incoming[:start_date] == stored[:start_date]
       overlapping = incoming[:start_date] <= stored[:end_date] && stored[:start_date] <= incoming[:end_date]
-      same_place = incoming[:location] == stored[:location]
+      same_place = !incoming[:location].empty? && incoming[:location] == stored[:location]
       candidate = same_day || (overlapping && same_place)
       next unless candidate
 

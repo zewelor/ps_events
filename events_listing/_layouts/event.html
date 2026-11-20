@@ -47,7 +47,10 @@ layout: default
       Detalhes do Evento
     </h2>
     <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Quando:</strong> <span class="text-[var(--color-text-muted)]">{{ page | format_event_datetime | escape }}</span></p>
-    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ page.location | escape }}</span></p>
+    {% assign event_location = page.location | default: "" | strip %}
+    {% if event_location != "" %}
+    <p class="mb-2"><strong class="text-[var(--color-text-muted)]">Onde:</strong> <span class="text-[var(--color-text-muted)]">{{ event_location | escape }}</span></p>
+    {% endif %}
     {% assign organizer = page.organizer | default: "" | strip %}
     {% assign email = page.email | default: "" | strip %}
     {% assign phone = page.phone | default: "" | strip %}
@@ -292,9 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
   {% endif %}
   "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
   "eventStatus": "https://schema.org/EventScheduled",
+  {% if event_location != "" %}
   "location": {
     "@type": "Place",
-    "name": {{ page.location | jsonify }},
+    "name": {{ event_location | jsonify }},
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Porto Santo",
@@ -302,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
       "addressCountry": "PT"
     }
   },
+  {% endif %}
   {% if page.image and page.image != "" %}
   "image": [
     {{ page.image | absolute_url | jsonify | replace: '<', '\u003c' }}
