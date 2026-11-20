@@ -58,6 +58,18 @@ class OcrSourceWorkflowTest < Minitest::Test
     assert_equal ["reader"], result[:calls].map { |call| call[:stage] }
   end
 
+  def test_invalid_event_fields_hold_the_candidate_and_preserve_ready_siblings
+    stub_reader(payload([candidate, candidate(name: "Outro concerto", start_date: "31/11/2026")]))
+
+    result = Ocr::SourceWorkflow.new.analyze(@path)
+
+    assert_equal ["Concerto"], result.fetch(:events).map { |event| event[:name] }
+    review, = result.fetch(:review_items)
+    assert_equal "invalid_event_fields", review.fetch(:reason)
+    assert_equal ["Outro concerto", "31/11/2026"], review.fetch(:candidate).values_at(:name, :start_date)
+    assert_equal [:start_date], review.fetch(:validation_errors).keys
+  end
+
   def test_attachment_and_hash_use_same_snapshot_if_source_changes
     Dir.mktmpdir do |dir|
       path = File.join(dir, "source.png")

@@ -160,45 +160,16 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_empty result[:review_items]
   end
 
-  def test_admission_hard_fails_invalid_emitted_ready_event
-    panels_data = [
-      {
-        "panel_id" => 1,
-        "panel_review_reason" => "none",
-        "panel_review_detail" => nil,
-        "candidates" => [
-          {
-            "name" => "Formação de Palmito",
-            "start_date" => "31/02/2026",
-            "start_time" => "14:00",
-            "end_date" => "23/10/2026",
-            "end_time" => "18:00",
-            "location" => "Casa do Povo de Nossa Senhora da Piedade",
-            "description" => "Formação tradicional com dois contactos.",
-            "category" => "Aprendizagem & Workshops",
-            "organizer" => "Casa do Povo",
-            "contact_email" => nil,
-            "contact_tel" => "291 985 289 / 924 366 168",
-            "price_type" => "Desconhecido",
-            "event_link1" => nil,
-            "event_link2" => nil,
-            "event_link3" => nil,
-            "event_link4" => nil,
-            "location_evidence" => "Casa do Povo",
-            "location_source" => "main_text",
-            "date_source" => "main_text",
-            "time_source" => "main_text",
-            "price_source" => "none",
-            "review_reason" => "none",
-            "review_detail" => nil
-          }
-        ]
-      }
-    ]
+  def test_admission_clears_unsupported_times_in_ready_and_held_candidates
+    candidate = admission_candidate.merge("start_time" => "18:00", "end_time" => "20:00")
 
-    assert_raises(EventValidationError) do
-      Ocr::Admission.evaluate(panels_data, panel_ids: [1])
-    end
+    ready = admit(candidate)
+    assert_empty ready.fetch(:review_items)
+    assert_equal [nil, nil], ready.fetch(:events).first.values_at(:start_time, :end_time)
+
+    held = admit(candidate.merge("location_source" => "none"))
+    assert_equal "missing_location", held.fetch(:review_items).first.fetch(:reason)
+    assert_equal [nil, nil], held.fetch(:review_items).first.fetch(:candidate).values_at(:start_time, :end_time)
   end
 
   def test_admission_honors_panel_conflicting_main_text_and_illegible_flags_even_when_candidate_claims_ready
@@ -290,11 +261,22 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
   end
 
   def test_admission_reviews_populated_date_without_source
-    candidate = admission_candidate.merge("date_source" => "none")
+    candidate = admission_candidate.merge("date_source" => "none", "end_date" => "11/07/2025")
     result = admit(candidate)
     assert_empty result[:events]
     assert_equal "missing_start_date", result[:review_items].first[:reason]
     assert_equal "10/07/2025", result[:review_items].first.dig(:candidate, :start_date)
+    assert_nil result[:review_items].first.dig(:candidate, :end_date)
+  end
+
+  def test_admission_drops_unsupported_dates_from_candidates_held_for_another_reason
+    candidate = admission_candidate.merge("date_source" => "none", "end_date" => "11/07/2025", "review_reason" => "missing_location")
+
+    result = admit(candidate)
+
+    review = result.fetch(:review_items).first
+    assert_equal "missing_location", review.fetch(:reason)
+    assert_equal [nil, nil], review.fetch(:candidate).values_at(:start_date, :end_date)
   end
 
   def test_admission_reviews_conflicting_known_location_evidence

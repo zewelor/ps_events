@@ -2,7 +2,6 @@ require "active_support/core_ext/enumerable"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/object/blank"
 require_relative "../event_validation"
-require_relative "../event_validation_error"
 require_relative "places"
 
 module Ocr
@@ -134,59 +133,52 @@ module Ocr
         additional_text: additional_text
       )
 
-      if block_reason
-        if block_reason == "missing_location"
-          candidate[:location] = nil
-        elsif canonical_location
-          candidate[:location] = canonical_location
-        end
+      if block_reason == "missing_location"
+        candidate[:location] = nil
+      elsif canonical_location
+        candidate[:location] = canonical_location
+      end
 
-        combined_message = [review_detail, panel_detail].compact.uniq.join(" | ")
+      unless block_reason
+        validation = EventValidation.call(candidate.compact_blank.merge(responsibility_agreement: "on"))
+        return {type: :event, event: validation.to_h} if validation.success?
 
-        return {
-          type: :review,
-          review_item: {
-            stage: "admission",
-            group_id: panel_id,
-            candidate_index: candidate_index,
-            reason: block_reason,
-            message: combined_message.empty? ? nil : combined_message,
-            candidate: candidate,
-            trace: {
-              location_evidence: location_evidence,
-              **sources,
-              panel_review_reason: panel_reason,
-              panel_review_detail: panel_detail,
-              verified: false
-            }
-          }
+        block_reason = "invalid_event_fields"
+        review_detail = "Alguns dados do evento são inválidos."
+      end
+
+      if sources[:date_source] == "none"
+        # The correction form leaves the start date empty for this reason.
+        candidate[:start_date] = nil unless block_reason == "missing_start_date"
+        candidate[:end_date] = nil
+      end
+
+      review_item = {
+        stage: "admission",
+        group_id: panel_id,
+        candidate_index: candidate_index,
+        reason: block_reason,
+        message: [review_detail, panel_detail].compact.uniq.join(" | ").presence,
+        candidate: candidate,
+        trace: {
+          location_evidence: location_evidence,
+          **sources,
+          panel_review_reason: panel_reason,
+          panel_review_detail: panel_detail,
+          verified: false
         }
-      end
-
-      validated_event(candidate, canonical_location, panel_id, candidate_index)
-    end
-
-    def validated_event(candidate, canonical_location, panel_id, candidate_index)
-      event_payload = candidate.dup
-      event_payload[:location] = canonical_location
-      event_payload.compact_blank!
-      event_payload[:responsibility_agreement] = "on"
-
-      validation = EventValidation.new.call(event_payload)
-      if validation.failure?
-        raise EventValidationError.new(
-          "Erro de validação no evento #{candidate_index} (painel #{panel_id}): #{validation.errors.inspect}",
-          validation_errors: validation.errors,
-          event_data: event_payload
-        )
-      end
-
-      {type: :event, event: validation.to_h}
+      }
+      review_item[:validation_errors] = validation.errors if validation
+      {type: :review, review_item: review_item}
     end
 
     def normalize_candidate_fields(raw)
       candidate = EVENT_KEYS.each_with_object({}) do |key, acc|
         acc[key.to_sym] = Places.clean_visible_text(raw[key])
+      end
+      if raw["time_source"] == "none"
+        candidate[:start_time] = nil
+        candidate[:end_time] = nil
       end
       if %w[service_fee_only none].include?(raw["price_source"].to_s) || candidate[:price_type].nil?
         candidate[:price_type] = "Desconhecido"
