@@ -50,6 +50,8 @@ class OcrCliTest < Minitest::Test
     assert_equal 1, result.fetch("events").length
     assert_equal ["reader"], result.fetch("calls").map { |call| call.fetch("stage") }
     assert_equal File.binread(FIXTURE_IMAGE), File.binread(File.join(artifacts, "source.png"))
+    assert_equal result, JSON.parse(File.read(File.join(artifacts, "result.json")))
+    assert_equal Digest::SHA256.file(FIXTURE_IMAGE).hexdigest, result.dig("hashes", "sent_sha256")
   end
 
   def test_source_benchmark_continues_after_pdf_error
