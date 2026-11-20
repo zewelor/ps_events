@@ -16,6 +16,12 @@ When adding new features, do not change the existing functionality unless necess
 
 After making changes, run `rubocop -a` to auto-correct any style issues. Run the tests to ensure everything works as expected. Run it on the whole codebase, not just the changed files. Its only for .rb files.
 
+## Generated artifacts
+
+Always save generated reports, presentations, benchmark outputs, and other
+local work artifacts under the repository's `tmp/` directory. Link to them
+from your response and keep them out of Git.
+
 ## Text
 
 When writing / translating text, for pages etc, use the following guidelines:
