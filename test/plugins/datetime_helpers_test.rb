@@ -64,6 +64,11 @@ class TestDatetimeHelpers < Minitest::Test
     assert_equal "01/12/2025 - 03/12/2025", format_event_datetime(event)
   end
 
+  def test_date_only_with_explicit_same_day_end_keeps_both_dates
+    event = {"start_date" => "01/12/2025", "end_date" => "01/12/2025"}
+    assert_equal "01/12/2025 - 01/12/2025", format_event_datetime(event)
+  end
+
   def test_case4_same_day_start_date_start_time_end_date_no_end_time
     event = {
       "start_date" => "01/12/2025",
