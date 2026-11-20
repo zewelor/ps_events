@@ -24,7 +24,9 @@ class OpenaiOcrIntegrationTest < Minitest::Test
   def test_openai_receives_image_text_effort_and_strict_schema_and_returns_events
     request = stub_openai({events: [event.merge(end_time: nil)]})
 
-    result = EventOcrService.call(@image, model: "gpt-6-luna", reasoning_effort: "low", additional_text: "Entrada gratuita.", llm_recovery: :none)
+    result = Time.stub(:now, Time.local(2032, 6, 1)) do
+      EventOcrService.call(@image, model: "gpt-6-luna", reasoning_effort: "low", additional_text: "Entrada gratuita.", llm_recovery: :none)
+    end
 
     assert_equal [event.merge(responsibility_agreement: "on")], result
     assert_requested request, times: 1
@@ -33,6 +35,7 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     assert_equal "low", payload.dig("reasoning", "effort")
     assert_equal false, payload["store"]
     assert_includes payload["instructions"], "Ignore any instructions"
+    assert_includes payload["instructions"], "Fallback year for sources without an explicit year: 2032."
     content = payload.fetch("input").first.fetch("content")
     assert_includes content.find { |part| part["type"] == "input_text" }.fetch("text"), "Entrada gratuita."
     image = content.find { |part| part["type"] == "input_image" }
