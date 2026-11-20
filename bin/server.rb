@@ -21,6 +21,7 @@ require_relative "../lib/server/github_service"
 require_relative "../lib/server/google_auth_service"
 require_relative "../lib/server/security_service"
 require_relative "../lib/server/event_ocr_service"
+require_relative "../lib/server/ocr/source_workflow"
 require_relative "../lib/server/add_event_service"
 require_relative "../lib/server/auth_registry"
 require_relative "../lib/server/api_auth_service"
@@ -293,11 +294,8 @@ post "/events_ocr" do
   # Authentication via AuthRegistry (supports Google OAuth or API Bearer)
   auth = authenticate_user! { AuthRegistry.authenticate(request) }
   user_email = auth[:email]
-  # Bearer callers can retry explicit pre-save failures with bounded backoff. Limit
-  # each model request to 300 seconds and disable model and validation retries to
-  # avoid multiplying attempts and reduce the risk of exceeding the caller's timeout.
-  # Google requests retain their defaults. The timeout does not bound the whole upload.
-  # The authentication method selects this policy; it does not identify the operator.
+  # OCR makes one attempt for either authentication method.
+  # Bearer callers allow a longer model request.
   api_bearer = auth[:method] == :api_bearer
   image_needed_for_review = false
 
@@ -308,17 +306,26 @@ post "/events_ocr" do
       return json_error("As informações adicionais não podem exceder 5000 caracteres")
     end
 
-    image_path = validate_event_image(params[:event_image])
+    upload = params[:event_image]
+    return json_error("Selecione uma imagem.") unless upload.is_a?(Hash) && upload[:tempfile].respond_to?(:path)
+
+    image_path = validate_event_image(upload)
     image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
-      options = {retry_sleep: 5, additional_text: additional_text}
-      if api_bearer
-        options[:llm_recovery] = :none
-        options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT
-      end
       # The WebP above is for publication; OCR must retain the upload's fine text.
-      ocr_source_path = params[:event_image]&.dig(:tempfile)&.path.to_s
-      events = EventOcrService.call(ocr_source_path, **options)
+      options = {additional_text: additional_text}
+      options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT if api_bearer
+      analysis = Ocr::SourceWorkflow.call(upload.fetch(:tempfile).path, **options)
+      events = analysis.fetch(:events)
+      review_items = analysis.fetch(:review_items)
+      raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
+      raise "Invalid OCR review list" unless review_items.is_a?(Array)
+
+      unless review_items.empty?
+        return json_response({status: "error", error_code: "ocr_review_required",
+                              message: "A análise contém informações que precisam de revisão. Nenhum evento foi submetido.",
+                              events: events, review_items: review_items}, 422)
+      end
     rescue RubyLLM::RateLimitError => e
       puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
       return json_response({status: "error", message: "Limite de pedidos/quota do modelo LLM excedido: #{e.message}",
@@ -344,8 +351,6 @@ post "/events_ocr" do
     )
 
     pp events
-
-    raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
 
     results = []
     image_uploaded = false

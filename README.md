@@ -31,9 +31,8 @@ source dockerized.sh; lefthook run pre-commit
 
 ### OCR models
 
-The CLI and benchmark use OpenAI Responses with `gpt-6.1-terra` and
-`medium` reasoning effort. The current `POST /events_ocr` endpoint uses
-`gpt-6.1-terra` with `low` reasoning effort. Set `OPENAI_API_KEY` in `.env`.
+The CLI, benchmark and `POST /events_ocr` use OpenAI Responses with
+`gpt-6.1-terra` and `medium` reasoning effort. Set `OPENAI_API_KEY` in `.env`.
 For a local Gemini trial, set `GEMINI_API_KEY` and pass `--model gemini-flash-latest`.
 Provider failures never switch models silently.
 OCR returns candidates. Admission checks their evidence and validates
@@ -46,10 +45,8 @@ an aggregator. The parser reads the final structured answer, requires a normal
 completion and rejects malformed collections or incomplete responses through
 the workflow's error handling before any events are saved.
 
-`POST /events_ocr` prepares a colour PNG from the first frame of the uploaded
-image, applies orientation metadata and scales the longer side down to 4096 px
-when needed. Prepared images are kept through retries and removed after analysis.
-Publication images use a separate 900 px limit.
+OCR reads the uploaded image. Publication uses a separate WebP with a 900 px
+limit.
 
 Run extraction without saving events:
 
@@ -75,8 +72,6 @@ empty artifact directory for each run. Artifacts contain the original input,
 the prepared image when resized or converted, the request, and its response or
 failure. `bin/ocr --json` returns validated `events` and `review_items`.
 Benchmark output contains these results inside `runs`.
-
-The production `/events_ocr` endpoint uses legacy OCR.
 
 The benchmark makes paid provider calls unless `--dry-run` or `--score-only` is used; it never
 uploads images to GitHub or writes spreadsheet rows. `cases.json` preserves the
@@ -125,13 +120,20 @@ spreadsheet row with the organizer's confirmed details.
 
 ### OCR failure responses
 
-OCR supports `llm_recovery: :automatic` (the default provider retries and validation
-correction attempts) or `llm_recovery: :none` (no automatic retries). Recovery applies
-only to analysis before saving events. The endpoint selects `:none` and a separate
-300-second request timeout for Bearer authentication; Google-authenticated requests
-retain the default recovery and timeout. Authentication does not indicate whether a
-human or a program initiated the request. The timeout applies to each model request,
-not the complete upload and event-saving operation.
+With Google or Bearer authentication, `POST /events_ocr` makes one OCR attempt
+on the uploaded image and optional post text. Bearer requests use a 300-second
+model timeout. The CLI and benchmark also accept PDFs.
+
+If any candidate needs source review, the endpoint returns HTTP 422 with
+`status: "error"`, `error_code: "ocr_review_required"`, the ready `events` and
+all `review_items` with their reasons. Candidates with invalid event fields
+include `validation_errors` keyed by field. The entire upload is held before any
+spreadsheet write or image publication. A caller can display the details for
+manual correction. The updated Câmara client retains this response and emails the poster, held
+candidates and review reasons for manual action. Earlier clients log the 422
+and leave the delivery pending. Deploy the client update before the endpoint. HTTP 409 continues to identify
+spreadsheet duplicate conflicts.
+When all candidates pass admission, normal duplicate detection and saving proceed.
 
 `POST /events_ocr` returns HTTP 503 with `error_code: "ocr_temporarily_unavailable"`
 when the model is temporarily unavailable during analysis, before any events are

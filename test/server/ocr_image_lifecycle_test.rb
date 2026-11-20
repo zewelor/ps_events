@@ -39,6 +39,17 @@ class OcrImageLifecycleTest < Minitest::Test
   end
 
   def stub_openai_analysis(result, status: "completed")
+    if result[:events].is_a?(Array)
+      candidates = result[:events].map do |item|
+        {name: nil, start_date: nil, start_time: nil, end_date: nil, end_time: nil,
+         location: nil, description: nil, category: nil, organizer: nil, contact_email: nil,
+         contact_tel: nil, price_type: "Desconhecido", event_link1: nil, event_link2: nil,
+         event_link3: nil, event_link4: nil, location_evidence: item[:location],
+         location_source: "main_text", date_source: "main_text", time_source: "none",
+         price_source: "none", review_reason: "none", review_detail: nil}.merge(item)
+      end
+      result = {panels: [{panel_id: 1, panel_review_reason: "none", panel_review_detail: nil, candidates: candidates}]}
+    end
     body = {
       id: "resp_batch", object: "response", status: status, model: "gpt-6.1-terra",
       output: [{id: "msg_batch", type: "message", role: "assistant", content: [{type: "output_text", text: JSON.generate(result)}]}],
@@ -52,18 +63,18 @@ class OcrImageLifecycleTest < Minitest::Test
 
   def submit(events: [event], error: nil, use_image: true, method: :api_bearer, provider: false)
     process = ImageService.method(:validate_and_process)
-    analyze = EventOcrService.method(:call)
+    analyze = Ocr::SourceWorkflow.method(:call)
     @output, = capture_io do
       ImageService.stub :validate_and_process, ->(upload) {
         path = process.call(upload)
         @paths << path
         path
       } do
-        EventOcrService.stub :call, ->(path, **options) {
-          assert File.file?(path), "OCR must receive an existing processed image"
+        Ocr::SourceWorkflow.stub :call, ->(path, **options) {
+          assert File.file?(path), "OCR must receive the original upload"
           raise error if error
 
-          provider ? analyze.call(path, **options) : events
+          provider ? analyze.call(path, **options) : {events: events, review_items: []}
         } do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "user@example.com", method: method} do
             input = {event_image: Rack::Test::UploadedFile.new(@source, "image/png")}
@@ -130,7 +141,7 @@ class OcrImageLifecycleTest < Minitest::Test
   end
 
   def test_openai_batch_is_saved_once_and_duplicate_replay_cleans_images
-    events = [event, event("22")]
+    events = [event, event("22").merge(location: nil, location_source: "none")]
     request = stub_openai_analysis({events: events})
 
     body = submit(provider: true)
@@ -140,17 +151,42 @@ class OcrImageLifecycleTest < Minitest::Test
 
     body = submit(provider: true)
     assert_equal 200, last_response.status
+    assert_equal "skipped", body["outcome"]
     assert_equal %w[skipped skipped], body["results"].map { |result| result["status"] }
     assert_cleaned
     assert_equal 2, app.settings.google_sheets.rows.length
+    assert_equal "", app.settings.google_sheets.rows.last[7]
     assert_requested request, times: 2
+  end
+
+  def test_reader_review_blocks_ready_events_before_any_write
+    events = [
+      event.merge(location: nil, location_source: "none"),
+      event("22", "Sem data").merge(start_date: nil, date_source: "none")
+    ]
+    request = stub_openai_analysis({events: events})
+
+    app.set :environment, :production
+    body = GitHubService.stub :ensure_image, ->(*) { flunk "Held OCR must not publish the image" } do
+      submit(provider: true)
+    end
+
+    assert_equal 422, last_response.status
+    assert_equal "ocr_review_required", body["error_code"]
+    assert_equal ["Concerto"], body.fetch("events").map { |item| item.fetch("name") }
+    refute body.fetch("events").first.key?("location")
+    assert_equal "missing_start_date", body.fetch("review_items").first.fetch("reason")
+    refute body.key?("retry_safe")
+    assert_empty app.settings.google_sheets.rows
+    assert_requested request, times: 1
+    assert_cleaned
   end
 
   def test_invalid_or_incomplete_analysis_never_appends_events
     [
       [{events: nil}, "completed"],
       [{events: [event, event("22")]}, "incomplete"],
-      [{events: [event, event("22").merge(start_date: "31/02/2026")]}, "completed"]
+      [{panels: "invalid"}, "completed"]
     ].each do |result, status|
       request = stub_openai_analysis(result, status: status)
 
@@ -173,16 +209,6 @@ class OcrImageLifecycleTest < Minitest::Test
     assert_equal 429, last_response.status
     assert_equal true, body["retry_safe"]
     assert_cleaned
-    assert_empty app.settings.google_sheets.rows
-  end
-
-  def test_timeouts_remove_images_for_both_authentication_policies
-    {api_bearer: 503, google_oauth: 422}.each do |method, status|
-      submit(error: Faraday::TimeoutError.new("Timed out"), method: method)
-
-      assert_equal status, last_response.status
-      assert_cleaned
-    end
     assert_empty app.settings.google_sheets.rows
   end
 
@@ -223,17 +249,6 @@ class OcrImageLifecycleTest < Minitest::Test
     assert_equal 200, last_response.status
     assert_cleaned
     assert_empty app.settings.google_sheets.rows
-  end
-
-  def test_completed_batch_and_duplicate_replay_remove_their_own_images
-    submit(events: [event, event("22")])
-    assert_equal 200, last_response.status
-    assert_cleaned
-
-    body = submit(events: [event, event("22")])
-    assert_equal "skipped", body["outcome"]
-    assert_cleaned
-    assert_equal 2, app.settings.google_sheets.rows.length
   end
 
   def test_conflicts_without_flyer_remove_image

@@ -15,6 +15,13 @@ class SharedFlyerReviewTest < Minitest::Test
     Sinatra::Application
   end
 
+  def stub_source_ocr(result, &block)
+    Ocr::SourceWorkflow.stub :call, lambda { |path, **options|
+      events = result.respond_to?(:call) ? result.call(path, **options) : result
+      {events: events, review_items: []}
+    }, &block
+  end
+
   def setup
     TestHelper.setup_network_blocking
     @previous_env = ENV.to_h.slice("GH_TOKEN", "GH_REPO")
@@ -63,7 +70,7 @@ class SharedFlyerReviewTest < Minitest::Test
   def submit_ocr(events, use_image: true)
     capture_io do
       AuthRegistry.stub :authenticate, {authenticated: true, email: SecurityService::WHITELISTED_EMAILS.first, method: :google_oauth} do
-        EventOcrService.stub :call, events do
+        stub_source_ocr events do
           ImageService.stub :validate_and_process, ->(*) {
             @converted += 1
             @path
@@ -226,7 +233,7 @@ class SharedFlyerReviewTest < Minitest::Test
     capture_io do
       AuthRegistry.stub :authenticate, ->(*) { flunk "Development must not request authentication" } do
         GoogleAuthService.stub :validate_token, ->(*) { flunk "Development must not validate a Google token" } do
-          EventOcrService.stub :call, [event("20"), event] do
+          stub_source_ocr [event("20"), event] do
             ImageService.stub :validate_and_process, @path do
               post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png"), use_event_image: "on"}
             end

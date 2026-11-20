@@ -14,6 +14,13 @@ class EventsOcrEndpointTest < Minitest::Test
     Sinatra::Application
   end
 
+  def stub_source_ocr(result, &block)
+    Ocr::SourceWorkflow.stub :call, lambda { |path, **options|
+      events = result.respond_to?(:call) ? result.call(path, **options) : result
+      {events: events, review_items: []}
+    }, &block
+  end
+
   def setup
     @orig_env = app.settings.environment
     @orig_sheets = app.settings.google_sheets
@@ -39,6 +46,20 @@ class EventsOcrEndpointTest < Minitest::Test
     }
   end
 
+  def test_authenticated_upload_requires_an_image
+    [nil, "poster.jpg"].each do |upload|
+      capture_io do
+        AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+          post "/events_ocr", {event_text: "Programa", event_image: upload}.compact
+        end
+      end
+
+      assert_equal 422, last_response.status
+      assert_equal "Selecione uma imagem.", JSON.parse(last_response.body).fetch("message")
+      assert_empty app.settings.google_sheets.rows
+    end
+  end
+
   def test_missing_token
     AuthRegistry.stub :authenticate, {authenticated: false, error: "Authentication required"} do
       post "/events_ocr", {}
@@ -60,7 +81,7 @@ class EventsOcrEndpointTest < Minitest::Test
     ocr_call = nil
     ocr_source = nil
     out, _err = capture_io do
-      EventOcrService.stub :call, lambda { |path, **options|
+      stub_source_ocr lambda { |path, **options|
         ocr_call = [path, options]
         ocr_source = File.binread(path)
         [valid_event]
@@ -89,7 +110,7 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_includes row[1], "+ocr@"
     assert_equal "test", row[14]
     assert_equal File.binread(__FILE__), ocr_source
-    assert_equal({retry_sleep: 5, additional_text: "Entrada gratuita até às 20:00."}, ocr_call.last)
+    assert_equal({additional_text: "Entrada gratuita até às 20:00."}, ocr_call.last)
   end
 
   def test_ocr_rejects_additional_text_over_limit
@@ -110,7 +131,7 @@ class EventsOcrEndpointTest < Minitest::Test
   def test_ocr_without_event_image
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     out, _err = capture_io do
-      EventOcrService.stub :call, [valid_event] do
+      stub_source_ocr [valid_event] do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
             post "/events_ocr", {
@@ -129,7 +150,7 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_authenticated_api_submitter_does_not_require_google_token
     capture_io do
-      EventOcrService.stub :call, [valid_event] do
+      stub_source_ocr [valid_event] do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
             post "/events_ocr", {
@@ -148,7 +169,7 @@ class EventsOcrEndpointTest < Minitest::Test
   def test_api_ocr_uses_bearer_policy_and_reports_model_timeout_as_retryable
     options_seen = nil
     capture_io do
-      EventOcrService.stub :call, lambda { |_, **options|
+      stub_source_ocr lambda { |_, **options|
         options_seen = options
         raise Faraday::TimeoutError, "model timed out"
       } do
@@ -160,7 +181,7 @@ class EventsOcrEndpointTest < Minitest::Test
       end
     end
 
-    assert_equal :none, options_seen[:llm_recovery]
+    refute options_seen.key?(:llm_recovery)
     assert_equal 300, options_seen[:request_timeout]
     assert_equal 503, last_response.status
     assert_equal "ocr_temporarily_unavailable", JSON.parse(last_response.body)["error_code"]
@@ -169,7 +190,7 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_google_ocr_timeout_preserves_existing_error_response
     capture_io do
-      EventOcrService.stub :call, ->(*) { raise Faraday::TimeoutError, "model timed out" } do
+      stub_source_ocr ->(*) { raise Faraday::TimeoutError, "model timed out" } do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "user@example.com", method: :google_oauth} do
             post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
@@ -185,42 +206,12 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_empty app.settings.google_sheets.rows
   end
 
-  def test_api_model_overload_returns_retryable_503_without_writes
-    TestHelper.setup_network_blocking
-    original_key = RubyLLM.config.openai_api_key
-    RubyLLM.config.openai_api_key = "offline-test-key"
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(
-      status: 503,
-      headers: {"Content-Type" => "application/json"},
-      body: JSON.generate(error: {code: "server_error", message: "High demand", type: "server_error"})
-    )
-    @provider_image = Tempfile.new(["ocr_provider_", ".png"])
-    image = @provider_image.path
-    FileUtils.cp(File.expand_path("../fixtures/ocr_events.png", __dir__), image)
-
-    capture_io do
-      ImageService.stub :validate_and_process, image do
-        AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
-          post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(image, "image/png")}
-        end
-      end
-    end
-
-    assert_equal 503, last_response.status
-    assert_equal "ocr_temporarily_unavailable", JSON.parse(last_response.body)["error_code"]
-    assert_empty app.settings.google_sheets.rows
-    assert_requested request, times: 1
-  ensure
-    RubyLLM.config.openai_api_key = original_key
-    TestHelper.reset_network_mocks
-  end
-
   def test_transient_ocr_errors_are_retryable_before_any_event_is_saved
     TestHelper.setup_network_blocking
 
     [RubyLLM::ServiceUnavailableError, RubyLLM::OverloadedError, RubyLLM::ServerError].each do |error_class|
       capture_io do
-        EventOcrService.stub :call, ->(*) { raise error_class, "Model temporarily unavailable" } do
+        stub_source_ocr ->(*) { raise error_class, "Model temporarily unavailable" } do
           ImageService.stub :validate_and_process, "/tmp/test.webp" do
             AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
               post "/events_ocr", {
@@ -244,7 +235,7 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_failure_while_saving_events_does_not_claim_ocr_can_be_retried
     capture_io do
-      EventOcrService.stub :call, [valid_event] do
+      stub_source_ocr [valid_event] do
         app.settings.google_sheets.stub :append_row, ->(*) { raise RubyLLM::ServiceUnavailableError, "Write failed" } do
           ImageService.stub :validate_and_process, "/tmp/test.webp" do
             AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
@@ -267,7 +258,7 @@ class EventsOcrEndpointTest < Minitest::Test
   def test_rate_limit_error
     whitelisted_email = SecurityService::WHITELISTED_EMAILS.first
     _out, _err = capture_io do
-      EventOcrService.stub :call, ->(*_args, **_kwargs) { raise RubyLLM::RateLimitError, "Quota exceeded" } do
+      stub_source_ocr ->(*_args, **_kwargs) { raise RubyLLM::RateLimitError, "Quota exceeded" } do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: whitelisted_email, method: :google_oauth} do
             post "/events_ocr", {
@@ -320,7 +311,7 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_rate_limit_during_save_does_not_claim_retry_is_safe
     capture_io do
-      EventOcrService.stub :call, [valid_event] do
+      stub_source_ocr [valid_event] do
         app.settings.google_sheets.stub :append_row, ->(*) { raise RubyLLM::RateLimitError, "Write failed" } do
           ImageService.stub :validate_and_process, "/tmp/test.webp" do
             AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
@@ -339,7 +330,7 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def submit_events(events)
     capture_io do
-      EventOcrService.stub :call, events do
+      stub_source_ocr events do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
             post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}

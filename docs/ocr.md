@@ -9,7 +9,14 @@ Usunięto eksperymentalny
 `selected` wraz z routerem, geometrią, kadrowaniem, maskowaniem i Judge
 miniatur. Polecenie
 `--score-only` nadal ocenia zapisane wyniki `selected` na historycznej referencji.
-API używa `legacy`. Integracja nowego OCR z API pozostaje w zakresie MCA-173.
+W kodzie endpointu `POST /events_ocr` obrazy przechodzą przez ten sam OCR.
+Jeśli choć jedna pozycja wymaga review, API zwraca HTTP 422
+(`ocr_review_required`) z obiema listami i wstrzymuje zapis całego plakatu.
+Admission wstrzymuje także datę oznaczoną przez czytnik jako pozbawiona źródła
+oraz przypadek, w którym nazwa miejsca i cytat wskazują dwa różne, jednoznaczne
+wpisy katalogu. Rola instytucji w tekście plakatu nadal wymaga oceny czytnika.
+Przy kompletnym wyniku następuje dotychczasowa kontrola duplikatów i zapis.
+[Kontrakt odpowiedzi API](../README.md#ocr-failure-responses).
 
 ## Wynik historyczny: prosty odczyt źródła — 15 listopada 2026
 
