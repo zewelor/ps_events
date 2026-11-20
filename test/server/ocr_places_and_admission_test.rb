@@ -32,7 +32,12 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
   end
 
   def test_canonical_location_does_not_merge_institution_and_school_names
-    ["Porta 33", "Porta33", "Escola da Vila", "Escola do Porto Santo"].each do |source_name|
+    assert_includes Ocr::Places.prompt_catalogue.fetch("Escola da Vila"), "Escola da Vila - Porta 33"
+    refute Ocr::Places.prompt_catalogue.key?("Porta 33")
+    assert_equal "Porta 33", Ocr::Places.canonical_location("Porta 33")
+    assert_equal "Porta33", Ocr::Places.canonical_location("Porta33")
+    assert_equal "Escola da Vila", Ocr::Places.canonical_location("Escola da Vila – Porta 33")
+    ["Escola da Vila", "Escola do Porto Santo"].each do |source_name|
       assert_equal source_name, Ocr::Places.canonical_location(source_name)
     end
   end

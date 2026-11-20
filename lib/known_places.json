@@ -1,4 +1,8 @@
 {
+  "Poncha do Pescador": [],
+  "Escola da Vila": [
+    "Escola da Vila - Porta 33"
+  ],
   "Auditório da Câmara Municipal": [
     "Auditório da CMPS",
     "Auditório da Câmara Municipal do Porto Santo"
@@ -81,5 +85,13 @@
   ],
   "Praia do Penedo": [],
   "Capela de São Pedro": [],
-  "Praia do Ribeiro Salgado": []
+  "Praia do Ribeiro Salgado": [],
+  "Escola Prof. Dr. Francisco de Freitas Branco": [
+    "Escola Básica e Secundária com Pré-Escolar e Creche Professor Dr. Francisco de Freitas Branco",
+    "Escola Básica e Secundária com Pré-Escolar e Creche Prof. Dr. Francisco de Freitas Branco",
+    "EBS com Pré-Escolar e Creche Prof. Dr. Francisco de Freitas Branco",
+    "EBS/PE e Creche Professor Dr. Francisco de Freitas Branco",
+    "Escola BS PE C Professor Dr. Francisco de Freitas Branco",
+    "Escola Básica e Secundária Prof. Dr. Francisco de Freitas Branco"
+  ]
 }
