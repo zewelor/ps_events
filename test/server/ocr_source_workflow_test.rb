@@ -71,6 +71,31 @@ class OcrSourceWorkflowTest < Minitest::Test
     assert_equal [:start_date], review.fetch(:validation_errors).keys
   end
 
+  def test_pdf_sends_the_complete_document_once_and_saves_the_exact_source
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "programme.pdf")
+      MiniMagick.convert do |convert|
+        2.times { convert << @path }
+        convert << path
+      end
+      bytes = File.binread(path)
+      artifacts = File.join(dir, "artifacts")
+      stub_reader(payload([candidate, candidate(name: "Espetáculo", start_date: "15/11/2026")]))
+
+      result = Ocr::SourceWorkflow.new.analyze(path, artifact_dir: artifacts)
+
+      assert_equal %w[Concerto Espetáculo], result.fetch(:events).map { |event| event.fetch(:name) }
+      assert_equal 1, @requests.length
+      part = @requests.first.fetch("input").first.fetch("content").find { |item| item["type"] == "input_file" }
+      assert_equal "programme.pdf", part.fetch("filename")
+      prefix, data = part.fetch("file_data").split(",", 2)
+      assert_equal "data:application/pdf;base64", prefix
+      assert_equal bytes, Base64.decode64(data)
+      assert_equal bytes, File.binread(File.join(artifacts, "source.pdf"))
+      assert_equal Digest::SHA256.hexdigest(bytes), result.dig(:hashes, :sent_sha256)
+    end
+  end
+
   def test_provider_incompatible_formats_use_lossless_first_frame_png
     Dir.mktmpdir do |dir|
       %w[bmp tiff gif].each do |format|
@@ -135,6 +160,33 @@ class OcrSourceWorkflowTest < Minitest::Test
 
       image = @requests.first.fetch("contents").flat_map { |content| content.fetch("parts") }.filter_map { |part| part["inline_data"] }.fetch(0)
       assert_equal "image/png", image.fetch("mime_type")
+    end
+  ensure
+    RubyLLM.configure { |config| config.gemini_api_key = gemini_key }
+  end
+
+  def test_gemini_receives_pdf_as_a_document
+    gemini_key = RubyLLM.config.gemini_api_key
+    RubyLLM.configure { |config| config.gemini_api_key = "offline-key" }
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "programme.pdf")
+      MiniMagick.convert do |convert|
+        convert << @path
+        convert << path
+      end
+      request = WebMock.stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").with do |http_request|
+        parts = JSON.parse(http_request.body).fetch("contents").flat_map { |content| content.fetch("parts") }
+        document = parts.filter_map { |part| part["inline_data"] }.fetch(0)
+        document.fetch("mime_type") == "application/pdf" && Base64.decode64(document.fetch("data")) == File.binread(path)
+      end.to_return(status: 200, headers: {"Content-Type" => "application/json"}, body: JSON.generate(
+        candidates: [{content: {role: "model", parts: [{text: JSON.generate(payload([candidate]))}]}, finishReason: "STOP"}]
+      ))
+
+      result = Ocr::SourceWorkflow.new(model: "gemini-flash-latest").analyze(path)
+
+      assert_equal ["Concerto"], result.fetch(:events).map { |event| event.fetch(:name) }
+      assert_requested request, times: 1
     end
   ensure
     RubyLLM.configure { |config| config.gemini_api_key = gemini_key }

@@ -31,63 +31,54 @@ source dockerized.sh; lefthook run pre-commit
 
 ### OCR models
 
-OCR uses the official OpenAI Responses API with `gpt-6.1-terra` and `low` reasoning
-effort by default. Set `OPENAI_API_KEY` in `.env`; Docker loads the key into the
-application environment. Optional settings:
-
-```bash
-OCR_MODEL=gpt-6.1-terra
-OCR_REASONING_EFFORT=low
-```
-
-To select the previous provider explicitly, use `OCR_MODEL=gemini-flash-latest`
-and `GEMINI_API_KEY`, with `OCR_REASONING_EFFORT=medium` for its previous setting.
-When unset, reasoning effort defaults to `low` for every model.
+The CLI and benchmark use OpenAI Responses with `gpt-6.1-terra` and
+`medium` reasoning effort. The current `POST /events_ocr` endpoint uses
+`gpt-6.1-terra` with `low` reasoning effort. Set `OPENAI_API_KEY` in `.env`.
+For a local Gemini trial, set `GEMINI_API_KEY` and pass `--model gemini-flash-latest`.
 Provider failures never switch models silently.
-Both providers use the same `{events: [...]}` schema, derived from
-`lib/event_schema.json`, and return the validated event array used by the
-endpoint, CLI and PDF processing. Optional fields are nullable in the model
-schema and removed when empty before local event validation.
+OCR returns candidates. Admission checks their evidence and validates
+ready events against `lib/event_schema.json`. Optional fields are nullable in the
+model schema and removed when empty before local event validation.
 
 RubyLLM's registry resolves the model; OCR pins its first-party provider and
 accepts only OpenAI and Gemini. Missing credentials do not redirect requests to
 an aggregator. The parser reads the final structured answer, requires a normal
 completion and rejects malformed collections or incomplete responses through
-the existing validation recovery policy, before any events are saved.
+the workflow's error handling before any events are saved.
 
-OCR reads the original uploaded image, independently of the publication WebP.
-Legacy prepares a colour PNG from the first image frame, applies orientation
-metadata and scales down images whose longer side exceeds 4096 px. Publication
-images use a 900 px limit. Prepared images remain available throughout retries
-and PDF conversation history, then are removed when the analysis finishes.
+`POST /events_ocr` prepares a colour PNG from the first frame of the uploaded
+image, applies orientation metadata and scales the longer side down to 4096 px
+when needed. Prepared images are kept through retries and removed after analysis.
+Publication images use a separate 900 px limit.
 
 Run extraction without saving events:
 
 ```bash
 ./dockerized.sh ruby bin/ocr path/to/poster.jpg
-./dockerized.sh ruby bin/ocr --workflow source --json path/to/poster.jpg
-./dockerized.sh ruby bin/ocr_benchmark --model gpt-6.1-terra --effort low \
+./dockerized.sh ruby bin/ocr --json path/to/programme.pdf
+./dockerized.sh ruby bin/ocr_benchmark \
   --repeat 3 --output tmp/ocr-results.json path/to/poster.jpg path/to/programme.jpg
-./dockerized.sh ruby bin/ocr_benchmark --workflow source --cases test/fixtures/ocr/cases_v2.json \
+./dockerized.sh ruby bin/ocr_benchmark --cases test/fixtures/ocr/cases_v2.json \
   --repeat 1 --artifacts-dir tmp/ocr-source-artifacts --output tmp/ocr-source-results.json
 ```
 
-The default `bin/ocr` and `EventOcrService.call` paths preserve the production
-direct extraction contract, including PDF rasterization. Opt-in `--workflow source`
-reads one image snapshot in one model request and returns validated
-`events` plus explicit `review_items`. JPEG, PNG and WebP inputs at or below 4096 px on
-the longer side are sent byte for byte. OpenAI also receives small static GIFs
+`bin/ocr` and `bin/ocr_benchmark` read images and PDFs. Each input
+is sent in one model request. PDFs are attached as complete documents.
+JPEG, PNG and WebP inputs at or below 4096 px on the longer side are sent byte
+for byte. OpenAI also receives small static GIFs
 unchanged. GIFs sent to Gemini, animated GIFs, BMPs and TIFFs use the first frame
 as PNG. Larger images are scaled down proportionally, preserving
-JPEG encoding for JPEG inputs and using PNG for other formats. It has no router, geometry, cropping,
-masking, miniature Judge or automatic retries. A valid event is still a model
-proposal, not independently verified source truth. Use a new or empty artifact
-directory for each run. Artifacts contain the original input, a separate copy of
-the image sent after resizing or conversion, and the request and response or request failure. PDF remains available through the default legacy workflow.
+JPEG encoding for JPEG inputs and using PNG for other formats.
 
-Production `/events_ocr` uses legacy. The benchmark defaults to `source` with
-`--cases` and to `legacy` for positional inputs. The benchmark
-makes paid provider calls unless `--dry-run` or `--score-only` is used; it never
+Both tools accept `--model` and `--effort` for individual runs. Use a new or
+empty artifact directory for each run. Artifacts contain the original input,
+the prepared image when resized or converted, the request, and its response or
+failure. `bin/ocr --json` returns validated `events` and `review_items`.
+Benchmark output contains these results inside `runs`.
+
+The production `/events_ocr` endpoint uses legacy OCR.
+
+The benchmark makes paid provider calls unless `--dry-run` or `--score-only` is used; it never
 uploads images to GitHub or writes spreadsheet rows. `cases.json` preserves the
 historical reference; `cases_v2.json` corrects source-role expectations without
 rewriting historical measurements. The separate archived-image holdout has its

@@ -1,6 +1,7 @@
 require "bundler/setup"
 require "minitest/autorun"
 require "tmpdir"
+require "fileutils"
 require_relative "../test_helper"
 
 Bundler.require(:default)
@@ -11,8 +12,6 @@ class EventOcrIntegrationTest < Minitest::Test
 
   def setup
     TestHelper.setup_network_blocking
-    @original_model = ENV["OCR_MODEL"]
-    ENV["OCR_MODEL"] = "gemini-flash-latest"
     @original_key = RubyLLM.config.gemini_api_key
     @original_retries = RubyLLM.config.max_retries
     RubyLLM.configure do |config|
@@ -26,7 +25,6 @@ class EventOcrIntegrationTest < Minitest::Test
   end
 
   def teardown
-    ENV["OCR_MODEL"] = @original_model
     RubyLLM.configure do |config|
       config.gemini_api_key = @original_key
       config.max_retries = @original_retries
@@ -38,7 +36,7 @@ class EventOcrIntegrationTest < Minitest::Test
   def test_image_and_additional_text_reach_gemini_and_return_multiple_events
     request = stub_gemini(events)
 
-    result = EventOcrService.call(@image_path, reasoning_effort: "medium", additional_text: "Inscrições até 12/10/2026.")
+    result = analyze_image(reasoning_effort: "medium", additional_text: "Inscrições até 12/10/2026.")
 
     assert_equal events.map { |event| event[:name] }, result.map { |event| event[:name] }
     assert_requested request, times: 1
@@ -63,7 +61,7 @@ class EventOcrIntegrationTest < Minitest::Test
     result = nil
 
     output, diagnostics = capture_io do
-      result = EventOcrService.call(@image_path, additional_text: "Inscrições até 12/10/2026.")
+      result = analyze_image(additional_text: "Inscrições até 12/10/2026.")
     end
 
     assert_equal "15/10/2026", result.first[:start_date]
@@ -84,14 +82,14 @@ class EventOcrIntegrationTest < Minitest::Test
       body: JSON.generate(error: {code: 429, message: "Quota exceeded", status: "RESOURCE_EXHAUSTED"})
     )
 
-    error = assert_raises(RubyLLM::RateLimitError) { EventOcrService.call(@image_path) }
+    error = assert_raises(RubyLLM::RateLimitError) { analyze_image }
 
     assert_includes error.message, "Quota exceeded"
     assert_requested request, times: 1
   end
 
   def test_unknown_recovery_policy_fails_before_request
-    error = assert_raises(ArgumentError) { EventOcrService.call(@image_path, llm_recovery: :unknown) }
+    error = assert_raises(ArgumentError) { analyze_image(llm_recovery: :unknown) }
 
     assert_includes error.message, "unknown LLM recovery policy"
     assert_empty @requests
@@ -106,7 +104,7 @@ class EventOcrIntegrationTest < Minitest::Test
       body: JSON.generate(error: {code: 503, message: "High demand", status: "UNAVAILABLE"})
     )
 
-    assert_raises(RubyLLM::ServiceUnavailableError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_raises(RubyLLM::ServiceUnavailableError) { analyze_image(llm_recovery: :none) }
     assert_requested request, times: 1
     assert_equal 1, RubyLLM.config.max_retries
   ensure
@@ -118,14 +116,14 @@ class EventOcrIntegrationTest < Minitest::Test
     invalid.first[:start_date] = "invalid-date"
     request = stub_gemini(invalid, events)
 
-    assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    assert_raises(EventValidationError) { analyze_image(llm_recovery: :none) }
     assert_requested request, times: 1
   end
 
   def test_ocr_without_recovery_propagates_provider_timeout
     request = stub_request(:post, GEMINI_URL).to_timeout
 
-    error = assert_raises(RubyLLM::ConnectionError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    error = assert_raises(RubyLLM::ConnectionError) { analyze_image(llm_recovery: :none) }
     assert error.timeout?
     assert_requested request, times: 1
   end
@@ -133,7 +131,7 @@ class EventOcrIntegrationTest < Minitest::Test
   def test_empty_collection_is_a_successful_analysis
     request = stub_gemini([])
 
-    assert_empty EventOcrService.call(@image_path, llm_recovery: :none)
+    assert_empty analyze_image(llm_recovery: :none)
     assert_requested request, times: 1
   end
 
@@ -141,7 +139,7 @@ class EventOcrIntegrationTest < Minitest::Test
     request = stub_gemini(nil, events)
     result = nil
     capture_io do
-      result = EventOcrService.call(@image_path)
+      result = analyze_image
     end
 
     assert_equal events.map { |event| event[:name] }, result.map { |event| event[:name] }
@@ -152,7 +150,7 @@ class EventOcrIntegrationTest < Minitest::Test
   def test_malformed_collection_is_not_retried_without_recovery
     request = stub_gemini(nil, events)
 
-    error = assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    error = assert_raises(EventValidationError) { analyze_image(llm_recovery: :none) }
 
     assert_includes error.message, "Formato de resposta OCR inválido"
     assert_requested request, times: 1
@@ -161,52 +159,27 @@ class EventOcrIntegrationTest < Minitest::Test
   def test_incomplete_gemini_response_is_rejected_even_with_valid_json
     request = stub_gemini(events, finish_reason: "MAX_TOKENS")
 
-    error = assert_raises(EventValidationError) { EventOcrService.call(@image_path, llm_recovery: :none) }
+    error = assert_raises(EventValidationError) { analyze_image(llm_recovery: :none) }
 
     assert_includes error.message, "max_tokens"
     assert_requested request, times: 1
   end
 
-  def test_invalid_pdf_preserves_conversion_error_and_cleans_temporary_files
-    pdf_path = File.join(@directory, "invalid.pdf")
-    File.write(pdf_path, "not a PDF")
-    before = Dir.glob("/tmp/event_ocr_{image,pdf}_*").sort
+  def test_legacy_reader_rejects_pdf_before_conversion_or_request
+    pdf_path = File.join(@directory, "programme.PDF")
+    File.write(pdf_path, "%PDF-1.4")
 
-    assert_raises(MiniMagick::Error) { EventOcrService.call(pdf_path, llm_recovery: :none) }
+    error = assert_raises(ArgumentError) { EventOcrService.call(pdf_path, model: "gemini-flash-latest", llm_recovery: :none) }
 
-    assert_equal before, Dir.glob("/tmp/event_ocr_{image,pdf}_*").sort
+    assert_includes error.message, "Ocr::SourceWorkflow"
     assert_empty @requests
   end
 
-  def test_pdf_rasterizes_every_page
-    pdf_path = File.join(@directory, "events.pdf")
-    MiniMagick.convert do |convert|
-      2.times { convert << @image_path }
-      convert << pdf_path
-    end
-    request = stub_gemini([events.first], [events.last])
-    result = EventOcrService.call(pdf_path, additional_text: "Programa de duas páginas.")
-
-    assert_equal events.map { |event| event[:name] }, result.map { |event| event[:name] }
-    assert_requested request, times: 2
-    @requests.each do |payload|
-      assert_includes payload.dig("contents", 0, "parts", 0, "text"), "Programa de duas páginas."
-    end
-  end
-
-  def test_pdf_with_invalid_second_page_does_not_return_partial_events
-    pdf_path = File.join(@directory, "invalid-events.pdf")
-    MiniMagick.convert do |convert|
-      2.times { convert << @image_path }
-      convert << pdf_path
-    end
-    request = stub_gemini([events.first], nil)
-
-    assert_raises(EventValidationError) { EventOcrService.call(pdf_path, llm_recovery: :none) }
-    assert_requested request, times: 2
-  end
-
   private
+
+  def analyze_image(**options)
+    EventOcrService.call(@image_path, model: "gemini-flash-latest", **options)
+  end
 
   def events
     [

@@ -4,7 +4,6 @@ FROM ghcr.io/zewelor/ruby:4.0.10-slim@sha256:80b24bf469df7d30327969486d7d352141d
 
 WORKDIR /app
 
-ARG RUNTIME_PACKAGES="imagemagick ghostscript"
 ARG DEV_PACKAGES="build-essential git libyaml-dev openssh-client curl jq file xz-utils"
 ARG WATCHEXEC_VERSION="2.4.3"
 
@@ -18,12 +17,12 @@ ENV BUNDLE_PATH=/bundle \
 # The Ruby base image creates app as UID/GID 1000:1000.
 # Local rootless Compose overrides this user to access host-owned bind mounts.
 
-# install dev dependencies
+# Install image tools.
 # hadolint ignore=SC2086,DL3008
 RUN chown app:app /app && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-    $RUNTIME_PACKAGES && \
+    imagemagick && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

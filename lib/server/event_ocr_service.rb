@@ -1,5 +1,4 @@
 require "json"
-require "fileutils"
 require "mini_magick"
 require "retryable"
 require "tmpdir"
@@ -22,11 +21,10 @@ class EventOcrService
   REASONING_EFFORT = :low
   SUPPORTED_PROVIDERS = %w[openai gemini].freeze
   IMAGE_MAX_SIZE = 4096
-  PDF_DENSITY = 200
   ADDITIONAL_TEXT_MAX_LENGTH = 5000
   ANALYSIS_PROMPT = "Analyze the attached event material and return the events according to the instructions."
 
-  def self.call(*args, llm_recovery: :automatic, request_timeout: nil, model: ENV.fetch("OCR_MODEL", MODEL), reasoning_effort: ENV["OCR_REASONING_EFFORT"], **kwargs)
+  def self.call(*args, llm_recovery: :automatic, request_timeout: nil, model: MODEL, reasoning_effort: nil, **kwargs)
     service = new(llm_recovery: llm_recovery, request_timeout: request_timeout, model: model, reasoning_effort: reasoning_effort)
     service.analyze(*args, **kwargs)
   end
@@ -120,7 +118,7 @@ class EventOcrService
     }
   end
 
-  def initialize(llm_recovery: :automatic, request_timeout: nil, model: ENV.fetch("OCR_MODEL", MODEL), reasoning_effort: ENV["OCR_REASONING_EFFORT"])
+  def initialize(llm_recovery: :automatic, request_timeout: nil, model: MODEL, reasoning_effort: nil)
     raise ArgumentError, "unknown LLM recovery policy: #{llm_recovery.inspect}" unless %i[automatic none].include?(llm_recovery)
 
     @llm_recovery = llm_recovery
@@ -131,18 +129,14 @@ class EventOcrService
   end
 
   def analyze(input_path, retry_sleep: 0, additional_text: nil, fallback_year: Time.now.year)
-    # Later requests resend attachments from history, so keep every prepared
-    # page until the whole analysis finishes.
+    raise ArgumentError, "PDF input requires Ocr::SourceWorkflow" if File.extname(input_path).casecmp(".pdf").zero?
+
+    # Provider retries can resend the prepared image from chat history.
     Dir.mktmpdir("event_ocr_image_") do |temp_dir|
-      @image_directory = temp_dir
-      @image_index = 0
       chat.with_instructions(self.class.build_instructions(fallback_year: fallback_year))
-
-      if pdf_file?(input_path)
-        return analyze_pdf(input_path, retry_sleep: retry_sleep, additional_text: additional_text)
-      end
-
-      analyze_image(input_path, retry_sleep: retry_sleep, additional_text: additional_text)
+      prepared_path = File.join(temp_dir, "source.png")
+      self.class.prepare_image(input_path, prepared_path)
+      analyze_prepared_image(prepared_path, retry_sleep: retry_sleep, additional_text: additional_text)
     end
   end
 
@@ -152,14 +146,6 @@ class EventOcrService
 
   def llm_client(request_timeout)
     self.class.llm_client(llm_recovery: @llm_recovery, request_timeout: request_timeout)
-  end
-
-  def analyze_image(image_path, retry_sleep:, additional_text: nil)
-    # OCR needs the original pixels, independently of the small publication image.
-    prepared_path = File.join(@image_directory, "page-#{@image_index}.png")
-    @image_index += 1
-    self.class.prepare_image(image_path, prepared_path)
-    analyze_prepared_image(prepared_path, retry_sleep: retry_sleep, additional_text: additional_text)
   end
 
   def analyze_prepared_image(image_path, retry_sleep:, additional_text: nil)
@@ -182,45 +168,6 @@ class EventOcrService
         parse_and_validate_response(response)
       end
     end
-  end
-
-  def analyze_pdf(pdf_path, retry_sleep:, additional_text: nil)
-    page_image_paths, temp_dir = extract_pdf_pages_to_images(pdf_path)
-    events = page_image_paths.flat_map do |page_image_path|
-      analyze_image(page_image_path, retry_sleep: retry_sleep, additional_text: additional_text)
-    end
-
-    events
-  ensure
-    cleanup_temp_dir(temp_dir)
-  end
-
-  def extract_pdf_pages_to_images(pdf_path)
-    temp_dir = Dir.mktmpdir("event_ocr_pdf_")
-    output_pattern = File.join(temp_dir, "page-%04d.png")
-    MiniMagick.convert do |convert|
-      convert.density(PDF_DENSITY)
-      convert << pdf_path
-      convert << output_pattern
-    end
-
-    page_image_paths = Dir.glob(File.join(temp_dir, "page-*.png")).sort
-    raise "Erro ao converter PDF: nenhum conteúdo de imagem foi gerado" if page_image_paths.empty?
-
-    [page_image_paths, temp_dir]
-  rescue
-    cleanup_temp_dir(temp_dir)
-    raise
-  end
-
-  def cleanup_temp_dir(path)
-    return if path.nil? || !Dir.exist?(path)
-
-    FileUtils.remove_entry(path)
-  end
-
-  def pdf_file?(input_path)
-    File.extname(input_path).casecmp(".pdf").zero?
   end
 
   def build_analysis_prompt(additional_text)

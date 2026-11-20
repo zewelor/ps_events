@@ -7,75 +7,10 @@ require "json"
 require "optparse"
 require "digest"
 require "fileutils"
-require_relative "../lib/server/event_ocr_service"
 require_relative "../lib/server/ocr/source_workflow"
 require_relative "../lib/server/ocr/benchmark_scorer"
 
-# Use the production extraction and validation path, without the ingestion
-# endpoint: this command never uploads images or writes spreadsheet rows.
-class BenchmarkOcrService < EventOcrService
-  def usage
-    responses = chat.messages.select { |message| message.role == :assistant }
-    {
-      tokens: chat.tokens.to_h,
-      response_models: responses.map(&:model),
-      ocr_schema_sha256: Digest::SHA256.hexdigest(JSON.generate(chat.schema)),
-      responses: responses.map { |message| response_details(message) }
-    }
-  end
-
-  private
-
-  def response_details(message)
-    details = {finish_reason: message.finish_reason, raw_text: message.content}
-    begin
-      parsed = message.parsed
-      details[:native_event_count] = parsed["events"].length if parsed.is_a?(Hash) && parsed["events"].is_a?(Array)
-    rescue JSON::ParserError => e
-      details[:parse_error] = e.message
-    end
-    details
-  end
-end
-
-def run_legacy_benchmark(paths:, options:)
-  options[:repeat].times.flat_map do |run|
-    paths.map do |path|
-      service = BenchmarkOcrService.new(
-        model: options[:model],
-        reasoning_effort: options[:effort],
-        llm_recovery: :none,
-        request_timeout: 180
-      )
-      result = {
-        image: path,
-        image_sha256: Digest::SHA256.file(path).hexdigest,
-        model: options[:model],
-        effort: options[:effort],
-        run: run + 1,
-        fallback_year: options[:fallback_year],
-        prompt_sha256: Digest::SHA256.hexdigest(EventOcrService.build_instructions(fallback_year: options[:fallback_year])),
-        schema_sha256: Digest::SHA256.file(EventValidation::SCHEMA_PATH).hexdigest,
-        ruby_llm_version: Gem.loaded_specs.fetch("ruby_llm").version.to_s,
-        image_preparation: {max_side: EventOcrService::IMAGE_MAX_SIZE, upscale: false, format: "png"}
-      }
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      begin
-        result[:events] = service.analyze(path, additional_text: options[:text], fallback_year: options[:fallback_year])
-      rescue => e
-        result[:error] = {type: e.class.name, message: e.message}
-      ensure
-        result[:seconds] = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(3)
-        result.merge!(service.usage)
-      end
-      puts JSON.generate(result)
-      $stdout.flush
-      result
-    end
-  end
-end
-
-def run_source_benchmark(targets:, options:)
+def run_benchmark(targets:, options:)
   options[:repeat].times.flat_map do |run_idx|
     run_num = run_idx + 1
     targets.each_with_index.map do |target, target_idx|
@@ -141,9 +76,8 @@ def resolve_targets(options, argv_paths)
 end
 
 options = {
-  workflow: nil,
-  model: EventOcrService::MODEL,
-  effort: EventOcrService::REASONING_EFFORT.to_s,
+  model: Ocr::SourceWorkflow::DEFAULT_MODEL,
+  effort: Ocr::SourceWorkflow::DEFAULT_REASONING_EFFORT,
   output: nil,
   repeat: 1,
   cases: nil,
@@ -156,8 +90,7 @@ options = {
 }
 
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: ./dockerized.sh ruby bin/ocr_benchmark [options] [IMAGE ...]"
-  opts.on("--workflow MODE", %w[legacy source], "OCR workflow: legacy (default with positional inputs) or source (default with --cases)") { |value| options[:workflow] = value }
+  opts.banner = "Usage: ./dockerized.sh ruby bin/ocr_benchmark [options] [IMAGE_OR_PDF ...]"
   opts.on("--model MODEL", "Reader OpenAI or Gemini model ID (default: #{options[:model]})") { |value| options[:model] = value }
   opts.on("--effort EFFORT", "Reader reasoning effort (default: #{options[:effort]})") { |value| options[:effort] = value }
   opts.on("--cases PATH", "Score/run against cases.json fixture manifest") { |value| options[:cases] = value }
@@ -185,7 +118,6 @@ if options[:score_only]
   exit 0
 end
 
-workflow_mode = options[:workflow] || (options[:cases] ? "source" : "legacy")
 abort parser.to_s if options[:cases].nil? && ARGV.empty?
 abort "Repeat count must be positive" unless options[:repeat].positive?
 
@@ -196,8 +128,6 @@ if options[:dry_run]
   plan = {
     dry_run: true,
     paid_api_calls: false,
-    workflow: workflow_mode,
-    image_detail: ("original" if workflow_mode == "source"),
     repeat: options[:repeat],
     fallback_year: options[:fallback_year],
     planned_runs: targets.length * options[:repeat],
@@ -216,37 +146,17 @@ if options[:dry_run]
   exit 0
 end
 
-if workflow_mode == "source"
-  runs = run_source_benchmark(targets: targets, options: options)
-  payload = {
-    workflow: workflow_mode,
-    image_detail: "original",
-    cases_path: options[:cases],
-    repeat: options[:repeat],
-    fallback_year: options[:fallback_year],
-    models: reader,
-    runs: runs
-  }.compact
-  if options[:cases]
-    payload[:score] = Ocr::BenchmarkScorer.score_runs(runs, cases_path: options[:cases])
-  end
-  write_json_output(options[:output], payload)
-  puts JSON.pretty_generate(payload.dig(:score, :aggregates)) if payload[:score]
-  exit 1 if runs.any? { |run| run.key?(:error) }
-else
-  results = run_legacy_benchmark(paths: targets.map { |t| t[:image] }, options: options)
-  payload = if options[:cases]
-    {
-      workflow: "legacy",
-      cases_path: options[:cases],
-      repeat: options[:repeat],
-      fallback_year: options[:fallback_year],
-      runs: results,
-      score: Ocr::BenchmarkScorer.score_runs(results, cases_path: options[:cases])
-    }
-  else
-    results
-  end
-  write_json_output(options[:output], payload)
-  exit 1 if results.any? { |result| result.key?(:error) }
+runs = run_benchmark(targets: targets, options: options)
+payload = {
+  cases_path: options[:cases],
+  repeat: options[:repeat],
+  fallback_year: options[:fallback_year],
+  models: reader,
+  runs: runs
+}.compact
+if options[:cases]
+  payload[:score] = Ocr::BenchmarkScorer.score_runs(runs, cases_path: options[:cases])
 end
+write_json_output(options[:output], payload)
+puts JSON.pretty_generate(payload.dig(:score, :aggregates)) if payload[:score]
+exit 1 if runs.any? { |run| run.key?(:error) }

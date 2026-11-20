@@ -61,23 +61,10 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     assert_requested request, times: 1
   end
 
-  def test_environment_selects_model_and_effort
+  def test_legacy_uses_code_defaults_even_with_old_environment_overrides
     original = ENV.values_at("OCR_MODEL", "OCR_REASONING_EFFORT")
-    ENV["OCR_MODEL"] = "gpt-6.1-terra"
-    ENV["OCR_REASONING_EFFORT"] = "none"
-    request = stub_openai({events: []}, model: "gpt-6.1-terra")
-
-    assert_empty EventOcrService.call(@image, llm_recovery: :none)
-    assert_equal "none", @requests.first.dig("reasoning", "effort")
-    assert_requested request, times: 1
-  ensure
-    ENV["OCR_MODEL"], ENV["OCR_REASONING_EFFORT"] = original
-  end
-
-  def test_default_configuration_uses_terra_low
-    original = ENV.values_at("OCR_MODEL", "OCR_REASONING_EFFORT")
-    ENV.delete("OCR_MODEL")
-    ENV.delete("OCR_REASONING_EFFORT")
+    ENV["OCR_MODEL"] = "gpt-6-luna"
+    ENV["OCR_REASONING_EFFORT"] = "high"
     request = stub_openai({events: []}, model: "gpt-6.1-terra")
 
     assert_empty EventOcrService.call(@image, llm_recovery: :none)

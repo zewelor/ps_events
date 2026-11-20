@@ -12,6 +12,8 @@ require_relative "schemas"
 
 module Ocr
   class SourceWorkflow
+    DEFAULT_MODEL = "gpt-6.1-terra".freeze
+    DEFAULT_REASONING_EFFORT = "medium".freeze
     PANEL_IDS = [1].freeze
 
     def self.call(path, **options)
@@ -19,7 +21,7 @@ module Ocr
       new(**options.except(:additional_text, :fallback_year, :artifact_dir)).analyze(path, **analyze_options)
     end
 
-    def initialize(model: ENV.fetch("OCR_MODEL", EventOcrService::MODEL), reasoning_effort: ENV["OCR_REASONING_EFFORT"] || EventOcrService::REASONING_EFFORT, llm_recovery: :none, request_timeout: 180)
+    def initialize(model: DEFAULT_MODEL, reasoning_effort: DEFAULT_REASONING_EFFORT, llm_recovery: :none, request_timeout: 180)
       raise ArgumentError, "source workflow does not support retries" unless llm_recovery == :none
 
       @model = EventOcrService.resolve_model(model)
@@ -30,12 +32,12 @@ module Ocr
     def run_evidence
       costs = @calls.map { |call| RubyLLM::Cost.from_h(call.fetch(:cost)) }
       {
-        stage: @stage, image_detail: "original", models: {reader: @model.id, reader_effort: @effort.to_s},
+        stage: @stage, image_detail: @image_detail, models: {reader: @model.id, reader_effort: @effort.to_s},
         hashes: @hashes, calls: @calls,
         timing: {total_seconds: (clock - @started).round(4), stages: @timings},
         usage_totals: %i[input_tokens output_tokens cache_read_tokens cache_write_tokens thinking_tokens].to_h { |key| [key, @calls.sum { |call| call.dig(:tokens, key).to_i }] },
         cost_totals: RubyLLM::Cost.aggregate(costs, complete: costs.all? { |cost| !cost.total.nil? }).to_h
-      }
+      }.compact
     end
 
     def analyze(path, additional_text: nil, fallback_year: Time.now.year, artifact_dir: nil)
@@ -44,7 +46,7 @@ module Ocr
       @calls = []
       @timings = {}
       @hashes = {}
-      raise ArgumentError, "PDF is unsupported; use the legacy EventOcrService path" if File.extname(path.to_s).casecmp(".pdf").zero?
+      @image_detail = nil
       raise ArgumentError, "Input file does not exist: #{path}" unless File.file?(path)
 
       if artifact_dir && Dir.exist?(artifact_dir) && !Dir.empty?(artifact_dir)
@@ -53,16 +55,24 @@ module Ocr
 
       bytes = File.binread(path)
       attachment = RubyLLM::Attachment.new(StringIO.new(bytes), filename: File.basename(path), resolution: :original)
-      raise ArgumentError, "Source must be an image: #{path}" unless attachment.image?
+      image = attachment.image?
+      pdf = attachment.pdf? && bytes.start_with?("%PDF-")
+      raise ArgumentError, "Source must be an image or PDF: #{path}" unless image || pdf
 
       @hashes[:source_sha256] = Digest::SHA256.hexdigest(bytes)
-      sent_bytes, sent_filename = prepare_image(bytes, File.basename(path), attachment.mime_type)
-      attachment = RubyLLM::Attachment.new(StringIO.new(sent_bytes), filename: sent_filename, resolution: :original) if sent_filename
-      @hashes[:sent_sha256] = Digest::SHA256.hexdigest(sent_bytes)
+      @hashes[:sent_sha256] = @hashes[:source_sha256]
+      if image
+        @image_detail = "original"
+        sent_bytes, sent_filename = prepare_image(bytes, File.basename(path), attachment.mime_type)
+        if sent_filename
+          attachment = RubyLLM::Attachment.new(StringIO.new(sent_bytes), filename: sent_filename, resolution: :original)
+          @hashes[:sent_sha256] = Digest::SHA256.hexdigest(sent_bytes)
+        end
+      end
       year = Integer(fallback_year)
       schema = Schemas.reader_schema(PANEL_IDS, additional_text: additional_text)
       instructions = Prompts.reader_instructions(fallback_year: year)
-      prompt = Prompts.build_reader_prompt(panel_ids: PANEL_IDS, additional_text: additional_text)
+      prompt = Prompts.build_reader_prompt(panel_ids: PANEL_IDS, additional_text: additional_text, pdf: pdf)
       @hashes[:reader_prompt_sha256] = Digest::SHA256.hexdigest(instructions)
       @hashes[:reader_request_sha256] = Digest::SHA256.hexdigest(prompt)
       @hashes[:reader_schema_sha256] = Digest::SHA256.hexdigest(JSON.generate(schema))

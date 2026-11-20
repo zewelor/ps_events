@@ -2,32 +2,35 @@
 
 ## Wycofanie `selected` — 19 listopada 2026
 
-CLI i benchmark obsługują `legacy` i `source`. Usunięto eksperymentalny
+OCR w CLI i benchmarku obsługuje obrazy oraz całe pliki PDF.
+Kod ustawia model Terra i poziom wysiłku medium. Flagi `--model` i `--effort`
+pozwalają zmienić te ustawienia dla pojedynczego uruchomienia.
+Usunięto eksperymentalny
 `selected` wraz z routerem, geometrią, kadrowaniem, maskowaniem i Judge
-miniatur. Benchmark z `--cases` domyślnie wybiera `source`. Polecenie
+miniatur. Polecenie
 `--score-only` nadal ocenia zapisane wyniki `selected` na historycznej referencji.
-API używa `legacy`. Integracja `source` z API pozostaje w zakresie MCA-173.
+API używa `legacy`. Integracja nowego OCR z API pozostaje w zakresie MCA-173.
 
-## Aktualny wynik: prosty odczyt źródła — 15 listopada 2026
+## Wynik historyczny: prosty odczyt źródła — 15 listopada 2026
 
-Wdrożono **lokalny, jawnie wybierany `--workflow source`**: jeden pełny obraz,
+Wdrożono **lokalny odczyt pełnego obrazu**: jeden pełny obraz,
 jeden reader, walidacja kanonicznego kontraktu i `review_items`. Bez routera,
 geometrii, maskowania, Judge, końcowego verifiera ani automatycznych ponowień.
 Nadal powstają osobne rekordy wydarzeń; **nie wycinamy ich obrazów**.
-`source` nie jest podłączony do API ani zapisu arkusza. Domyślne `legacy`
-obsługuje PDF. Wyniki `selected` poniżej dokumentują wcześniejsze pomiary.
+W tym pomiarze OCR działał lokalnie, bez zapisu arkusza. Wyniki `selected`
+poniżej dokumentują wcześniejsze pomiary.
 
 ```sh
-./dockerized.sh bundle exec ruby bin/ocr --workflow source --effort medium \
+./dockerized.sh bundle exec ruby bin/ocr --effort medium \
   --fallback-year 2026 --json --artifacts-dir tmp/ocr-one-source flyer.jpg
-./dockerized.sh bundle exec ruby bin/ocr_benchmark --workflow source \
+./dockerized.sh bundle exec ruby bin/ocr_benchmark \
   --cases test/fixtures/ocr/cases_holdout_20261115.json --effort medium \
   --fallback-year 2026 --repeat 1 --output tmp/ocr-source-medium.json
 ```
 
 Katalog artefaktów musi być nowy lub pusty. Zapisywane są dokładne bajty obrazu,
 żądanie i odpowiedź oraz hashe źródła, promptu, schematów i katalogu miejsc.
-Nieobrazowe wejście jest odrzucane przed wywołaniem modelu. Błąd próby zachowuje
+Nieobsługiwany format jest odrzucany przed wywołaniem modelu. Błąd próby zachowuje
 diagnostykę i jest widoczny jako błąd; nie oznacza pustej poprawnej ekstrakcji.
 
 Po udanym odczycie z `--artifacts-dir` katalog zawiera także `result.json`.
@@ -653,12 +656,9 @@ Palmito używa `{fallback_year}` z kontekstu analizy. CLI przyjmuje `--fallback-
 Benchmark odczytu całego obrazu z zapisem artefaktów:
 
 ```bash
-./dockerized.sh ruby bin/ocr_benchmark --workflow source \
+./dockerized.sh ruby bin/ocr_benchmark \
   --cases test/fixtures/ocr/cases_v2.json --repeat 3 \
   --artifacts-dir tmp/ocr-source-artifacts --output tmp/ocr-source-results.json
-
-./dockerized.sh ruby bin/ocr_benchmark --workflow legacy --model gpt-6.1-terra --effort low \
-  --repeat 3 --output tmp/ocr-regression-results.json test/fixtures/ocr/images/*
 
 # Bez płatnych wywołań:
 ./dockerized.sh ruby bin/ocr_benchmark --cases test/fixtures/ocr/cases_v2.json --repeat 3 --dry-run
