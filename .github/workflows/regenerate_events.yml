@@ -3,7 +3,6 @@ name: Regenerate events
 on:
   push:
     paths:
-      - 'bin/spreadsheet_to_ical'
       - '.github/workflows/regenerate_events.yml'
     branches:
       - main
@@ -104,11 +103,6 @@ jobs:
       - name: Prune unreferenced images
         run: |
           ruby bin/clean_old_images
-
-      # - name: Generate events.ics
-      #   run: docker compose run app bin/spreadsheet_to_ical -o events.ics
-      #   env:
-      #     COMPOSE_FILE: docker-compose.ci.yml
 
       - name: Pull latest changes before commit
         run: git pull --rebase --autostash

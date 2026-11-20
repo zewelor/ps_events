@@ -1,8 +1,5 @@
 # Readme
 
-
-[Link to ics](https://raw.githubusercontent.com/zewelor/ps_events/refs/heads/main/events.ics)
-
 ## Setup
 
 - cp .env.example .env
@@ -247,15 +244,3 @@ with `node --test test/*_test.js`. Run `just e2e_install` to install Playwright
 and Chromium, then `just e2e` to build the Jekyll site and test the review form
 with simulated Google sign-in and submission. Frontend Checks runs both
 JavaScript suites in CI.
-
-Generate an ICS file from the default Google Sheets CSV:
-
-```bash
-./bin/spreadsheet_to_ical > events.ics
-```
-
-Generate with a custom CSV URL:
-
-```bash
-./bin/spreadsheet_to_ical "https://example.com/events.csv" > events.ics
-```

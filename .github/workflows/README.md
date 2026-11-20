@@ -8,7 +8,7 @@ Solid arrows mean "can trigger / leads to a new workflow or job path". Dotted ar
 
 ```mermaid
 flowchart TD
-    push_regen["push(main)<br/>bin/spreadsheet_to_ical<br/>or regenerate_events.yml"] --> regenerate["regenerate_events.yml<br/>download CSV & prune images"]
+    push_regen["push(main)<br/>regenerate_events.yml"] --> regenerate["regenerate_events.yml<br/>download CSV & prune images"]
     schedule_regen["schedule / workflow_dispatch / repository_dispatch"] --> regenerate
 
     regenerate --> regen_image["build local :ci image<br/>from checked-out dependencies"]
@@ -22,7 +22,7 @@ flowchart TD
 
     push_events["push(main)<br/>events.csv"] --> jekyll
 
-    push_site["push(main)<br/>events_listing/**, jekyll_site.yml,<br/>or lib/event_schema.json<br/>(unless regenerate handoff files changed)"] --> jekyll
+    push_site["push(main)<br/>events_listing/**, jekyll_site.yml,<br/>or lib/event_schema.json<br/>(unless regenerate_events.yml changed)"] --> jekyll
     schedule_site["schedule / workflow_dispatch"] --> jekyll
     jekyll --> site_image["build local :ci image<br/>before Jekyll build"]
 

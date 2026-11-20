@@ -32,10 +32,7 @@ jobs:
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
       (
         github.event_name != 'push' ||
-        (
-          !contains(toJSON(github.event.commits), 'bin/spreadsheet_to_ical') &&
-          !contains(toJSON(github.event.commits), '.github/workflows/regenerate_events.yml')
-        )
+        !contains(toJSON(github.event.commits), '.github/workflows/regenerate_events.yml')
       )
     runs-on: ubuntu-latest
     concurrency:
