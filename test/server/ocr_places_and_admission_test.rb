@@ -289,6 +289,49 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_empty direct_result[:review_items]
   end
 
+  def test_admission_reviews_populated_date_without_source
+    candidate = admission_candidate.merge("date_source" => "none")
+    result = admit(candidate)
+    assert_empty result[:events]
+    assert_equal "missing_start_date", result[:review_items].first[:reason]
+    assert_equal "10/07/2025", result[:review_items].first.dig(:candidate, :start_date)
+  end
+
+  def test_admission_reviews_conflicting_known_location_evidence
+    candidate = admission_candidate.merge("location" => "Biblioteca Municipal", "location_evidence" => "Auditório do CCC")
+    result = admit(candidate)
+    assert_empty result[:events]
+    assert_equal "conflicting_location_evidence", result[:review_items].first[:reason]
+    assert_equal "Biblioteca Municipal do Porto Santo", result[:review_items].first.dig(:candidate, :location)
+  end
+
+  def test_admission_keeps_aliases_and_unrecognised_free_text
+    [
+      {"location" => "Auditório do Centro Cultural e de Congressos", "location_evidence" => "Auditório do CCC"},
+      {"location" => "Biblioteca Municipal", "location_evidence" => "Biblioteca Municipal, entrada norte"},
+      {"location" => "Praia da Calheta", "location_evidence" => "PRAIA DA CALHETA"}
+    ].each do |location|
+      result = admit(admission_candidate.merge(location))
+      assert_equal 1, result[:events].length
+      assert_empty result[:review_items]
+    end
+  end
+
+  def admission_candidate
+    {
+      "name" => "Concerto de Verão", "start_date" => "10/07/2025", "location" => "Biblioteca Municipal",
+      "description" => "Concerto de verão na biblioteca.", "category" => "Música", "price_type" => "Desconhecido",
+      "location_evidence" => "Biblioteca Municipal", "location_source" => "main_text", "date_source" => "main_text",
+      "time_source" => "none", "price_source" => "none", "review_reason" => "none"
+    }
+  end
+
+  def admit(candidate)
+    Ocr::Admission.evaluate(
+      [{"panel_id" => 1, "panel_review_reason" => "none", "candidates" => [candidate]}], panel_ids: [1]
+    )
+  end
+
   def test_unavailable_additional_text_routes_referenced_sources_to_review
     candidate = {
       "name" => "Workshop de Atendimento ao Público e Comunicação", "start_date" => "16/07/2025",

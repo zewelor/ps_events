@@ -113,28 +113,22 @@ module Ocr
 
       candidate = normalize_candidate_fields(raw)
       location_evidence = Places.clean_visible_text(raw["location_evidence"])
-      location_source = raw["location_source"].to_s
-      date_source = raw["date_source"].to_s
-      time_source = raw["time_source"].to_s
-      price_source = raw["price_source"].to_s
+      sources = {
+        location_source: raw["location_source"].to_s,
+        date_source: raw["date_source"].to_s,
+        time_source: raw["time_source"].to_s,
+        price_source: raw["price_source"].to_s
+      }
       review_reason = raw["review_reason"].to_s
       review_detail = Places.clean_visible_text(raw["review_detail"])
 
-      raw_location = candidate[:location]
-      canonical_location = Places.canonical_location(raw_location)
-
-      if price_source == "service_fee_only" || price_source == "none" || candidate[:price_type].nil?
-        candidate[:price_type] = "Desconhecido"
-      end
+      canonical_location = Places.canonical_location(candidate[:location])
 
       block_reason = determine_block_reason(
         candidate: candidate,
         canonical_location: canonical_location,
         location_evidence: location_evidence,
-        location_source: location_source,
-        date_source: date_source,
-        time_source: time_source,
-        price_source: price_source,
+        sources: sources,
         review_reason: review_reason,
         panel_reason: panel_reason,
         additional_text: additional_text
@@ -160,10 +154,7 @@ module Ocr
             candidate: candidate,
             trace: {
               location_evidence: location_evidence,
-              location_source: location_source,
-              date_source: date_source,
-              time_source: time_source,
-              price_source: price_source,
+              **sources,
               panel_review_reason: panel_reason,
               panel_review_detail: panel_detail,
               verified: false
@@ -172,10 +163,13 @@ module Ocr
         }
       end
 
+      validated_event(candidate, canonical_location, panel_id, candidate_index)
+    end
+
+    def validated_event(candidate, canonical_location, panel_id, candidate_index)
       event_payload = candidate.dup
       event_payload[:location] = canonical_location
       event_payload.compact_blank!
-      event_payload[:price_type] ||= "Desconhecido"
       event_payload[:responsibility_agreement] = "on"
 
       validation = EventValidation.new.call(event_payload)
@@ -191,18 +185,26 @@ module Ocr
     end
 
     def normalize_candidate_fields(raw)
-      EVENT_KEYS.each_with_object({}) do |key, acc|
+      candidate = EVENT_KEYS.each_with_object({}) do |key, acc|
         acc[key.to_sym] = Places.clean_visible_text(raw[key])
       end
+      if %w[service_fee_only none].include?(raw["price_source"].to_s) || candidate[:price_type].nil?
+        candidate[:price_type] = "Desconhecido"
+      end
+      candidate
     end
 
-    def determine_block_reason(candidate:, canonical_location:, location_evidence:, location_source:, date_source:, time_source:, price_source:, review_reason:, panel_reason:, additional_text:)
-      return "unavailable_additional_text" if additional_text.blank? && [location_source, date_source, time_source, price_source].include?("additional_text")
+    def determine_block_reason(candidate:, canonical_location:, location_evidence:, sources:, review_reason:, panel_reason:, additional_text:)
+      return "unavailable_additional_text" if additional_text.blank? && sources.value?("additional_text")
       return review_reason if review_reason != "none" && !review_reason.empty?
-      return "conflicting_inset" if date_source == "inset" || time_source == "inset"
+      return "conflicting_inset" if sources[:date_source] == "inset" || sources[:time_source] == "inset"
 
-      return "missing_start_date" if candidate[:start_date].nil?
-      return "missing_location" if canonical_location.nil? || location_evidence.nil? || NON_VENUE_SOURCES.include?(location_source)
+      return "missing_start_date" if candidate[:start_date].nil? || sources[:date_source] == "none"
+      return "missing_location" if canonical_location.nil? || location_evidence.nil? || NON_VENUE_SOURCES.include?(sources[:location_source])
+
+      location_match = Places.alias_map_folded[Places.folded_key(canonical_location)]
+      evidence_match = Places.alias_map_folded[Places.folded_key(location_evidence)]
+      return "conflicting_location_evidence" if location_match && evidence_match && location_match != evidence_match
 
       missing_required = REQUIRED_FIELDS.any? { |field| candidate[field].nil? }
       return "missing_required_fields" if missing_required
