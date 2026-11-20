@@ -122,20 +122,24 @@ class OcrImageLifecycleTest < Minitest::Test
   end
 
   def test_three_provider_503_retries_leave_no_processed_images
+    original_retries = RubyLLM.config.max_retries
+    RubyLLM.config.max_retries = 1
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(
       status: 503, headers: {"Content-Type" => "application/json"},
       body: JSON.generate(error: {code: "server_error", message: "High demand", type: "server_error"})
     )
-    3.times do
+    3.times do |attempt|
       body = submit(provider: true)
 
       assert_equal 503, last_response.status
       assert_equal "ocr_temporarily_unavailable", body["error_code"]
+      assert_requested request, times: attempt + 1
       assert_cleaned
     end
     assert_equal 3, @paths.uniq.length
-    assert_requested request, times: 3
     assert_empty app.settings.google_sheets.rows
+  ensure
+    RubyLLM.config.max_retries = original_retries
   end
 
   def test_openai_batch_is_saved_once_and_duplicate_replay_cleans_images
