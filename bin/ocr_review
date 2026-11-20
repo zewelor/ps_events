@@ -1,0 +1,25 @@
+#!dockerized.sh ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+Bundler.require(:development)
+require "json"
+require "optparse"
+require_relative "../lib/server/ocr/targeted_review"
+
+mode = "batch"
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [--mode batch|separate] ARTIFACT_DIR"
+  opts.on("--mode MODE", %w[batch separate], "Batch questions per image (default), or ask separately") { |value| mode = value }
+end
+begin
+  parser.parse!
+  raise OptionParser::MissingArgument, "ARTIFACT_DIR" unless ARGV.length == 1
+
+  report = Ocr::TargetedReview.new(mode: mode).call(ARGV.first)
+  puts JSON.pretty_generate(report)
+  exit 1 if report[:status] == "technical_failure"
+rescue => e
+  warn "Error: #{e.class}: #{e.message}"
+  exit 1
+end

@@ -55,6 +55,7 @@ module Ocr
       raise ArgumentError, "Source must be an image: #{path}" unless attachment.image?
 
       @hashes[:source_sha256] = Digest::SHA256.hexdigest(bytes)
+      @hashes[:sent_sha256] = @hashes[:source_sha256]
       year = Integer(fallback_year)
       schema = Schemas.reader_schema(PANEL_IDS, additional_text: additional_text)
       instructions = Prompts.reader_instructions(fallback_year: year)
@@ -100,7 +101,9 @@ module Ocr
 
       @stage = "admission"
       admitted = Admission.evaluate(parsed.fetch("panels"), panel_ids: PANEL_IDS, additional_text: additional_text)
-      {route: "whole_source", fallback_year: year, events: admitted[:events], review_items: admitted[:review_items], diagnostics: {panels: admitted[:panels], artifact_dir: artifact_dir}}.merge(run_evidence)
+      result = {route: "whole_source", fallback_year: year, events: admitted[:events], review_items: admitted[:review_items], diagnostics: {panels: admitted[:panels], artifact_dir: artifact_dir}}.merge(run_evidence)
+      File.write(File.join(artifact_dir, "result.json"), JSON.pretty_generate(result) + "\n") if artifact_dir
+      result
     end
 
     private
