@@ -35,8 +35,11 @@ module Ocr
         a visible start day. Preserve month transitions. For weekday-dependent hours,
         check the calendar weekday of the start date.
         Separately named or separately dated events under a generic heading are
-        separate candidates. Nonconsecutive dates are separate occurrences; a continuous
-        date range belongs to one named event running throughout that period. A single
+        separate candidates. Nonconsecutive dates are separate occurrences.
+        For a performance on listed dates (e.g. "4 & 5" or
+        "4 e 5"), return one occurrence per date, even on consecutive days. Apply
+        shared hours to each occurrence. Keep one range when the source describes
+        one event running throughout the period (e.g. "de 4 a 6"). A single
         day's programme for one event/venue is one candidate: use its first start time
         and put the programme in description. Use HH:MM, Europe/Lisbon. Missing times
         remain null; never guess end_time or set it equal to start_time.
