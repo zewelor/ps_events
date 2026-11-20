@@ -103,7 +103,7 @@ class OcrImageLifecycleTest < Minitest::Test
     assert_equal 200, last_response.status
     attachment = payload.fetch("input").first.fetch("content").find { |part| part["type"] == "input_image" }
     pixels = Base64.decode64(attachment.fetch("image_url").split(",", 2).last)
-    assert_equal [2400, 3200], MiniMagick::Image.read(pixels).dimensions
+    assert_equal [1200, 1600], MiniMagick::Image.read(pixels).dimensions
     assert_equal [675, 900], publication_size
     assert_equal before, Dir.glob("/tmp/event_ocr_image_*")
     assert_requested request, times: 1

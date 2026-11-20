@@ -21,7 +21,6 @@ class EventOcrService
   MODEL = "gpt-6.1-terra"
   REASONING_EFFORT = :low
   SUPPORTED_PROVIDERS = %w[openai gemini].freeze
-  IMAGE_SCALE = 2
   IMAGE_MAX_SIZE = 4096
   PDF_DENSITY = 200
   ADDITIONAL_TEXT_MAX_LENGTH = 5000
@@ -68,6 +67,19 @@ class EventOcrService
         - If its more complex, like free till some hour, use 'Pago' and add a note in the description
         - Be sure that price mentioned is price for attending the event, not for something else, like parking / extra menu / etc.
     INSTR
+  end
+
+  def self.prepare_image(input_path, output_path, coalesce: false)
+    MiniMagick.convert do |convert|
+      convert << "#{input_path}[0]"
+      convert.coalesce if coalesce
+      convert.auto_orient
+      convert.filter "Lanczos"
+      # ImageMagick's > suffix shrinks oversized images and never upscales.
+      convert.resize "#{IMAGE_MAX_SIZE}x#{IMAGE_MAX_SIZE}>"
+      convert.strip
+      convert << output_path
+    end
   end
 
   def self.resolve_model(model)
@@ -143,19 +155,9 @@ class EventOcrService
 
   def analyze_image(image_path, retry_sleep:, additional_text: nil)
     # OCR needs the original pixels, independently of the small publication image.
-    # Enlarging small text improved extraction in the poster benchmark.
     prepared_path = File.join(@image_directory, "page-#{@image_index}.png")
     @image_index += 1
-    dimensions = MiniMagick::Image.new(image_path).dimensions
-    target_size = [dimensions.max * IMAGE_SCALE, IMAGE_MAX_SIZE].min
-    MiniMagick.convert do |convert|
-      convert << "#{image_path}[0]"
-      convert.auto_orient
-      convert.filter "Lanczos"
-      convert.resize "#{target_size}x#{target_size}"
-      convert.strip
-      convert << prepared_path
-    end
+    self.class.prepare_image(image_path, prepared_path)
     analyze_prepared_image(prepared_path, retry_sleep: retry_sleep, additional_text: additional_text)
   end
 

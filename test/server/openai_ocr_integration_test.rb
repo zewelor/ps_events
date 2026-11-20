@@ -40,7 +40,7 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     assert_includes content.find { |part| part["type"] == "input_text" }.fetch("text"), "Entrada gratuita."
     image = content.find { |part| part["type"] == "input_image" }
     pixels = Base64.decode64(image.fetch("image_url").split(",", 2).last)
-    assert_equal MiniMagick::Image.new(@image).dimensions.map { |size| size * 2 }, MiniMagick::Image.read(pixels).dimensions
+    assert_equal MiniMagick::Image.new(@image).dimensions, MiniMagick::Image.read(pixels).dimensions
     format = payload.dig("text", "format")
     assert_equal true, format["strict"]
     schema = format.fetch("schema")
@@ -91,7 +91,7 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     source = Tempfile.new(["ocr_source_", ".tiff"])
     MiniMagick.convert do |convert|
       convert << @image
-      convert.resize "3000x1000!"
+      convert.resize "6000x2000!"
       convert << source.path
     end
     request = stub_openai({events: []}, model: "gpt-6.1-terra")
@@ -103,7 +103,7 @@ class OpenaiOcrIntegrationTest < Minitest::Test
     assert attachment.fetch("image_url").start_with?("data:image/png;base64,")
     pixels = Base64.decode64(attachment.fetch("image_url").split(",", 2).last)
     assert_equal [4096, 1365], MiniMagick::Image.read(pixels).dimensions
-    assert_equal [3000, 1000], MiniMagick::Image.new(source.path).dimensions
+    assert_equal [6000, 2000], MiniMagick::Image.new(source.path).dimensions
     assert_equal before, Dir.glob("/tmp/event_ocr_image_*")
     assert_requested request, times: 1
   ensure

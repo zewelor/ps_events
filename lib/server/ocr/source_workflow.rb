@@ -4,6 +4,7 @@ require "json"
 require "json-schema"
 require "ruby_llm"
 require "stringio"
+require "tmpdir"
 require_relative "../event_ocr_service"
 require_relative "admission"
 require_relative "prompts"
@@ -55,6 +56,9 @@ module Ocr
       raise ArgumentError, "Source must be an image: #{path}" unless attachment.image?
 
       @hashes[:source_sha256] = Digest::SHA256.hexdigest(bytes)
+      sent_bytes, sent_filename = prepare_image(bytes, File.basename(path), attachment.mime_type)
+      attachment = RubyLLM::Attachment.new(StringIO.new(sent_bytes), filename: sent_filename, resolution: :original) if sent_filename
+      @hashes[:sent_sha256] = Digest::SHA256.hexdigest(sent_bytes)
       year = Integer(fallback_year)
       schema = Schemas.reader_schema(PANEL_IDS, additional_text: additional_text)
       instructions = Prompts.reader_instructions(fallback_year: year)
@@ -67,6 +71,7 @@ module Ocr
       if artifact_dir
         FileUtils.mkdir_p(artifact_dir)
         File.binwrite(File.join(artifact_dir, "source#{File.extname(path)}"), bytes)
+        File.binwrite(File.join(artifact_dir, sent_filename), sent_bytes) if sent_filename
         File.write(File.join(artifact_dir, "reader_request.json"), JSON.pretty_generate({instructions: instructions, prompt: prompt, schema: schema}) + "\n")
       end
       @stage = "reader"
@@ -104,6 +109,37 @@ module Ocr
     end
 
     private
+
+    def prepare_image(bytes, filename, mime_type)
+      Dir.mktmpdir("ocr_source_") do |dir|
+        original_path = File.join(dir, "source#{File.extname(filename)}")
+        File.binwrite(original_path, bytes)
+        dimensions = MiniMagick.identify do |identify|
+          identify.ping
+          identify.format "%w %h %W %H"
+          identify << "#{original_path}[0]"
+        end.split.map { |dimension| Integer(dimension) }
+        animated_gif = if mime_type == "image/gif"
+          frames = MiniMagick.identify do |identify|
+            identify.ping
+            identify.format "%n\n"
+            identify << original_path
+          end.lines.first
+          Integer(frames) > 1
+        else
+          false
+        end
+        supported_format = %w[image/jpeg image/png image/webp].include?(mime_type) ||
+          (mime_type == "image/gif" && @model.provider == "openai")
+        return [bytes, nil] if supported_format && !animated_gif && dimensions.max <= EventOcrService::IMAGE_MAX_SIZE
+
+        sent_filename = (mime_type == "image/jpeg") ? "sent.jpg" : "sent.png"
+        output_path = File.join(dir, sent_filename)
+        coalesce = mime_type == "image/gif" && dimensions.first(2) != dimensions.last(2)
+        EventOcrService.prepare_image(original_path, output_path, coalesce: coalesce)
+        [File.binread(output_path), sent_filename]
+      end
+    end
 
     def clock
       Process.clock_gettime(Process::CLOCK_MONOTONIC)

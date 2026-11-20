@@ -57,7 +57,7 @@ def run_legacy_benchmark(paths:, options:)
         prompt_sha256: Digest::SHA256.hexdigest(EventOcrService.build_instructions(fallback_year: options[:fallback_year])),
         schema_sha256: Digest::SHA256.file(EventValidation::SCHEMA_PATH).hexdigest,
         ruby_llm_version: Gem.loaded_specs.fetch("ruby_llm").version.to_s,
-        image_preparation: {scale: EventOcrService::IMAGE_SCALE, max_side: EventOcrService::IMAGE_MAX_SIZE, format: "png"}
+        image_preparation: {max_side: EventOcrService::IMAGE_MAX_SIZE, upscale: false, format: "png"}
       }
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       begin

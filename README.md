@@ -56,13 +56,10 @@ completion and rejects malformed collections or incomplete responses through
 the existing validation recovery policy, before any events are saved.
 
 OCR reads the original uploaded image, independently of the publication WebP.
-It prepares a lossless colour PNG from the first image frame, applies orientation
-metadata, enlarges it by
-up to 2× and caps the longer side at 4096 px. Publication images keep their
-900 px limit. Prepared images remain available throughout retries and PDF
-conversation history, then are removed when the analysis finishes. This uses
-more image tokens; the benchmark report separates earlier raw-image costs from
-the current preprocessing results.
+Legacy prepares a colour PNG from the first image frame, applies orientation
+metadata and scales down images whose longer side exceeds 4096 px. Publication
+images use a 900 px limit. Prepared images remain available throughout retries
+and PDF conversation history, then are removed when the analysis finishes.
 
 Run extraction without saving events:
 
@@ -77,12 +74,16 @@ Run extraction without saving events:
 
 The default `bin/ocr` and `EventOcrService.call` paths preserve the production
 direct extraction contract, including PDF rasterization. Opt-in `--workflow source`
-reads one unchanged image snapshot in one model request and returns validated
-`events` plus explicit `review_items`. It has no router, geometry, cropping,
+reads one image snapshot in one model request and returns validated
+`events` plus explicit `review_items`. JPEG, PNG and WebP inputs at or below 4096 px on
+the longer side are sent byte for byte. OpenAI also receives small static GIFs
+unchanged. GIFs sent to Gemini, animated GIFs, BMPs and TIFFs use the first frame
+as PNG. Larger images are scaled down proportionally, preserving
+JPEG encoding for JPEG inputs and using PNG for other formats. It has no router, geometry, cropping,
 masking, miniature Judge or automatic retries. A valid event is still a model
 proposal, not independently verified source truth. Use a new or empty artifact
-directory for each run; artifacts contain the exact input, request and response
-or request failure. PDF remains available through the default legacy workflow.
+directory for each run. Artifacts contain the original input, a separate copy of
+the image sent after resizing or conversion, and the request and response or request failure. PDF remains available through the default legacy workflow.
 
 Production `/events_ocr` uses legacy. The benchmark defaults to `source` with
 `--cases` and to `legacy` for positional inputs. The benchmark

@@ -70,6 +70,143 @@ class OcrSourceWorkflowTest < Minitest::Test
     assert_equal [:start_date], review.fetch(:validation_errors).keys
   end
 
+  def test_provider_incompatible_formats_use_lossless_first_frame_png
+    Dir.mktmpdir do |dir|
+      %w[bmp tiff gif].each do |format|
+        path = File.join(dir, "source.#{format}")
+        MiniMagick.convert do |convert|
+          convert.size "20x10"
+          convert << "xc:red"
+          convert << "xc:blue" if format == "gif"
+          convert << path
+        end
+        stub_reader(payload([candidate]))
+        result = Ocr::SourceWorkflow.new.analyze(path)
+        image = @requests.last.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
+        assert image.fetch("image_url").start_with?("data:image/png;base64,"), format
+        sent_bytes = Base64.decode64(image.fetch("image_url").split(",", 2).last)
+        assert_equal [20, 10], MiniMagick::Image.read(sent_bytes).dimensions, format
+        sent_path = File.join(dir, "sent.png")
+        File.binwrite(sent_path, sent_bytes)
+        color = MiniMagick.identify { |command|
+          command.format "%[pixel:p{0,0}]"
+          command << sent_path
+        }
+        assert_match(/255,0,0/, color, format)
+        assert_equal Digest::SHA256.hexdigest(sent_bytes), result.dig(:hashes, :sent_sha256)
+      end
+    end
+  end
+
+  def test_small_static_gif_remains_byte_identical
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "source.gif")
+      MiniMagick.convert { |command|
+        command << @path
+        command << path
+      }
+      stub_reader(payload([candidate]))
+      Ocr::SourceWorkflow.new.analyze(path)
+      image = @requests.last.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
+      assert_equal File.binread(path), Base64.decode64(image.fetch("image_url").split(",", 2).last)
+    end
+  end
+
+  def test_small_static_gif_is_sent_as_png_to_gemini
+    gemini_key = RubyLLM.config.gemini_api_key
+    RubyLLM.configure { |config| config.gemini_api_key = "offline-key" }
+    WebMock.stub_request(:post, "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent").with do |request|
+      @requests << JSON.parse(request.body)
+      true
+    end.to_return(status: 200, headers: {"Content-Type" => "application/json"}, body: JSON.generate(
+      candidates: [{content: {role: "model", parts: [{text: JSON.generate(payload([]))}]}, finishReason: "STOP"}]
+    ))
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "source.gif")
+      MiniMagick.convert do |command|
+        command.size "20x10"
+        command << "xc:red"
+        command << path
+      end
+
+      Ocr::SourceWorkflow.new(model: "gemini-flash-latest").analyze(path)
+
+      image = @requests.first.fetch("contents").flat_map { |content| content.fetch("parts") }.filter_map { |part| part["inline_data"] }.fetch(0)
+      assert_equal "image/png", image.fetch("mime_type")
+    end
+  ensure
+    RubyLLM.configure { |config| config.gemini_api_key = gemini_key }
+  end
+
+  def test_source_at_limit_is_sent_unchanged
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "source.png")
+      MiniMagick.convert do |convert|
+        convert << @path
+        convert.resize "4096x1024!"
+        convert << path
+      end
+      stub_reader(payload([candidate]))
+      result = Ocr::SourceWorkflow.new.analyze(path)
+      image = @requests.first.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
+      assert_equal File.binread(path), Base64.decode64(image.fetch("image_url").split(",", 2).last)
+      assert_equal result.dig(:hashes, :source_sha256), result.dig(:hashes, :sent_sha256)
+      assert_equal 1, @requests.length
+    end
+  end
+
+  def test_large_source_sends_bounded_snapshot_and_records_sent_bytes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "large.jpg")
+      MiniMagick.convert do |convert|
+        convert << @path
+        convert.resize "6000x2000!"
+        convert << path
+      end
+      original_bytes = File.binread(path)
+      artifact_dir = File.join(dir, "artifacts")
+      stub_reader(payload([candidate]))
+
+      attachment_new = RubyLLM::Attachment.method(:new)
+      replacement = proc do |snapshot, **kwargs|
+        File.binwrite(path, "source changed")
+        attachment_new.call(snapshot, **kwargs)
+      end
+      result = RubyLLM::Attachment.stub(:new, replacement) { Ocr::SourceWorkflow.new.analyze(path, artifact_dir: artifact_dir) }
+      image = @requests.first.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
+      assert image.fetch("image_url").start_with?("data:image/jpeg;base64,")
+      assert_equal "original", image.fetch("detail")
+      sent_bytes = Base64.decode64(image.fetch("image_url").split(",", 2).last)
+      assert_equal [4096, 1365], MiniMagick::Image.read(sent_bytes).dimensions
+      assert_equal 1, @requests.length
+      assert_equal original_bytes, File.binread(File.join(artifact_dir, "source.jpg"))
+      assert_equal sent_bytes, File.binread(File.join(artifact_dir, "sent.jpg"))
+      assert_equal Digest::SHA256.hexdigest(original_bytes), result.dig(:hashes, :source_sha256)
+      assert_equal Digest::SHA256.hexdigest(sent_bytes), result.dig(:hashes, :sent_sha256)
+    end
+  end
+
+  def test_large_gif_canvas_is_coalesced_and_bounded
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "source.gif")
+      MiniMagick.convert do |convert|
+        convert << @path
+        convert.resize "300x400!"
+        convert.page "6000x2000+100+100"
+        convert << path
+      end
+      stub_reader(payload([candidate]))
+      result = Ocr::SourceWorkflow.new.analyze(path)
+      image = @requests.first.fetch("input").flat_map { |item| item["content"].is_a?(Array) ? item["content"] : [] }.find { |part| part["type"] == "input_image" }
+      assert image.fetch("image_url").start_with?("data:image/png;base64,")
+      sent_bytes = Base64.decode64(image.fetch("image_url").split(",", 2).last)
+      assert_equal [4096, 1365], MiniMagick::Image.read(sent_bytes).dimensions
+      assert_equal Digest::SHA256.hexdigest(sent_bytes), result.dig(:hashes, :sent_sha256)
+      assert_equal 1, @requests.length
+    end
+  end
+
   def test_attachment_and_hash_use_same_snapshot_if_source_changes
     Dir.mktmpdir do |dir|
       path = File.join(dir, "source.png")
