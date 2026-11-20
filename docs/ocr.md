@@ -629,6 +629,8 @@ Na teraz nie wybieramy kolejnego OCR, drugiego ogólnego weryfikatora, ramek/nap
 
 ## 7. Zestaw regresyjny i uruchamianie
 
+Nowe przypadki regresyjne są w [cases_regressions.json](../test/fixtures/ocr/cases_regressions.json). Plakat Pijamy jest kopią wejścia z Facebooka. Listopadowa agenda pozostaje w [cases_v2.json](../test/fixtures/ocr/cases_v2.json).
+
 Oryginalne bajty 10 JPEG-ów, hashe, wybrane fakty i pominięcia są w [cases.json](../test/fixtures/ocr/cases.json). Obrazy mają razem około 2,8 MB. To referencje do oceny, nie kompletne payloady do zapisania ani zapisane odpowiedzi modelu.
 
 | Fixture | Chroniona regresja |

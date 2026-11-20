@@ -1,0 +1,25 @@
+{
+  "purpose": "Source-reviewed regression examples added after the frozen OCR evaluations.",
+  "cases": [
+    {
+      "id": "pijama_2026_facebook_poster",
+      "image": "images/pijama_2026_facebook_poster.jpg",
+      "sha256": "8ca9c58115f54052f3aad2f6d42b0849b5d5921524b35d37c5607f6cea25279c",
+      "expected_event_count": 1,
+      "expected_events": [
+        {
+          "name_contains": ["A Menina que Queria Desenhar o Mundo"],
+          "start_date": "20/11/2026",
+          "start_time": "15:00",
+          "location_contains": "Centro Cultural de Congressos",
+          "organizer": null
+        }
+      ],
+      "interpretation_notes": [
+        "Image only. This 512x640 JPEG is the Facebook CDN rendition used as the OCR input. Its media filename is 907518213_1013605834391276_2487318140687249804_n.png.",
+        "The poster names the venue next to the date and time. Footer logos do not identify the organizer, and Rute Areal is credited for adaptation and stage direction.",
+        "The 21:00 film belongs to the older November agenda. The dance after the play is mentioned in the municipal article. Neither appears on the poster."
+      ]
+    }
+  ]
+}
