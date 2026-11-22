@@ -96,6 +96,7 @@
         'mini_magick',
         'webmock',
         'puma',
+        'icalendar',
       ],
     },
     {
