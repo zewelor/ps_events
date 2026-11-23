@@ -22,7 +22,9 @@ sitemap: false
       <label for="event_image" class="form-label">Imagem <span class="text-red-500">*</span></label>
       <input type="file" name="event_image" id="event_image" accept="image/*" required aria-describedby="image-help" class="form-input file-input-button" />
       <p id="image-help" class="form-help">Escolha ou arraste uma imagem para aqui. Para colar uma imagem copiada, clique neste texto e prima Ctrl+V (⌘+V no Mac).</p>
-      <img id="image-preview" alt="Pré-visualização da imagem selecionada" class="hidden mt-4 max-h-48 max-w-full rounded-lg object-contain" />
+      <a id="image-preview-link" class="hidden" target="_blank" rel="noopener" aria-label="Abrir o cartaz em tamanho original">
+        <img id="image-preview" alt="Pré-visualização da imagem selecionada" class="mt-4 max-h-48 max-w-full rounded-lg object-contain" />
+      </a>
     </div>
     <div>
       <label for="event_text" class="form-label">Informações adicionais</label>
@@ -81,10 +83,13 @@ sitemap: false
   const imageInput = document.getElementById('event_image');
   const dropZone = document.getElementById('image-drop-zone');
   const imagePreview = document.getElementById('image-preview');
+  const imagePreviewLink = document.getElementById('image-preview-link');
   const googleTokenInput = document.getElementById('google_token');
   const duplicateReview = document.getElementById('duplicate-review');
   let pendingConflicts = [];
   let unresolvedResults = [];
+  let confirmedResults = [];
+  let ocrReviewItems = [];
   let processedImageRef = null;
   let reviewCounts = null;
   let reviewMessage = '';
@@ -103,31 +108,51 @@ sitemap: false
     };
 
     if (!pendingConflicts.length) {
-      const message = unresolvedResults.length
+      const message = (unresolvedResults.length || ocrReviewItems.length)
         ? `Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}. Ainda há eventos por verificar.`
         : `A revisão terminou. Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`;
       PXOForms.showReviewNotice(duplicateReview, message);
       PXOForms.renderUnresolvedEvents(duplicateReview, unresolvedResults);
-      return;
-    }
-
-    PXOForms.renderConflictReview(duplicateReview, result, {
-      onSame: (conflict) => {
-        pendingConflicts = pendingConflicts.filter((item) => item.conflict !== conflict);
-        reviewCounts.skipped += 1;
-        reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
-        reviewMessage = 'Este evento foi dispensado como já existente. Os eventos já processados foram mantidos.';
-        renderOcrReview();
-      },
-      onDifferent: (conflict) => {
-        const pending = pendingConflicts.find((item) => item.conflict === conflict);
-        if (pending.retry) {
-          return pending.retry(conflictFingerprints(conflict));
-        } else {
-          return submitExtractedEvent(pending);
+    } else {
+      PXOForms.renderConflictReview(duplicateReview, result, {
+        onSame: (conflict) => {
+          pendingConflicts = pendingConflicts.filter((item) => item.conflict !== conflict);
+          reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
+          renderOcrReview();
+        },
+        onDifferent: (conflict) => {
+          const pending = pendingConflicts.find((item) => item.conflict === conflict);
+          if (pending.retry) {
+            return pending.retry(conflictFingerprints(conflict));
+          } else {
+            return submitExtractedEvent(pending);
+          }
         }
-      }
-    });
+      });
+    }
+    PXOForms.renderConfirmedEvents(duplicateReview, confirmedResults);
+    PXOForms.renderOcrReviewItems(duplicateReview, ocrReviewItems, originalOcrData.get('use_event_image') === 'on');
+  }
+
+  function showIngestionReview(result, data) {
+    originalOcrData = data;
+    processedImageRef = result.image_ref || null;
+    reviewMessage = result.message || '';
+    const results = result.results || [];
+    unresolvedResults = results.filter(item => item.status === 'failed' || item.status === 'not_attempted');
+    confirmedResults = results
+      .filter(item => item.status === 'added' || item.status === 'skipped')
+      .map(item => ({status: item.status, event: result.events?.[item.index]}));
+    ocrReviewItems = result.review_items || [];
+    reviewCounts = {
+      added: Number(result.counts?.added ?? results.filter(item => item.status === 'added').length),
+      skipped: Number(result.counts?.skipped ?? results.filter(item => item.status === 'skipped').length),
+      conflicted: Number(result.counts?.conflicted ?? results.filter(item => item.status === 'conflict').length)
+    };
+    pendingConflicts = results
+      .filter(item => item.status === 'conflict')
+      .map(conflict => ({conflict, retry: null}));
+    renderOcrReview();
   }
 
   function submitExtractedEvent(pending) {
@@ -153,6 +178,7 @@ sitemap: false
       action: new URL('/add_event', form.action).toString(),
       data,
       onSuccess: (result) => {
+        confirmedResults.push({status: 'added', event});
         pendingConflicts = pendingConflicts.filter((item) => item !== pending);
         reviewCounts.added += 1;
         reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
@@ -160,6 +186,7 @@ sitemap: false
         renderOcrReview();
       },
       onSkipped: (result) => {
+        confirmedResults.push({status: 'skipped', event});
         pendingConflicts = pendingConflicts.filter((item) => item !== pending);
         reviewCounts.skipped += 1;
         reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
@@ -201,7 +228,8 @@ sitemap: false
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
     imagePreview.removeAttribute('src');
-    imagePreview.classList.add('hidden');
+    imagePreviewLink.removeAttribute('href');
+    imagePreviewLink.classList.add('hidden');
   }
 
   imageInput.addEventListener('change', () => {
@@ -209,7 +237,8 @@ sitemap: false
     if (!imageInput.files.length) return;
     previewUrl = URL.createObjectURL(imageInput.files[0]);
     imagePreview.src = previewUrl;
-    imagePreview.classList.remove('hidden');
+    imagePreviewLink.href = previewUrl;
+    imagePreviewLink.classList.remove('hidden');
   });
 
   form.addEventListener('reset', clearPreview);
@@ -265,23 +294,14 @@ sitemap: false
         duplicateReview.replaceChildren();
         duplicateReview.classList.add('hidden');
       },
-      onConflict: (result, _retry, originalData) => {
-        originalOcrData = originalData;
-        processedImageRef = result.image_ref || null;
-        reviewMessage = result.message || '';
-        const results = result.results || [];
-        unresolvedResults = results.filter(item => item.status === 'failed' || item.status === 'not_attempted');
-        reviewCounts = {
-          added: Number(result.counts?.added ?? results.filter((item) => item.status === 'added').length),
-          skipped: Number(result.counts?.skipped ?? results.filter((item) => item.status === 'skipped').length),
-          conflicted: Number(result.counts?.conflicted ?? results.filter((item) => item.status === 'conflict').length)
-        };
-        pendingConflicts = results
-          .filter((item) => item.status === 'conflict')
-          .map((conflict) => ({ conflict, retry: null }));
-        renderOcrReview();
+      onConflict: (result, _retry, data) => showIngestionReview(result, data),
+      onOcrReview: (result, data) => {
+        if (result.error_code === 'ocr_review_required') {
+          PXOForms.renderHeldOcrEvents(duplicateReview, result, data.get('use_event_image') === 'on');
+        } else {
+          showIngestionReview(result, data);
+        }
       },
-      onOcrReview: (result, data) => PXOForms.renderHeldOcrEvents(duplicateReview, result, data.get('use_event_image') === 'on'),
       onSuccess: (result) => {
         PXOForms.showToast(result.message);
         ocrText.value = JSON.stringify(result.events, null, 2);

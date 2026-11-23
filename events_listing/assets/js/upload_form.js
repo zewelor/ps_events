@@ -35,6 +35,14 @@
     conflicting_inset: ['start_date', 'Confirme a data e a hora do evento antes de submeter.']
   };
 
+  function validationFieldHints(fields, event) {
+    return fields.map(field => {
+      const value = event?.[field];
+      const hint = `Verifique o campo «${EVENT_FIELD_LABELS[field]}».`;
+      return typeof value === 'string' && value ? `${hint} Sugestão do OCR: ${value}.` : hint;
+    });
+  }
+
   function prefillEventForm(form, notice) {
     const prefix = '#prefill=';
     const hash = window.location.hash;
@@ -56,10 +64,14 @@
     const [reviewKey, reviewMessage] = typeof reason === 'string' && Object.hasOwn(PREFILL_REVIEW_FIELDS, reason)
       ? PREFILL_REVIEW_FIELDS[reason]
       : [];
+    const invalidFields = Array.isArray(payload.validation_fields)
+      ? payload.validation_fields.filter(field => typeof field === 'string' && Object.hasOwn(EVENT_FIELD_LABELS, field))
+      : [];
     notice.textContent = reviewMessage || 'Reveja os dados do evento e complete o que falta antes de submeter.';
     if (reason === 'missing_start_date' && typeof event.start_date === 'string' && event.start_date) {
       notice.textContent += ` Sugestão do OCR: ${event.start_date}.`;
     }
+    if (invalidFields.length) notice.textContent += ` ${validationFieldHints(invalidFields, event).join(' ')}`;
 
     for (const key of Object.keys(EVENT_FIELD_LABELS)) {
       const field = form.elements.namedItem(key);
@@ -82,7 +94,8 @@
       if (key === 'price_type' && !field.value) field.value = 'Desconhecido';
     }
 
-    const reviewField = reviewKey ? form.elements.namedItem(reviewKey) : form.querySelector(':invalid');
+    const focusField = reviewKey || invalidFields[0];
+    const reviewField = focusField ? form.elements.namedItem(focusField) : form.querySelector(':invalid');
     reviewField?.focus();
     form.addEventListener('reset', () => notice.classList.add('hidden'), {once: true});
     return true;
@@ -200,7 +213,9 @@
         if (!response.ok) throw new Error(result.message || `Erro ${response.status}`);
 
         if (result.status === 'ok') {
-          if (result.outcome === 'skipped') {
+          if (onOcrReview && result.review_items?.length) {
+            onOcrReview(result, data);
+          } else if (result.outcome === 'skipped') {
             if (onSkipped) onSkipped(result);
             else showToast(result.message || 'Este evento já se encontra registado.', 'info');
           } else if (onSuccess) {
@@ -356,11 +371,12 @@
 
   function renderHeldOcrEvents(container, result, useEventImage = false) {
     showReviewNotice(container, 'Nenhum evento foi submetido. Reveja e submeta cada evento no formulário.');
+    renderOcrReviewItems(container, [...result.events.map(candidate => ({candidate})), ...result.review_items], useEventImage);
+  }
+
+  function renderOcrReviewItems(container, items, useEventImage) {
+    if (!items.length) return;
     if (useEventImage) appendText(container, 'p', 'text-sm', 'Volte a anexar o cartaz em cada formulário antes de submeter.');
-    const items = [
-      ...result.events.map(candidate => ({candidate})),
-      ...result.review_items
-    ];
 
     for (const {candidate, reason, message, validation_errors: validationErrors} of items) {
       const card = document.createElement('article');
@@ -372,9 +388,8 @@
       const reviewMessage = Object.hasOwn(PREFILL_REVIEW_FIELDS, reason) && PREFILL_REVIEW_FIELDS[reason][1];
       if (reviewMessage || message) appendText(card, 'p', 'text-sm', reviewMessage || message);
       const invalidFields = Object.keys(validationErrors || {})
-        .filter(field => Object.hasOwn(EVENT_FIELD_LABELS, field))
-        .map(field => EVENT_FIELD_LABELS[field]);
-      if (invalidFields.length) appendText(card, 'p', 'text-sm', `Campos a corrigir: ${invalidFields.join(', ')}.`);
+        .filter(field => Object.hasOwn(EVENT_FIELD_LABELS, field));
+      validationFieldHints(invalidFields, candidate).forEach(hint => appendText(card, 'p', 'text-sm', hint));
 
       const link = appendText(card, 'a', 'navigation-button', candidate ? 'Rever e submeter' : 'Preencher formulário');
       link.href = '/add_event/';
@@ -384,11 +399,26 @@
         const event = Object.fromEntries(Object.keys(EVENT_FIELD_LABELS)
           .filter(field => typeof candidate[field] === 'string')
           .map(field => [field, candidate[field]]));
-        link.hash = 'prefill=' + encodeURIComponent(JSON.stringify({event, reason: reason ?? null}));
+        const payload = {event, reason: reason ?? null};
+        if (invalidFields.length) payload.validation_fields = invalidFields;
+        link.hash = 'prefill=' + encodeURIComponent(JSON.stringify(payload));
       }
       container.appendChild(card);
     }
   }
 
-  window.PXOForms = { prefillEventForm, dismissToast, showToast, submitUploadForm, renderConflictReview, renderUnresolvedEvents, showReviewNotice, renderHeldOcrEvents };
+  function renderConfirmedEvents(container, results) {
+    const confirmed = results.filter(item => item.event?.name && (item.status === 'added' || item.status === 'skipped'));
+    if (!confirmed.length) return;
+    const list = document.createElement('ul');
+    list.className = 'space-y-1 text-sm';
+    for (const {status, event} of confirmed) {
+      const label = status === 'added' ? 'Adicionado' : 'Já existente';
+      const dateTime = eventDateTime(event);
+      appendText(list, 'li', '', `${label}: ${event.name}${dateTime ? ` (${dateTime})` : ''}`);
+    }
+    container.appendChild(list);
+  }
+
+  window.PXOForms = { prefillEventForm, dismissToast, showToast, submitUploadForm, renderConflictReview, renderUnresolvedEvents, showReviewNotice, renderHeldOcrEvents, renderOcrReviewItems, renderConfirmedEvents };
 })();

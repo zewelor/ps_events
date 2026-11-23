@@ -155,6 +155,57 @@ test('held invalid candidates identify fields to correct without exposing valida
     }]
   }}]);
   await flow.submit();
-  assert.match(flow.review.textContent, /Campos a corrigir: Data de início, Local\./);
+  assert.match(flow.review.textContent, /Verifique o campo «Data de início»/);
+  assert.match(flow.review.textContent, /Verifique o campo «Local»/);
   assert.doesNotMatch(flow.review.textContent, /internal detail|unknown/);
+});
+
+const invalidEndDate = {
+  candidate: {...event('Concerto do cartaz'), end_date: '31/02/2027'},
+  reason: 'invalid_event_fields',
+  validation_errors: {end_date: ['internal detail']}
+};
+
+test('mixed OCR lists confirmed saves and opens only the correction', async () => {
+  const events = [event('Primeiro concerto'), event('Segundo concerto')];
+  const flow = reviewFlow([{code: 200, body: {
+    status: 'ok', outcome: 'added', events,
+    counts: {added: 2, skipped: 0, conflicted: 0},
+    results: events.map((_, index) => ({status: 'added', index})),
+    review_items: [invalidEndDate]
+  }}]);
+  await flow.submit();
+  assert.match(flow.review.textContent, /Adicionados: 2/);
+  assert.match(flow.review.textContent, /Primeiro concerto/);
+  assert.match(flow.review.textContent, /Segundo concerto/);
+  assert.match(flow.review.textContent, /Data de fim.*31\/02\/2027/);
+  assert.match(flow.review.textContent, /Volte a anexar o cartaz/);
+  const [link] = flow.review.all().filter(node => node.tag === 'a');
+  assert.equal(flow.review.all().filter(node => node.tag === 'a').length, 1);
+  assert.deepEqual(JSON.parse(decodeURIComponent(link.hash.slice('prefill='.length))), {
+    event: invalidEndDate.candidate,
+    reason: 'invalid_event_fields',
+    validation_fields: ['end_date']
+  });
+  assert.equal(flow.posted.length, 1);
+});
+
+test('dismissing a possible match preserves the OCR correction and uncertain write', async () => {
+  const flow = reviewFlow([{code: 503, body: {
+    status: 'error', error_code: 'ingestion_failed',
+    counts: {added: 1, skipped: 1, conflicted: 1},
+    events: [event('Já adicionado'), event('Já existente'), event('Possível duplicado'), failed.event],
+    results: [{status: 'added', index: 0}, {status: 'skipped', index: 1}, conflict('Possível duplicado', 2), {...failed, index: 3}],
+    review_items: [invalidEndDate]
+  }}], false);
+  await flow.submit();
+  assert.match(flow.review.textContent, /Já existente/);
+  assert.match(flow.review.textContent, /Possível duplicado/);
+  assert.match(flow.review.textContent, /Concerto do cartaz/);
+  await flow.click('Não guardar esta submissão');
+  assert.match(flow.review.textContent, /Concerto do cartaz/);
+  assert.match(flow.review.textContent, /Adicionados: 1/);
+  assert.match(flow.review.textContent, /Já existentes: 1/);
+  assert.match(flow.review.textContent, /Concerto com resultado incerto/);
+  assert.equal(flow.posted.length, 1);
 });
