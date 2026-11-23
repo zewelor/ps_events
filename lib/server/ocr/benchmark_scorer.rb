@@ -132,6 +132,70 @@ module Ocr
 
       assignment, unmatched_indices = match_events(events, expected)
 
+      field_scores = score_expected_events(events, expected, assignment, expected_numbers)
+
+      unmatched_events = unmatched_indices.map { |idx| events.fetch(idx) }
+
+      rc_assignment, remaining_unmatched_indices = match_events(unmatched_events, review_candidates)
+      review_candidate_emissions = rc_assignment.values.map { |idx| unmatched_events.fetch(idx) }
+      unmatched_extra_events = remaining_unmatched_indices.map { |idx| unmatched_events.fetch(idx) }
+
+      review_candidates_summary = evaluate_review_candidates(
+        review_candidates: review_candidates,
+        emitted_assignment: rc_assignment,
+        review_items: review_items
+      )
+
+      omission_eval = evaluate_required_omissions(
+        required_omissions: required_omissions,
+        events: events,
+        expected: expected,
+        review_items: review_items
+      )
+
+      route_matched = expected_route.nil? ? nil : actual_route == expected_route
+
+      {
+        case_id: case_def.fetch("id"),
+        run: run[:run],
+        fallback_year: fallback_year,
+        unscored_due_to_error: false,
+        failed_stage: nil,
+        error: nil,
+        expected_route: expected_route,
+        actual_route: actual_route,
+        route_matched: route_matched,
+        expected_events: expected.length,
+        unscored_events: 0,
+        exported_events: events.length,
+        matched_occurrences: assignment.length,
+        missing_occurrences: expected.length - assignment.length,
+        complete_checked_events: field_scores.fetch(:complete_checked_events),
+        passed_fields: field_scores.fetch(:passed_fields),
+        expected_fields: expected_fields_count,
+        unscored_fields: 0,
+        matched_checked_fields: field_scores.fetch(:matched_checked_fields),
+        omissions: field_scores.fetch(:omissions),
+        bad_fields: field_scores.fetch(:bad_fields),
+        contact_number_checks: field_scores.fetch(:contact_number_checks),
+        unmatched_extra_events: unmatched_extra_events,
+        review_candidate_emissions: review_candidate_emissions,
+        review_candidates_summary: review_candidates_summary,
+        unscored_review_candidates: 0,
+        expected_reviews: omission_eval[:expected_reviews],
+        unscored_reviews: 0,
+        matched_expected_reviews: omission_eval[:matched_expected_reviews],
+        missed_expected_reviews: omission_eval[:missed_expected_reviews],
+        unsafe_omission_emissions: omission_eval[:unsafe_omission_emissions],
+        review_item_count: review_items.length,
+        timing: timing,
+        usage_totals: usage_totals,
+        cost_totals: cost_summary
+      }
+    end
+
+    def score_expected_events(events, expected, assignment, expected_numbers)
+      extra_contact_check = expected_numbers.any? ? 1 : 0
       passed_fields = 0
       matched_checked_fields = 0
       complete_checked_events = 0
@@ -194,46 +258,9 @@ module Ocr
         complete_checked_events += 1 if failures.zero?
       end
 
-      unmatched_events = unmatched_indices.map { |idx| events.fetch(idx) }
-
-      rc_assignment, remaining_unmatched_indices = match_events(unmatched_events, review_candidates)
-      review_candidate_emissions = rc_assignment.values.map { |idx| unmatched_events.fetch(idx) }
-      unmatched_extra_events = remaining_unmatched_indices.map { |idx| unmatched_events.fetch(idx) }
-
-      review_candidates_summary = evaluate_review_candidates(
-        review_candidates: review_candidates,
-        emitted_assignment: rc_assignment,
-        review_items: review_items
-      )
-
-      omission_eval = evaluate_required_omissions(
-        required_omissions: required_omissions,
-        events: events,
-        expected: expected,
-        review_items: review_items
-      )
-
-      route_matched = expected_route.nil? ? nil : actual_route == expected_route
-
       {
-        case_id: case_def.fetch("id"),
-        run: run[:run],
-        fallback_year: fallback_year,
-        unscored_due_to_error: false,
-        failed_stage: nil,
-        error: nil,
-        expected_route: expected_route,
-        actual_route: actual_route,
-        route_matched: route_matched,
-        expected_events: expected.length,
-        unscored_events: 0,
-        exported_events: events.length,
-        matched_occurrences: assignment.length,
-        missing_occurrences: expected.length - assignment.length,
         complete_checked_events: complete_checked_events,
         passed_fields: passed_fields,
-        expected_fields: expected_fields_count,
-        unscored_fields: 0,
         matched_checked_fields: matched_checked_fields,
         omissions: omissions,
         bad_fields: bad_fields,
@@ -242,20 +269,7 @@ module Ocr
           passed: contact_passed,
           failed: contact_failed,
           details: contact_details
-        },
-        unmatched_extra_events: unmatched_extra_events,
-        review_candidate_emissions: review_candidate_emissions,
-        review_candidates_summary: review_candidates_summary,
-        unscored_review_candidates: 0,
-        expected_reviews: omission_eval[:expected_reviews],
-        unscored_reviews: 0,
-        matched_expected_reviews: omission_eval[:matched_expected_reviews],
-        missed_expected_reviews: omission_eval[:missed_expected_reviews],
-        unsafe_omission_emissions: omission_eval[:unsafe_omission_emissions],
-        review_item_count: review_items.length,
-        timing: timing,
-        usage_totals: usage_totals,
-        cost_totals: cost_summary
+        }
       }
     end
 
