@@ -142,7 +142,35 @@ helpers do
     references
   end
 
-  def ingestion_response(results, events: nil, event: nil, failed: false, image_ref: nil)
+  def validate_event_form
+    fields = params.dup
+    %i[event_image google_token distinct_from image_ref].each { |key| fields.delete(key) }
+    fields[:start_date] = normalize_date(fields[:start_date])
+    fields[:end_date] = normalize_date(fields[:end_date])
+    EventValidation.call(fields)
+  end
+
+  def add_event_service
+    AddEventService.new(
+      google_sheets: settings.google_sheets,
+      spreadsheet_id: settings.spreadsheet_id,
+      events_range: settings.events_range
+    )
+  end
+
+  def read_ocr(upload_path, additional_text:, api_bearer:)
+    options = {additional_text: additional_text}
+    options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT if api_bearer
+    analysis = Ocr::SourceWorkflow.call(upload_path, **options)
+    events = analysis.fetch(:events)
+    review_items = analysis.fetch(:review_items)
+    raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
+    raise "Invalid OCR review list" unless review_items.is_a?(Array)
+
+    [events, review_items]
+  end
+
+  def ingestion_response(results, events: nil, event: nil, failed: false, image_ref: nil, review_items: [])
     counts = {
       added: results.count { |result| result[:status] == "added" },
       skipped: results.count { |result| result[:status] == "skipped" },
@@ -165,6 +193,7 @@ helpers do
     data = {message: message, counts: counts, results: results}
     data[:image_ref] = image_ref if image_ref
     data[:events] = events if events
+    data[:review_items] = review_items unless review_items.empty?
     if event
       data[:event_name] = event[:name]
       data[:event_date] = event[:start_date]
@@ -313,15 +342,9 @@ post "/events_ocr" do
     image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
       # The WebP above is for publication; OCR must retain the upload's fine text.
-      options = {additional_text: additional_text}
-      options[:request_timeout] = EVENT_ANALYSIS_LLM_TIMEOUT if api_bearer
-      analysis = Ocr::SourceWorkflow.call(upload.fetch(:tempfile).path, **options)
-      events = analysis.fetch(:events)
-      review_items = analysis.fetch(:review_items)
-      raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
-      raise "Invalid OCR review list" unless review_items.is_a?(Array)
+      events, review_items = read_ocr(upload.fetch(:tempfile).path, additional_text: additional_text, api_bearer: api_bearer)
 
-      unless review_items.empty?
+      if events.empty? && !review_items.empty?
         return json_response({status: "error", error_code: "ocr_review_required",
                               message: "A análise contém informações que precisam de revisão. Nenhum evento foi submetido.",
                               events: events, review_items: review_items}, 422)
@@ -344,38 +367,19 @@ post "/events_ocr" do
     end
 
     ocr_submitter_email = user_email.sub("@", "+ocr@")
-    service = AddEventService.new(
-      google_sheets: settings.google_sheets,
-      spreadsheet_id: settings.spreadsheet_id,
-      events_range: settings.events_range
-    )
-
+    service = add_event_service
     pp events
-
-    results = []
     image_uploaded = false
-    events.each_with_index do |ev, index|
-      result = service.add_event(ev,
-        submitter_email: ocr_submitter_email,
-        image_path: use_image ? image_path : "") do
-        if use_image && !image_uploaded
-          upload_image_if_production(image_path)
-          image_uploaded = true
-        end
+    results = service.add_events(events, submitter_email: ocr_submitter_email, image_path: use_image ? image_path : "") do
+      if use_image && !image_uploaded
+        upload_image_if_production(image_path)
+        image_uploaded = true
       end
-      results << result.merge(index: index)
-    rescue => e
-      puts "❌ Error saving OCR event #{index}: #{e.message}"
-      results << {status: "failed", index: index, event: ev}
-      events.each_with_index do |remaining, remaining_index|
-        results << {status: "not_attempted", index: remaining_index, event: remaining} if remaining_index > index
-      end
-      image_needed_for_review = image_ref.present?
-      return ingestion_response(results, events: events, failed: true, image_ref: image_ref)
     end
 
-    image_needed_for_review = image_ref.present? && results.any? { |result| result[:status] == "conflict" }
-    ingestion_response(results, events: events, image_ref: image_ref)
+    failed = results.any? { |result| result.fetch(:status) == "failed" }
+    image_needed_for_review = image_ref.present? && (failed || results.any? { |result| result.fetch(:status) == "conflict" })
+    ingestion_response(results, events: events, failed: failed, image_ref: image_ref, review_items: review_items)
   rescue RubyLLM::RateLimitError => e
     puts "⚠️ Rate limit / quota exceeded in OCR: #{e.message}"
     json_error("Limite de pedidos/quota do modelo LLM excedido: #{e.message}", 429, error_code: "rate_limit_exceeded")
@@ -396,13 +400,6 @@ post "/add_event" do
     missing_message: "Google authentication is required to submit an event"
   )[:email]
 
-  # Remove the file upload from params for validation
-  validation_params = params.dup
-  validation_params.delete(:event_image)
-  validation_params.delete(:google_token)
-  validation_params.delete(:distinct_from)
-  validation_params.delete(:image_ref)
-
   begin
     distinct_from = distinct_event_references
     image_ref = ParamUtils.fetch(params, :image_ref)
@@ -417,54 +414,42 @@ post "/add_event" do
 
   image_path ||= ""
 
-  # Convert dates from HTML5 format (yyyy-mm-dd) to the format expected by the
-  # validator (dd/mm/YYYY). Other formats pass through unchanged.
-  validation_params[:start_date] = normalize_date(validation_params[:start_date])
-  validation_params[:end_date] = normalize_date(validation_params[:end_date])
-
-  # Validate the event data using dry-validation directly
-  result = EventValidation.call(validation_params)
-
-  if result.success?
-    validated_params = result.to_h
-    puts "✅ Validation successful for event: #{validated_params[:name]}"
-
-    # Process image only after successful validation
-    begin
-      unless image_ref
-        image_path = validate_event_image(params[:event_image])
-        image_ref = File.basename(image_path, ".webp") unless image_path.empty?
-      end
-    rescue => e
-      return json_error(e.message)
-    end
-
-    contact_email = validated_params[:contact_email]&.strip&.downcase
-    if contact_email != google_user_email.downcase
-      puts "ℹ️ Event submitted by #{google_user_email} for contact #{contact_email}"
-    end
-
-    begin
-      saved = AddEventService.new(
-        google_sheets: settings.google_sheets,
-        spreadsheet_id: settings.spreadsheet_id,
-        events_range: settings.events_range
-      ).add_event(validated_params, submitter_email: google_user_email, image_path: image_path, distinct_from: distinct_from) do
-        if settings.environment != :production && image_ref && (!File.file?(image_path) || File.symlink?(image_path))
-          raise "Processed image is unavailable; upload the source again"
-        end
-        upload_image_if_production(image_path) unless image_path.empty?
-      end
-
-      ingestion_response([saved], event: validated_params, image_ref: image_ref)
-    rescue => e
-      puts "❌ Error adding event: #{e.message}"
-      puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
-      ingestion_response([{status: "failed", event: validated_params}], failed: true, image_ref: image_ref)
-    end
-  else
+  result = validate_event_form
+  if result.failure?
     puts "❌ Validation failed: #{result.errors.to_h.inspect}"
-    # Validation failed: return errors as JSON
-    json_error("Validation failed\n#{result.errors.to_h.map { |k, v| "#{k}: #{v.join(", ")}" }.join("\n")}", 422)
+    return json_error("Validation failed\n#{result.errors.to_h.map { |k, v| "#{k}: #{v.join(", ")}" }.join("\n")}", 422)
+  end
+
+  validated_params = result.to_h
+  puts "✅ Validation successful for event: #{validated_params[:name]}"
+
+  # Process image only after successful validation
+  begin
+    unless image_ref
+      image_path = validate_event_image(params[:event_image])
+      image_ref = File.basename(image_path, ".webp") unless image_path.empty?
+    end
+  rescue => e
+    return json_error(e.message)
+  end
+
+  contact_email = validated_params[:contact_email]&.strip&.downcase
+  if contact_email != google_user_email.downcase
+    puts "ℹ️ Event submitted by #{google_user_email} for contact #{contact_email}"
+  end
+
+  begin
+    saved = add_event_service.add_event(validated_params, submitter_email: google_user_email, image_path: image_path, distinct_from: distinct_from) do
+      if settings.environment != :production && image_ref && (!File.file?(image_path) || File.symlink?(image_path))
+        raise "Processed image is unavailable; upload the source again"
+      end
+      upload_image_if_production(image_path) unless image_path.empty?
+    end
+
+    ingestion_response([saved], event: validated_params, image_ref: image_ref)
+  rescue => e
+    puts "❌ Error adding event: #{e.message}"
+    puts "   Backtrace: #{e.backtrace.first(3).join(" | ")}"
+    ingestion_response([{status: "failed", event: validated_params}], failed: true, image_ref: image_ref)
   end
 end

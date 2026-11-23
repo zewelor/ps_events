@@ -14,10 +14,10 @@ class EventsOcrEndpointTest < Minitest::Test
     Sinatra::Application
   end
 
-  def stub_source_ocr(result, &block)
+  def stub_source_ocr(result, review_items: [], &block)
     Ocr::SourceWorkflow.stub :call, lambda { |path, **options|
       events = result.respond_to?(:call) ? result.call(path, **options) : result
-      {events: events, review_items: []}
+      {events: events, review_items: review_items}
     }, &block
   end
 
@@ -327,9 +327,9 @@ class EventsOcrEndpointTest < Minitest::Test
     refute body["retry_safe"]
   end
 
-  def submit_events(events)
+  def submit_events(events, review_items: [])
     capture_io do
-      stub_source_ocr events do
+      stub_source_ocr events, review_items: review_items do
         ImageService.stub :validate_and_process, "/tmp/test.webp" do
           AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
             post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(__FILE__, "image/png")}
@@ -370,13 +370,17 @@ class EventsOcrEndpointTest < Minitest::Test
 
   def test_ocr_conflicts_are_reported_separately_from_successful_appends
     submit_events([valid_event])
+    review = {"stage" => "admission", "reason" => "missing_start_date", "candidate" => {"name" => "Concerto para rever"}}
     body = submit_events([
       valid_event.merge(name: "Outro título OCR", category: "Arte", location: "Outro local"),
+      valid_event,
       valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
-    ])
+    ], review_items: [review])
 
     assert_equal 409, last_response.status
-    assert_equal({"added" => 1, "skipped" => 0, "conflicted" => 1}, body["counts"])
+    assert_equal({"added" => 1, "skipped" => 1, "conflicted" => 1}, body["counts"])
+    assert_equal %w[conflict skipped added], body.fetch("results").map { |result| result.fetch("status") }
+    assert_equal [review], body["review_items"]
     assert_equal "Events!A2:S2", body["results"].first["candidates"].first["reference"]
     assert_equal 2, app.settings.google_sheets.rows.size
   end

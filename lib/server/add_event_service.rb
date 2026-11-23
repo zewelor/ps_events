@@ -39,6 +39,23 @@ class AddEventService
     raise
   end
 
+  def add_events(events, submitter_email:, image_path:, &before_append)
+    results = []
+    events.each_with_index do |event, index|
+      result = add_event(event, submitter_email: submitter_email, image_path: image_path, &before_append)
+      results << result.merge(index: index)
+    rescue => e
+      puts "❌ Error saving OCR event #{index}: #{e.message}"
+      results << {status: "failed", index: index, event: event}
+      remaining_index = index + 1
+      events.drop(remaining_index).each_with_index do |remaining, offset|
+        results << {status: "not_attempted", index: remaining_index + offset, event: remaining}
+      end
+      break
+    end
+    results
+  end
+
   private
 
   def build_row(event, submitter_email, image_path)

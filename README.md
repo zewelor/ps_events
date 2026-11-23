@@ -117,34 +117,8 @@ spreadsheet row with the organizer's confirmed details.
 
 ### OCR failure responses
 
-With Google or Bearer authentication, `POST /events_ocr` makes one OCR attempt
-on the uploaded image and optional post text. Bearer requests use a 300-second
-model timeout. The CLI and benchmark also accept PDFs.
-
-If any candidate needs source review, the endpoint returns HTTP 422 with
-`status: "error"`, `error_code: "ocr_review_required"`, the ready `events` and
-all `review_items` with their reasons. Candidates with invalid event fields
-include `validation_errors` keyed by field. The entire upload is held before any
-spreadsheet write or image publication. A caller can display the details for
-manual correction. The updated Câmara client retains this response and emails the poster, held
-candidates and review reasons for manual action. Earlier clients log the 422
-and leave the delivery pending. Deploy the client update before the endpoint. HTTP 409 continues to identify
-spreadsheet duplicate conflicts.
-When all candidates pass admission, normal duplicate detection and saving proceed.
-
-`POST /events_ocr` returns HTTP 503 with `error_code: "ocr_temporarily_unavailable"`
-when the model is temporarily unavailable during analysis, before any events are
-saved. Clients may retry that explicit response with bounded backoff.
-
-Provider rate limits and quota failures during analysis return HTTP 429 with
-`rate_limit_exceeded` and `retry_safe: true`: no events were saved. This does not
-distinguish a short throttle from exhausted quota; clients may use bounded retries
-and must report persistent failures. A 429 without this explicit flag is not safe
-to retry automatically. Saving failures return
-HTTP 503 with `ingestion_failed`, including confirmed results before the failure.
-A generic 503, timeout, or lost
-response does not guarantee that nothing was saved. Do not automatically repeat
-those uploads without checking the persisted events.
+See the [OCR API response reference](docs/ocr-api-responses.md) for status codes,
+messages, review data, and retry rules.
 
 ### Duplicate feedback
 

@@ -10,13 +10,14 @@ Usunięto eksperymentalny
 miniatur. Polecenie
 `--score-only` nadal ocenia zapisane wyniki `selected` na historycznej referencji.
 W kodzie endpointu `POST /events_ocr` obrazy przechodzą przez ten sam OCR.
-Jeśli choć jedna pozycja wymaga review, API zwraca HTTP 422
-(`ocr_review_required`) z obiema listami i wstrzymuje zapis całego plakatu.
+Gotowe wydarzenia przechodzą kontrolę duplikatów i zapis. Pozycje do korekty
+trafiają do `review_items` w tej samej odpowiedzi. HTTP 422
+(`ocr_review_required`) dotyczy plakatów z pozycjami do korekty i bez żadnego
+gotowego wydarzenia.
 Admission wstrzymuje także datę oznaczoną przez czytnik jako pozbawiona źródła
 oraz przypadek, w którym nazwa miejsca i cytat wskazują dwa różne, jednoznaczne
 wpisy katalogu. Rola instytucji w tekście plakatu nadal wymaga oceny czytnika.
-Przy kompletnym wyniku następuje dotychczasowa kontrola duplikatów i zapis.
-[Kontrakt odpowiedzi API](../README.md#ocr-failure-responses).
+[Kontrakt odpowiedzi API](ocr-api-responses.md).
 
 ## Wynik historyczny: prosty odczyt źródła — 15 listopada 2026
 
@@ -607,7 +608,7 @@ Obecny `/events_ocr` bierze tablicę z `EventOcrService.call` i przechodzi do za
 
 Najpierw szczegółowy wynik w CLI/benchmarku. Włączenie go do ingestii wymaga jawnej decyzji, jak operator i klient zobaczą pominięcia oraz jakie częściowe wyniki wolno zapisać. Sam brak pozycji przeglądu też nie dowodzi, że model wykrył wszystkie wydarzenia w źródle.
 
-Nie zmieniamy po cichu obsługi urwanego/nieparsowalnego wyjścia ani `EventValidationError`; takie błędy nie stają się udanym częściowym wynikiem. Brak danych w źródle nie jest przejściową awarią OCR i nie powinien oznaczać HTTP 503 ani automatycznego retry. Obecne `ocr_temporarily_unavailable` dotyczy konkretnych awarii przed zapisem; Bearer i benchmarki wyłączają retry przez `llm_recovery: :none`. [Obecny kontrakt błędów](../README.md#ocr-failure-responses).
+Nie zmieniamy po cichu obsługi urwanego/nieparsowalnego wyjścia ani `EventValidationError`; takie błędy nie stają się udanym częściowym wynikiem. Brak danych w źródle nie jest przejściową awarią OCR i nie powinien oznaczać HTTP 503 ani automatycznego retry. Obecne `ocr_temporarily_unavailable` dotyczy konkretnych awarii przed zapisem; Bearer i benchmarki wyłączają retry przez `llm_recovery: :none`. [Obecny kontrakt błędów](ocr-api-responses.md).
 
 ## 5. Selektywny plan — kolejność i bramki
 

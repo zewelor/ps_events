@@ -161,12 +161,31 @@ class OcrImageLifecycleTest < Minitest::Test
     assert_requested request, times: 2
   end
 
-  def test_reader_review_blocks_ready_events_before_any_write
+  def test_reader_review_saves_ready_events_independently
     events = [
       event.merge(location: nil, location_source: "none"),
-      event("22", "Sem data").merge(start_date: nil, date_source: "none")
+      event("22", "Segundo concerto"),
+      event("23", "Terceiro concerto").merge(end_date: "31/02/2027")
     ]
     request = stub_openai_analysis({events: events})
+
+    body = submit(provider: true)
+
+    assert_equal 200, last_response.status
+    assert_equal %w[added added], body.fetch("results").map { |result| result.fetch("status") }
+    assert_equal ["Concerto", "Segundo concerto"], body.fetch("events").map { |item| item.fetch("name") }
+    refute body.fetch("events").first.key?("location")
+    review, = body.fetch("review_items")
+    assert_equal 1, body.fetch("review_items").length
+    assert_equal "31/02/2027", review.dig("candidate", "end_date")
+    assert review.fetch("validation_errors").key?("end_date")
+    assert_equal ["Concerto", "Segundo concerto"], app.settings.google_sheets.rows.map { |row| row[2] }
+    assert_requested request, times: 1
+    assert_cleaned
+  end
+
+  def test_reader_review_without_ready_events_never_writes
+    request = stub_openai_analysis({events: [event.merge(start_date: nil, date_source: "none")]})
 
     app.set :environment, :production
     body = GitHubService.stub :ensure_image, ->(*) { flunk "Held OCR must not publish the image" } do
@@ -175,8 +194,7 @@ class OcrImageLifecycleTest < Minitest::Test
 
     assert_equal 422, last_response.status
     assert_equal "ocr_review_required", body["error_code"]
-    assert_equal ["Concerto"], body.fetch("events").map { |item| item.fetch("name") }
-    refute body.fetch("events").first.key?("location")
+    assert_empty body.fetch("events")
     assert_equal "missing_start_date", body.fetch("review_items").first.fetch("reason")
     refute body.key?("retry_safe")
     assert_empty app.settings.google_sheets.rows
@@ -264,12 +282,20 @@ class OcrImageLifecycleTest < Minitest::Test
 
   def test_partial_failure_without_flyer_removes_image
     app.settings.google_sheets.append_failure_after = 1
-    body = submit(events: [event, event("22"), event("23")], use_image: false)
+    request = stub_openai_analysis({events: [
+      event, event("22"), event("23"),
+      event("24", "Concerto para rever").merge(end_date: "31/02/2027")
+    ]})
+    body = submit(provider: true, use_image: false)
 
     assert_equal 503, last_response.status
     assert_equal "ingestion_failed", body["error_code"]
     assert_equal %w[added failed not_attempted], body["results"].map { |result| result["status"] }
+    assert_equal 1, app.settings.google_sheets.rows.length
+    assert_equal "Concerto para rever", body.fetch("review_items").first.dig("candidate", "name")
+    refute body.key?("retry_safe")
     refute body.key?("image_ref")
+    assert_requested request, times: 1
     assert_cleaned
   end
 
