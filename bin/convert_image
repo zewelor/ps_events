@@ -4,10 +4,9 @@
 require "bundler/setup"
 Bundler.require(:development)
 
-require "fileutils"
 require "securerandom"
 require_relative "../lib/server/image_service"
-require_relative "../lib/server/github_service"
+require_relative "../lib/cli/image_publisher"
 
 def usage
   puts <<~USAGE
@@ -39,26 +38,11 @@ begin
   uuid = File.basename(processed_path, ".*")
   puts "Image processed to WebP: #{processed_path} (UUID: #{uuid})"
 
-  # Save locally under assets/images
-  local_dest = File.expand_path("../events_listing/assets/images/#{uuid}.webp", __dir__)
-  FileUtils.mkdir_p(File.dirname(local_dest))
-  FileUtils.cp(processed_path, local_dest)
-  puts "Saved image locally to: #{local_dest}"
-
-  # Attempt GitHub API upload
-  if ENV["GH_TOKEN"].to_s.strip.empty? || ENV["GH_REPO"].to_s.strip.empty?
-    puts "Warning: GH_TOKEN or GH_REPO not found. Skipping GitHub API upload."
-  else
-    puts "Uploading image to GitHub..."
-    if GitHubService.upload_image(processed_path)
-      puts "Uploaded successfully to GitHub!"
-    else
-      puts "Warning: GitHub API upload failed. Image was still saved locally."
-    end
+  begin
+    ImagePublisher.publish(processed_path)
+  ensure
+    File.delete(processed_path) if File.exist?(processed_path)
   end
-
-  # Cleanup temporary file from /tmp
-  File.delete(processed_path) if File.exist?(processed_path)
 
   puts "Success! Image UUID: #{uuid}"
 rescue => e
