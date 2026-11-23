@@ -97,6 +97,7 @@
         'webmock',
         'puma',
         'icalendar',
+        'addressable',
       ],
     },
     {
