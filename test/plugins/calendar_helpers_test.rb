@@ -123,11 +123,62 @@ class TestCalendarHelpers < Minitest::Test
 
   def test_event_to_ics_timed_event_format
     ics = event_to_ics(@event)
+    assert_includes ics, "BEGIN:VCALENDAR"
     assert_includes ics, "BEGIN:VEVENT"
-    assert_includes ics, "SUMMARY:Test Event"
     refute_includes ics, "VALUE=DATE"
     assert_includes ics, "DTSTART:20251201T100000"
     assert_includes ics, "DTEND:20251201T120000"
+    assert_includes ics, "END:VCALENDAR"
+
+    calendars = Icalendar::Calendar.parse(ics)
+    assert_equal 1, calendars.size
+    calendar = calendars.first
+    assert_equal "PUBLISH", calendar.ip_method
+    assert_equal ["Evento PXO Pulse"], calendar.custom_properties["x_wr_calname"]
+    assert_equal 1, calendar.events.size
+
+    parsed_event = calendar.events.first
+    assert_equal "Test Event", parsed_event.summary
+    assert_equal "Loc", parsed_event.location
+    assert_equal "Desc", parsed_event.description
+    assert_equal DateTime.new(2025, 12, 1, 10, 0, 0), parsed_event.dtstart.value
+    assert_equal DateTime.new(2025, 12, 1, 12, 0, 0), parsed_event.dtend.value
+  end
+
+  def test_event_to_ics_full_day_no_end_date_and_special_characters_round_trip
+    event = {
+      "_name" => "  Festival do Porto Santo, 2026  ",
+      "start_date" => "01/12/2025",
+      "start_time" => "",
+      "end_date" => "",
+      "end_time" => "",
+      "description" => "  Primeira linha, com vírgula;\nSegunda linha  ",
+      "location" => "  Praça do Barqueiro, Porto Santo  "
+    }
+
+    ics = event_to_ics(event)
+    assert_includes ics, "DTSTART;VALUE=DATE:20251201"
+    assert_includes ics, "DTEND;VALUE=DATE:20251202"
+
+    parsed_event = Icalendar::Calendar.parse(ics).first.events.first
+    assert_equal "Festival do Porto Santo, 2026", parsed_event.summary
+    assert_equal "Praça do Barqueiro, Porto Santo", parsed_event.location
+    assert_equal "Primeira linha, com vírgula;\nSegunda linha", parsed_event.description
+    assert_equal Date.new(2025, 12, 1), parsed_event.dtstart.value
+    assert_equal Date.new(2025, 12, 2), parsed_event.dtend.value
+  end
+
+  def test_event_to_ics_multi_day_timed_event
+    event = @event.merge(
+      "start_date" => "29/07/2026",
+      "start_time" => "19:00",
+      "end_date" => "30/07/2026",
+      "end_time" => "02:00"
+    )
+
+    parsed_event = Icalendar::Calendar.parse(event_to_ics(event)).first.events.first
+    assert_equal DateTime.new(2026, 7, 29, 19, 0, 0), parsed_event.dtstart.value
+    assert_equal DateTime.new(2026, 7, 30, 2, 0, 0), parsed_event.dtend.value
   end
 
   def test_timed_event_without_end_date_uses_start_date_for_both_exports
