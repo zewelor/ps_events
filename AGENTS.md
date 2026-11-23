@@ -275,10 +275,13 @@ spreadsheet ID, the range and the services from, so use it instead of re-reading
 - Functions should be small and focused
 - If a function needs a comment to explain what it does, it should be split
 
-## OCR error response
+## OCR API responses
 
-- Return `ocr_temporarily_unavailable` only for OCR failures before any events are saved;
-  see [OCR failure responses](README.md#ocr-failure-responses) for the API contract.
+- When changing the behavior of `POST /events_ocr`, update the affected parts of
+  [the OCR API response reference](docs/ocr-api-responses.md) in the same change.
+  Keep HTTP status codes, error codes, response fields, client-visible messages,
+  and retry and write behavior in sync with the endpoint.
+- Return `ocr_temporarily_unavailable` only for OCR failures before any events are saved.
 
 ## Testing Guidelines
 
