@@ -30,6 +30,39 @@ Katalog artefaktów musi być nowy lub pusty. Zapisywane są dokładne bajty obr
 Nieobrazowe wejście jest odrzucane przed wywołaniem modelu. Błąd próby zachowuje
 diagnostykę i jest widoczny jako błąd; nie oznacza pustej poprawnej ekstrakcji.
 
+### Lokalne review wybranych pól
+
+Po udanym odczycie z `--artifacts-dir` katalog zawiera także `result.json`.
+Dla tego samego katalogu można uruchomić osobną ocenę OpenAI Decisions
+(`gpt-6-luna`). Polecenie przyjmuje artefakty obrazów, także starszy układ
+z `source.json` i podkatalogiem `reader/`. Niespójny lub niekompletny katalog
+oraz PDF powodują błąd przed wywołaniem modelu.
+Starszy `source.json` bez `sent_sha256` może użyć obrazu źródłowego po
+sprawdzeniu jego hasha, gdy katalog nie zawiera osobnego pliku `sent`.
+
+Tryb `batch` wysyła wszystkie pytania dla obrazu w jednym żądaniu. Niekompletna
+odpowiedź wstrzymuje werdykty dla całej partii. Tryb `separate` wysyła każde
+pytanie osobno i zachowuje poprawne odpowiedzi z udanych wywołań.
+
+```sh
+./dockerized.sh bundle exec ruby bin/ocr_review --mode batch tmp/ocr-one-source
+./dockerized.sh bundle exec ruby bin/ocr_review --mode separate tmp/ocr-one-source
+```
+
+Każda pozycja w `questions` wskazuje rekord, pole i werdykt. Dla zakresu dat,
+organizatora i przypisanej roli w opisie `unsupported` oznacza zakwestionowanie
+twierdzenia. Dla brakującego miejsca, dnia lub godziny rozpoczęcia pytanie
+brzmi, czy źródło dostarcza tej informacji. Wtedy `unsupported` przemawia za
+pozostawieniem braku lub istniejącego review, a `supported` wskazuje pole do
+ponownego odczytu. `uncertain` zapisuje niepewność modelu. Błąd techniczny
+jest raportowany oddzielnie i powoduje niezerowy kod wyjścia.
+
+CLI zachowuje oryginalne `events` i `review_items`. Brak pytania o pole
+oznacza brak oceny. Gdy lista pytań jest pusta, CLI zwraca raport bez
+wywołania modelu. Pytania o role w opisie uruchamiają się na podstawie
+wzorców językowych w portugalskim tekście. Nie obejmują wszystkich możliwych
+twierdzeń ani pominiętych wydarzeń.
+
 ### Referencja i normalizacja
 
 Usunięto alias łączący instytucję Porta33 ze szkołami Escola da Vila/Escola do
