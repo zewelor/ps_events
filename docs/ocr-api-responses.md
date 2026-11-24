@@ -50,6 +50,21 @@ Przy `invalid_event_fields` pole `validation_errors` grupuje błędy według
 nazwy pola, a `candidate` zachowuje odczytane wartości. Jeśli istnieją
 wyłącznie pozycje do korekty, endpoint zwraca `422 ocr_review_required`.
 
+Gdy nazwa miejsca i cytowany przez OCR tekst wskazują dwa różne miejsca ze
+słownika, wydarzenie może zostać zapisane bez miejsca. `venue_notices` zawiera
+wtedy `index` pozycji w `events` oraz `candidate` i `evidence` zwrócone przez
+model. To wskazówki do sprawdzenia na oryginale, nie niezależnie potwierdzony
+cytat. Sprawdź status w `results[index]`: przy `added` użyj `range`, a przy
+`skipped` — `existing_row`, aby w razie potrzeby poprawić istniejący wiersz
+w arkuszu. Nie przesyłaj wydarzenia ponownie jako korekty. Przy `conflict`,
+`failed` lub `not_attempted` sprawdź wynik zapisu przed podjęciem działania.
+Inne powody wymagające korekty nadal wstrzymują kandydata.
+
+Ta kontrola porównuje tylko rozpoznane nazwy miejsc. Nie potrafi niezależnie
+ustalić, czy podpis lub nazwa w stopce obrazu wskazuje miejsce wydarzenia;
+model może błędnie oznaczyć taką nazwę jako tekst główny. Oryginał pozostaje
+źródłem do weryfikacji.
+
 ## Komunikaty formularza podczas korekty
 
 Formularz podstawia własną instrukcję dla trzech powodów zwracanych jako
