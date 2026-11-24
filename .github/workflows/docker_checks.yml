@@ -15,7 +15,6 @@ on:
 
 env:
   COMPOSE_DOCKER_CLI_BUILD: 1
-  OLD_VERSIONS_TO_KEEP: 10
   DOCKER_BUILD_CHECKS_ANNOTATIONS: false
 
 permissions:
@@ -180,7 +179,8 @@ jobs:
       - tests
     runs-on: ubuntu-latest
     concurrency:
-      group: ci-docker
+      group: ghcr-${{ github.repository }}
+      queue: max
       cancel-in-progress: false
     permissions:
       contents: read
@@ -225,7 +225,8 @@ jobs:
       - production_smoke
     runs-on: ubuntu-latest
     concurrency:
-      group: production-docker
+      group: ghcr-${{ github.repository }}
+      queue: max
       cancel-in-progress: false
     environment: production
     permissions:
@@ -272,15 +273,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GIT_CODE_VERSION=${{ github.sha }}
-
-      - name: Delete old images
-        uses: dataaxiom/ghcr-cleanup-action@v1
-        with:
-          keep-n-tagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
-          keep-n-untagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
-          exclude-tags: latest
-          delete-partial-images: true
-          validate: true
 
       - name: Deploy via webhook
         env:
