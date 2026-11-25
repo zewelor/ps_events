@@ -74,7 +74,7 @@ class OcrCliTest < Minitest::Test
     assert_includes stdout, "Clube de Leitura — Livros que inspiram"
     request = JSON.parse(File.read(captured))
     assert_includes request.dig("systemInstruction", "parts", 0, "text"),
-      "Fallback year for sources without an explicit year: 2028."
+      "The fallback year is 2028 only if the source omitted a year."
   end
 
   def test_benchmark_scores_pdf_case
@@ -102,7 +102,7 @@ class OcrCliTest < Minitest::Test
     assert_equal ["programme"], result.dig("score", "runs").map { |run| run.fetch("case_id") }
     assert_equal 1, result.dig("score", "aggregates", "matched_occurrences")
     request = JSON.parse(File.read(File.join(run.dig("diagnostics", "artifact_dir"), "reader_request.json")))
-    assert_includes request.fetch("instructions"), "Fallback year for sources without an explicit year: 2028."
+    assert_includes request.fetch("instructions"), "The fallback year is 2028 only if the source omitted a year."
     assert_includes request.fetch("prompt"), "Read every page of the PDF as part of the same panel."
   end
 

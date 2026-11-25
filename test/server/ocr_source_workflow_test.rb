@@ -52,6 +52,19 @@ class OcrSourceWorkflowTest < Minitest::Test
     {panels: [{panel_id: 1, panel_review_reason: "none", panel_review_detail: nil, candidates: candidates}]}
   end
 
+  def test_reader_sends_instructions_with_fallback_year_and_places
+    stub_reader(payload([candidate]))
+    Dir.mktmpdir do |dir|
+      result = Ocr::SourceWorkflow.new.analyze(@path, fallback_year: 2031, artifact_dir: dir)
+      instructions = JSON.parse(File.read(File.join(dir, "reader_request.json"))).fetch("instructions")
+
+      assert_includes instructions, "The fallback year is 2031 only if the source omitted a year."
+      assert_equal Ocr::Places.prompt_catalogue, JSON.parse(instructions.split("Known venues and aliases: ", 2).last)
+      assert_equal instructions, @requests.first.fetch("instructions")
+      assert_equal Digest::SHA256.hexdigest(instructions), result.dig(:hashes, :reader_prompt_sha256)
+    end
+  end
+
   def test_multiple_events_and_review_items_use_one_untouched_attachment
     stub_reader(payload([candidate, candidate(name: "Sem local", location: nil, location_evidence: nil, location_source: "none", review_reason: "missing_location"), candidate(name: "Conflito", date_source: "inset", review_reason: "conflicting_inset")]),
       commentary: "Vou analisar o cartaz.")
