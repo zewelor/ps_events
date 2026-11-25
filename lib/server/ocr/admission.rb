@@ -29,6 +29,7 @@ module Ocr
 
       events = []
       review_items = []
+      uncertain_fields_by_index = {}
       panel_summaries = []
 
       panels_data.each do |panel|
@@ -50,6 +51,8 @@ module Ocr
             additional_text: additional_text
           )
           if outcome[:type] == :event
+            uncertain_fields = outcome.fetch(:uncertain_fields)
+            uncertain_fields_by_index[events.length] = uncertain_fields unless uncertain_fields.empty?
             events << outcome[:event]
             panel_ready += 1
           else
@@ -80,7 +83,7 @@ module Ocr
         }
       end
 
-      {events: events, review_items: review_items, panels: panel_summaries}
+      {events: events, review_items: review_items, uncertain_fields_by_index: uncertain_fields_by_index, panels: panel_summaries}
     end
 
     def validate_panel_coverage!(panels_data, panel_ids)
@@ -124,13 +127,16 @@ module Ocr
       location_source = sources.fetch(:location_source)
       venue_only_review = %w[missing_location ambiguous_venue_policy].include?(review_reason)
       missing_location = location_evidence.nil? || NON_VENUE_SOURCES.include?(location_source) ||
-        (location_source == "additional_text" && additional_text.blank?) || venue_only_review
-      candidate[:location] = missing_location ? nil : Places.canonical_location(candidate[:location])
-      venue_reason = venue_review_reason(candidate[:location], location_evidence)
+        (location_source == "additional_text" && additional_text.blank?)
+      original_location = candidate[:location]
+      location = Places.canonical_location(original_location) unless missing_location
+      conflicting_location = conflicting_venue_evidence?(location, location_evidence)
+      candidate[:location] = (venue_only_review || conflicting_location) ? nil : location
+      uncertain_fields = {}
+      uncertain_fields[:location] = {candidate: original_location, evidence: location_evidence} if conflicting_location
 
       block_reason = determine_block_reason(
         candidate: candidate,
-        venue_reason: venue_reason,
         sources: sources,
         review_reason: venue_only_review ? "none" : review_reason,
         panel_reason: panel_reason,
@@ -139,14 +145,11 @@ module Ocr
 
       unless block_reason
         validation = EventValidation.call(candidate.compact_blank.merge(responsibility_agreement: "on"))
-        return {type: :event, event: validation.to_h} if validation.success?
+        return {type: :event, event: validation.to_h, uncertain_fields: uncertain_fields} if validation.success?
 
         block_reason = "invalid_event_fields"
         review_detail = "Alguns dados do evento são inválidos."
       end
-
-      # Keep a disputed venue only when the correction form can show its conflict.
-      candidate[:location] = nil if venue_reason == "conflicting_location_evidence" && block_reason != venue_reason
 
       if sources[:date_source] == "none"
         # The correction form leaves the start date empty for this reason.
@@ -187,22 +190,20 @@ module Ocr
       candidate
     end
 
-    def venue_review_reason(location, location_evidence)
-      return if location.nil?
+    def conflicting_venue_evidence?(location, location_evidence)
+      return false if location.nil?
 
       location_match = Places.alias_map_folded[Places.folded_key(location)]
       evidence_match = Places.alias_map_folded[Places.folded_key(location_evidence)]
-      "conflicting_location_evidence" if location_match && evidence_match && location_match != evidence_match
+      location_match.present? && evidence_match.present? && location_match != evidence_match
     end
 
-    def determine_block_reason(candidate:, venue_reason:, sources:, review_reason:, panel_reason:, additional_text:)
+    def determine_block_reason(candidate:, sources:, review_reason:, panel_reason:, additional_text:)
       return "unavailable_additional_text" if additional_text.blank? && sources.value?("additional_text")
       return review_reason if review_reason != "none" && !review_reason.empty?
       return "conflicting_inset" if sources[:date_source] == "inset" || sources[:time_source] == "inset"
 
       return "missing_start_date" if candidate[:start_date].nil? || sources[:date_source] == "none"
-      return venue_reason if venue_reason
-
       missing_required = REQUIRED_FIELDS.any? { |field| candidate[field].nil? }
       return "missing_required_fields" if missing_required
       return panel_reason if panel_reason && panel_reason != "none"

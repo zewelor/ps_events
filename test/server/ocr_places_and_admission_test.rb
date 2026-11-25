@@ -282,12 +282,13 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     assert_equal "Biblioteca Municipal", review.fetch(:trace).fetch(:location_evidence)
   end
 
-  def test_admission_reviews_conflicting_known_location_evidence
+  def test_admission_saves_without_conflicting_known_location_and_reports_candidates
     candidate = admission_candidate.merge("location" => "Biblioteca Municipal", "location_evidence" => "Auditório do CCC")
     result = admit(candidate)
-    assert_empty result[:events]
-    assert_equal "conflicting_location_evidence", result[:review_items].first[:reason]
-    assert_equal "Biblioteca Municipal do Porto Santo", result[:review_items].first.dig(:candidate, :location)
+    assert_nil result.fetch(:events).first[:location]
+    assert_empty result[:review_items]
+    assert_equal({0 => {location: {candidate: "Biblioteca Municipal", evidence: "Auditório do CCC"}}},
+      result[:uncertain_fields_by_index])
   end
 
   def test_admission_drops_conflicting_venue_when_date_review_takes_precedence
@@ -305,6 +306,7 @@ class OcrPlacesAndAdmissionTest < Minitest::Test
     [
       {"location" => "Auditório do Centro Cultural e de Congressos", "location_evidence" => "Auditório do CCC"},
       {"location" => "Biblioteca Municipal", "location_evidence" => "Biblioteca Municipal, entrada norte"},
+      {"location" => "Biblioteca Municipal", "location_evidence" => "na Biblioteca Municipal"},
       {"location" => "Praia da Calheta", "location_evidence" => "PRAIA DA CALHETA"}
     ].each do |location|
       result = admit(admission_candidate.merge(location))

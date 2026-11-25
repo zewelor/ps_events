@@ -164,10 +164,12 @@ helpers do
     analysis = Ocr::SourceWorkflow.call(upload_path, **options)
     events = analysis.fetch(:events)
     review_items = analysis.fetch(:review_items)
+    uncertain_fields_by_index = analysis.fetch(:uncertain_fields_by_index, {})
     raise "Invalid OCR event list" unless events.is_a?(Array) && events.all? { |event| event.is_a?(Hash) }
     raise "Invalid OCR review list" unless review_items.is_a?(Array)
+    raise "Invalid OCR uncertain fields" unless uncertain_fields_by_index.is_a?(Hash)
 
-    [events, review_items]
+    [events, review_items, uncertain_fields_by_index]
   end
 
   def ingestion_response(results, events: nil, event: nil, failed: false, image_ref: nil, review_items: [])
@@ -342,7 +344,7 @@ post "/events_ocr" do
     image_ref = File.basename(image_path, ".webp") if use_image && !image_path.empty?
     begin
       # The WebP above is for publication; OCR must retain the upload's fine text.
-      events, review_items = read_ocr(upload.fetch(:tempfile).path, additional_text: additional_text, api_bearer: api_bearer)
+      events, review_items, uncertain_fields_by_index = read_ocr(upload.fetch(:tempfile).path, additional_text: additional_text, api_bearer: api_bearer)
 
       if events.empty? && !review_items.empty?
         return json_response({status: "error", error_code: "ocr_review_required",
@@ -377,6 +379,10 @@ post "/events_ocr" do
       end
     end
 
+    results.each do |result|
+      fields = uncertain_fields_by_index[result.fetch(:index)]
+      result[:uncertain_fields] = fields if fields
+    end
     failed = results.any? { |result| result.fetch(:status) == "failed" }
     image_needed_for_review = image_ref.present? && (failed || results.any? { |result| result.fetch(:status) == "conflict" })
     ingestion_response(results, events: events, failed: failed, image_ref: image_ref, review_items: review_items)

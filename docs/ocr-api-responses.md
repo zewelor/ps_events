@@ -16,7 +16,7 @@ PDF-y obsługują narzędzia CLI i benchmark, a endpoint przyjmuje obrazy.
 | 503 | `error_code: "ocr_temporarily_unavailable"` | `O serviço de análise está temporariamente indisponível. Tente novamente mais tarde.` | Ponawiaj z rosnącym odstępem i ograniczoną liczbą prób. Błąd wystąpił podczas analizy, przed zapisem. |
 | 503 | `error_code: "ingestion_failed"` | `Não foi possível concluir a submissão. Adicionados: {added}. Já existentes: {skipped}. A aguardar revisão: {conflicted}. Os dados foram mantidos. Verifique os eventos antes de tentar novamente.` | Pokaż dotychczasowe wyniki. Przed ponowieniem sprawdź arkusz, ponieważ część operacji mogła się udać. |
 | 409 | `status: "needs_review"`, bez `error_code` | `Encontrámos eventos semelhantes. Confirme se são os mesmos eventos.` | Pokaż możliwe duplikaty. Poprzednie lub kolejne pozycje w tej samej partii mogły zostać zapisane. |
-| 200 | `status: "ok"`, `outcome: "added"` lub `"skipped"` | Podsumowanie liczników lub informacja, że wydarzenia są już zarejestrowane. | Pokaż wyniki zapisu, a jeśli odpowiedź zawiera `review_items`, także pozycje do korekty. |
+| 200 | `status: "ok"`, `outcome: "added"` lub `"skipped"` | Podsumowanie liczników lub informacja, że wydarzenia są już zarejestrowane. | Pokaż wyniki zapisu wraz z pozycjami do korekty z `review_items` i polami do sprawdzenia z `results[].uncertain_fields`, gdy odpowiedź je zawiera. |
 
 Limit czasu lub błąd połączenia podczas analizy zwraca `503
 ocr_temporarily_unavailable` dla żądań Bearer. Przy uwierzytelnieniu Google
@@ -50,15 +50,18 @@ Przy `invalid_event_fields` pole `validation_errors` grupuje błędy według
 nazwy pola, a `candidate` zachowuje odczytane wartości. Jeśli istnieją
 wyłącznie pozycje do korekty, endpoint zwraca `422 ocr_review_required`.
 
-Gdy nazwa miejsca i cytowany przez OCR tekst wskazują dwa różne miejsca ze
-słownika, wydarzenie może zostać zapisane bez miejsca. `venue_notices` zawiera
-wtedy `index` pozycji w `events` oraz `candidate` i `evidence` zwrócone przez
-model. To wskazówki do sprawdzenia na oryginale, nie niezależnie potwierdzony
-cytat. Sprawdź status w `results[index]`: przy `added` użyj `range`, a przy
-`skipped` — `existing_row`, aby w razie potrzeby poprawić istniejący wiersz
-w arkuszu. Nie przesyłaj wydarzenia ponownie jako korekty. Przy `conflict`,
-`failed` lub `not_attempted` sprawdź wynik zapisu przed podjęciem działania.
-Inne powody wymagające korekty nadal wstrzymują kandydata.
+Element `results` może zawierać `uncertain_fields`, jeśli przynajmniej jedno
+pole wymaga sprawdzenia. Klucze są nazwami pól wydarzenia, a wartości zawierają
+`candidate` i `evidence` zwrócone przez model. Oba odczyty należy sprawdzić
+na oryginale. Obecnie dotyczy to pola `location`: gdy nazwa miejsca i tekst
+podany jako dowód wskazują dwa różne miejsca ze słownika, wydarzenie może
+zostać zapisane bez miejsca. Sam brak miejsca nie wymaga sprawdzenia.
+
+Przy `added` pole `range` wskazuje wiersz do ewentualnej korekty, a przy
+`skipped` wskazuje go `existing_row`. Nie przesyłaj ponownie wydarzenia jako
+korekty. Przy `conflict`, `failed` lub `not_attempted` sprawdź wynik zapisu
+przed podjęciem działania. Powody wymagające korekty przed zapisem pozostają
+w `review_items`.
 
 Ta kontrola porównuje tylko rozpoznane nazwy miejsc. Nie potrafi niezależnie
 ustalić, czy podpis lub nazwa w stopce obrazu wskazuje miejsce wydarzenia;
@@ -67,13 +70,12 @@ model może błędnie oznaczyć taką nazwę jako tekst główny. Oryginał pozo
 
 ## Komunikaty formularza podczas korekty
 
-Formularz podstawia własną instrukcję dla trzech powodów zwracanych jako
-`review_items[].reason`. Dla pozostałych pokazuje `review_items[].message`,
-jeżeli odpowiedź je zawiera.
+Formularz pokazuje własną instrukcję dla powodów z tabeli. Dla pozostałych
+powodów pokazuje `review_items[].message`, jeżeli odpowiedź je zawiera.
 
 | Powód | Instrukcja w formularzu |
 | --- | --- |
-| `conflicting_location_evidence` | `Confirme o local do evento.` |
+| `conflicting_location_evidence` (wcześniejsze linki do korekty) | `Confirme o local do evento.` |
 | `missing_start_date` | `Indique a data de início do evento.` |
 | `conflicting_inset` | `Confirme a data e a hora do evento antes de submeter.` |
 
@@ -83,7 +85,7 @@ i w razie dostępności dodaje `Sugestão do OCR: {wartość}.`
 
 ## Wdrożenie
 
-Obsługę odpowiedzi łączących wyniki zapisu z pozycjami do korekty należy
+Obsługę wyników z `review_items` lub `results[].uncertain_fields` należy
 wdrożyć w formularzu i kliencie Câmara przed włączeniem tego zachowania
 w endpoincie. [Kod endpointu](../bin/server.rb) ·
 [Reguły korekty OCR](../lib/server/ocr/admission.rb) ·

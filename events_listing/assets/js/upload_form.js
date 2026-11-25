@@ -213,7 +213,7 @@
         if (!response.ok) throw new Error(result.message || `Erro ${response.status}`);
 
         if (result.status === 'ok') {
-          if (onOcrReview && result.review_items?.length) {
+          if (onOcrReview && (result.review_items?.length || result.results?.some(item => item.uncertain_fields))) {
             onOcrReview(result, data);
           } else if (result.outcome === 'skipped') {
             if (onSkipped) onSkipped(result);
@@ -287,6 +287,7 @@
       appendText(card, 'h2', 'font-semibold', submittedEvent.name || 'Evento submetido');
       appendText(card, 'p', 'text-sm', `Data e hora: ${eventDateTime(submittedEvent) || 'Não indicadas'}`);
       appendText(card, 'p', 'text-sm', `Local: ${submittedEvent.location || 'Não indicado'}`);
+      renderUncertainFields(card, conflict);
 
       appendText(card, 'p', 'pt-2 text-sm font-medium', 'Eventos semelhantes já registados:');
       (conflict.candidates || []).forEach((candidate) => {
@@ -354,6 +355,7 @@
       const event = item.event || {};
       appendText(card, 'h2', 'font-semibold', event.name || 'Evento sem nome');
       appendText(card, 'p', 'text-sm', item.status === 'failed' ? 'Resultado do registo por confirmar' : 'Registo ainda não tentado');
+      renderUncertainFields(card, item);
       Object.entries(event).forEach(([field, value]) => {
         if (field !== 'name' && EVENT_FIELD_LABELS[field] && value) {
           appendText(card, 'p', 'whitespace-pre-wrap break-words text-sm', `${EVENT_FIELD_LABELS[field]}: ${value}`);
@@ -412,12 +414,30 @@
     if (!confirmed.length) return;
     const list = document.createElement('ul');
     list.className = 'space-y-1 text-sm';
-    for (const {status, event} of confirmed) {
+    for (const item of confirmed) {
+      const {status, event} = item;
       const label = status === 'added' ? 'Adicionado' : 'Já existente';
       const dateTime = eventDateTime(event);
-      appendText(list, 'li', '', `${label}: ${event.name}${dateTime ? ` (${dateTime})` : ''}`);
+      const entry = appendText(list, 'li', '', `${label}: ${event.name}${dateTime ? ` (${dateTime})` : ''}`);
+      renderUncertainFields(entry, item);
     }
     container.appendChild(list);
+  }
+
+  function renderUncertainFields(container, {uncertain_fields: fields, status, range, existing_row: existingRow}) {
+    if (!fields) return;
+    appendText(container, 'p', 'text-sm font-medium', 'Campos a verificar');
+    for (const [field, {candidate, evidence}] of Object.entries(fields)) {
+      const label = EVENT_FIELD_LABELS[field] || field;
+      appendText(container, 'p', 'text-sm', `${label}: valor sugerido pelo OCR: ${candidate}. Texto indicado: ${evidence}.`);
+    }
+    if (status === 'added' || status === 'skipped') {
+      const reference = status === 'added' ? range : existingRow;
+      appendText(container, 'p', 'text-sm', 'Confirme os dados no cartaz e, se necessário, corrija o registo no Google Sheets.');
+      if (reference) appendText(container, 'p', 'text-sm', `Registo: ${reference}`);
+    } else {
+      appendText(container, 'p', 'text-sm', 'Verifique o resultado do registo antes de corrigir os dados.');
+    }
   }
 
   window.PXOForms = { prefillEventForm, dismissToast, showToast, submitUploadForm, renderConflictReview, renderUnresolvedEvents, showReviewNotice, renderHeldOcrEvents, renderOcrReviewItems, renderConfirmedEvents };

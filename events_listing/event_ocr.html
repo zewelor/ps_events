@@ -108,9 +108,9 @@ sitemap: false
     };
 
     if (!pendingConflicts.length) {
-      const message = (unresolvedResults.length || ocrReviewItems.length)
-        ? `Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}. Ainda há eventos por verificar.`
-        : `A revisão terminou. Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`;
+      const needsReview = unresolvedResults.length || ocrReviewItems.length || confirmedResults.some(item => item.uncertain_fields);
+      const counts = `Adicionados: ${reviewCounts.added}. Já existentes: ${reviewCounts.skipped}.`;
+      const message = needsReview ? `${counts} Ainda há dados por verificar.` : `A revisão terminou. ${counts}`;
       PXOForms.showReviewNotice(duplicateReview, message);
       PXOForms.renderUnresolvedEvents(duplicateReview, unresolvedResults);
     } else {
@@ -142,7 +142,7 @@ sitemap: false
     unresolvedResults = results.filter(item => item.status === 'failed' || item.status === 'not_attempted');
     confirmedResults = results
       .filter(item => item.status === 'added' || item.status === 'skipped')
-      .map(item => ({status: item.status, event: result.events?.[item.index]}));
+      .map(item => ({...item, event: result.events?.[item.index]}));
     ocrReviewItems = result.review_items || [];
     reviewCounts = {
       added: Number(result.counts?.added ?? results.filter(item => item.status === 'added').length),
@@ -156,7 +156,9 @@ sitemap: false
   }
 
   function submitExtractedEvent(pending) {
+    const {index, uncertain_fields} = pending.conflict;
     const event = pending.conflict.event || {};
+    const withOcrContext = (item) => ({...item, index, uncertain_fields});
     const data = new FormData();
     data.set('google_token', originalOcrData.get('google_token') || '');
     Object.entries(event).forEach(([field, value]) => {
@@ -178,7 +180,7 @@ sitemap: false
       action: new URL('/add_event', form.action).toString(),
       data,
       onSuccess: (result) => {
-        confirmedResults.push({status: 'added', event});
+        confirmedResults.push({...withOcrContext(result.results?.[0]), status: 'added', event});
         pendingConflicts = pendingConflicts.filter((item) => item !== pending);
         reviewCounts.added += 1;
         reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
@@ -186,7 +188,7 @@ sitemap: false
         renderOcrReview();
       },
       onSkipped: (result) => {
-        confirmedResults.push({status: 'skipped', event});
+        confirmedResults.push({...withOcrContext(result.results?.[0]), status: 'skipped', event});
         pendingConflicts = pendingConflicts.filter((item) => item !== pending);
         reviewCounts.skipped += 1;
         reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
@@ -196,12 +198,12 @@ sitemap: false
       onConflict: (result, retry) => {
         const unresolved = (result.results || []).filter(item => item.status === 'failed' || item.status === 'not_attempted');
         if (unresolved.length) {
-          unresolvedResults.push(...unresolved.map(item => ({...item, index: pending.conflict.index})));
+          unresolvedResults.push(...unresolved.map(withOcrContext));
           pendingConflicts = pendingConflicts.filter(item => item !== pending);
           reviewCounts.conflicted = Math.max(0, reviewCounts.conflicted - 1);
         }
         const updatedConflict = (result.results || []).find((item) => item.status === 'conflict');
-        if (updatedConflict) pending.conflict = updatedConflict;
+        if (updatedConflict) pending.conflict = withOcrContext(updatedConflict);
         pending.retry = retry;
         reviewMessage = result.message || reviewMessage;
         renderOcrReview();

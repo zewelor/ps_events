@@ -190,6 +190,79 @@ test('mixed OCR lists confirmed saves and opens only the correction', async () =
   assert.equal(flow.posted.length, 1);
 });
 
+const uncertainLocation = {location: {candidate: 'Biblioteca Municipal', evidence: 'Auditório do CCC'}};
+
+test('a saved event lists each uncertain field next to its sheet row', async () => {
+  const flow = reviewFlow([{code: 200, body: {
+    status: 'ok', outcome: 'added', events: [{...event('Concerto'), location: undefined}],
+    counts: {added: 1, skipped: 0, conflicted: 0},
+    results: [{status: 'added', index: 0, range: 'Events!A2:S2',
+      uncertain_fields: {...uncertainLocation, start_time: {candidate: '21:00', evidence: '22:00'}}}]
+  }}]);
+  await flow.submit();
+  const entry = flow.review.all().find(node => node.tag === 'li' && node.textContent.includes('Concerto'));
+  assert.ok(entry);
+  assert.match(entry.textContent, /Biblioteca Municipal/);
+  assert.match(entry.textContent, /Auditório do CCC/);
+  assert.match(entry.textContent, /Hora de início:.*21:00.*22:00/);
+  assert.match(entry.textContent, /Events!A2:S2/);
+  assert.match(entry.textContent, /Google Sheets/);
+  assert.match(flow.review.textContent, /Ainda há dados por verificar/);
+  assert.doesNotMatch(flow.review.textContent, /A revisão terminou/);
+  assert.equal(flow.review.all().filter(node => node.tag === 'a').length, 0);
+  assert.equal(flow.posted.length, 1);
+});
+
+test('uncertain fields stay with their own results in a partial failure', async () => {
+  const flow = reviewFlow([{code: 503, body: {
+    status: 'error', error_code: 'ingestion_failed',
+    events: [event('Outro evento'), event('Já existente'), event('Resultado incerto')],
+    counts: {added: 0, skipped: 1, conflicted: 0},
+    results: [
+      {status: 'skipped', index: 1, existing_row: 'Events!A4:S4', uncertain_fields: uncertainLocation},
+      {...failed, index: 2, event: event('Resultado incerto'),
+        uncertain_fields: {location: {candidate: 'Largo das Palmeiras', evidence: 'Porto Santo Golfe'}}}
+    ]
+  }}], false);
+  await flow.submit();
+  assert.match(flow.review.textContent, /Já existente/);
+  assert.match(flow.review.textContent, /Events!A4:S4/);
+  const unresolved = flow.review.all().find(node => node.tag === 'article' && node.textContent.includes('Resultado incerto'));
+  assert.ok(unresolved);
+  assert.match(unresolved.textContent, /Largo das Palmeiras/);
+  assert.match(unresolved.textContent, /verifique o resultado do registo/i);
+  assert.doesNotMatch(unresolved.textContent, /Events!A4:S4/);
+  assert.equal(flow.review.all().filter(node => node.tag === 'a').length, 0);
+  assert.equal(flow.posted.length, 1);
+});
+
+test('uncertain fields follow the original event through repeated duplicate checks', async () => {
+  const original = {...conflict('Concerto', 1), uncertain_fields: uncertainLocation};
+  const flow = reviewFlow([
+    {code: 409, body: {status: 'needs_review', events: [event('Outro'), original.event],
+      counts: {added: 1, skipped: 0, conflicted: 1}, results: [{status: 'added', index: 0}, original]}},
+    {code: 409, body: {status: 'needs_review', results: [conflict('Concerto', 0)]}},
+    {code: 200, body: {status: 'ok', outcome: 'added', results: [{status: 'added', index: 0, range: 'Events!A8:S8'}]}}
+  ], false);
+  await flow.submit();
+  await flow.click('É outro evento');
+  assert.match(flow.review.textContent, /Biblioteca Municipal/);
+  await flow.click('É outro evento');
+  assert.match(flow.review.textContent, /Events!A8:S8/);
+  assert.match(flow.review.textContent, /Biblioteca Municipal/);
+  assert.equal(flow.posted.length, 3);
+});
+
+test('dismissing a possible match removes its uncertain fields', async () => {
+  const item = {...conflict('Concerto', 0), uncertain_fields: uncertainLocation};
+  const flow = reviewFlow([{code: 409, body: {status: 'needs_review', events: [item.event], results: [item]}}], false);
+  await flow.submit();
+  assert.match(flow.review.textContent, /Biblioteca Municipal/);
+  await flow.click('Não guardar esta submissão');
+  assert.match(flow.review.textContent, /A revisão terminou/);
+  assert.doesNotMatch(flow.review.textContent, /Biblioteca Municipal|Google Sheets/);
+});
+
 test('dismissing a possible match preserves the OCR correction and uncertain write', async () => {
   const flow = reviewFlow([{code: 503, body: {
     status: 'error', error_code: 'ingestion_failed',

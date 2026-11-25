@@ -14,9 +14,10 @@ Gotowe wydarzenia przechodzą kontrolę duplikatów i zapis. Pozycje do korekty
 trafiają do `review_items` w tej samej odpowiedzi. HTTP 422
 (`ocr_review_required`) dotyczy plakatów z pozycjami do korekty i bez żadnego
 gotowego wydarzenia.
-Admission wstrzymuje także datę oznaczoną przez czytnik jako pozbawiona źródła
-oraz przypadek, w którym nazwa miejsca i cytat wskazują dwa różne, jednoznaczne
-wpisy katalogu. Rola instytucji w tekście plakatu nadal wymaga oceny czytnika.
+Admission wstrzymuje także kandydata, którego data nie ma źródła. Gdy nazwa
+miejsca i cytat wskazują dwa różne, jednoznaczne wpisy katalogu, gotowe
+wydarzenie zostaje zapisane z pustym miejscem, a oba odczyty trafiają do
+sprawdzenia. Rola instytucji w tekście plakatu nadal wymaga oceny czytnika.
 [Kontrakt odpowiedzi API](ocr-api-responses.md).
 
 ## Wynik historyczny: prosty odczyt źródła — 15 listopada 2026

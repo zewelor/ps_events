@@ -350,6 +350,59 @@ class EventsOcrEndpointTest < Minitest::Test
     assert_equal 1, app.settings.google_sheets.rows.size
   end
 
+  def test_conflicting_venue_is_saved_blank_and_reported_in_the_row_result
+    TestHelper.setup_network_blocking
+    original_key = RubyLLM.config.openai_api_key
+    RubyLLM.config.openai_api_key = "offline-test-key"
+    raw = valid_event.transform_keys(&:to_s).merge(
+      "start_time" => nil, "end_time" => nil, "contact_email" => nil, "contact_tel" => nil,
+      "event_link1" => nil, "event_link2" => nil, "event_link3" => nil, "event_link4" => nil,
+      "location" => "Biblioteca Municipal", "location_evidence" => "Auditório do CCC",
+      "location_source" => "main_text", "date_source" => "main_text", "time_source" => "none",
+      "price_type" => "Desconhecido", "price_source" => "none",
+      "review_reason" => "ambiguous_venue_policy", "review_detail" => nil
+    )
+    sibling = raw.merge("start_date" => "04/12/2025", "end_date" => "04/12/2025", "location" => "Auditório do CCC", "review_reason" => "none")
+    held = sibling.merge("name" => "Held occurrence", "date_source" => "inset", "review_reason" => "conflicting_inset")
+    analysis = {panels: [{panel_id: 1, panel_review_reason: "none", panel_review_detail: nil, candidates: [sibling, held, raw]}]}
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(
+      headers: {"Content-Type" => "application/json"},
+      body: JSON.generate(id: "response", object: "response", status: "completed", model: "gpt-6.1-terra",
+        output: [{id: "message", type: "message", role: "assistant", content: [{type: "output_text", text: JSON.generate(analysis)}]}],
+        usage: {input_tokens: 200, output_tokens: 50})
+    )
+    image = File.expand_path("../fixtures/ocr_events.png", __dir__)
+    responses = []
+    capture_io do
+      ImageService.stub :validate_and_process, "/tmp/test.webp" do
+        AuthRegistry.stub :authenticate, {authenticated: true, email: "api@service.test", method: :api_bearer} do
+          2.times do
+            post "/events_ocr", {event_image: Rack::Test::UploadedFile.new(image, "image/png")}
+            assert_equal 200, last_response.status, last_response.body
+            responses << JSON.parse(last_response.body)
+          end
+        end
+      end
+    end
+
+    assert_equal "", app.settings.google_sheets.rows.last[7]
+    assert_equal 2, app.settings.google_sheets.rows.size
+    assert_requested request, times: 2
+    assert_equal %w[added skipped], responses.map { |body| body.dig("results", 1, "status") }
+    assert_equal "Events!A3:S3", responses.first.dig("results", 1, "range")
+    assert_equal "Events!A3:S3", responses.last.dig("results", 1, "existing_row")
+    responses.each do |body|
+      assert_equal ["Held occurrence"], body.fetch("review_items").map { |item| item.dig("candidate", "name") }
+      refute body.key?("uncertain_fields")
+      refute body.fetch("results").first.key?("uncertain_fields")
+      assert_equal({"location" => {"candidate" => "Biblioteca Municipal", "evidence" => "Auditório do CCC"}},
+        body.dig("results", 1, "uncertain_fields"))
+    end
+  ensure
+    RubyLLM.config.openai_api_key = original_key
+    TestHelper.reset_network_mocks
+  end
+
   def test_partial_append_failure_reports_successes_and_retry_adds_only_missing_occurrences
     later_event = valid_event.merge(start_date: "04/12/2025", end_date: "04/12/2025")
     app.settings.google_sheets.append_failure_after = 1

@@ -71,7 +71,7 @@ module Ocr
       end
       original = find_image!(artifact, source_hash)
       image = (sent_hash == source_hash) ? original : find_image!(artifact, sent_hash)
-      questions = build_questions(events, reviews)
+      questions = build_questions(events, reviews, source.fetch("uncertain_fields_by_index", {}))
       groups = if questions.empty?
         []
       elsif @mode == :batch
@@ -149,9 +149,12 @@ module Ocr
       raise ArgumentError, "No saved file matches expected SHA-256 #{hash}"
     end
 
-    def build_questions(events, reviews)
+    def build_questions(events, reviews, uncertain_fields)
       questions = []
-      records = events.each_with_index.map { |event, i| ["event:#{i + 1}", event] }
+      records = events.each_with_index.map do |event, i|
+        reason = "conflicting_location_evidence" if uncertain_fields.dig(i.to_s, "location")
+        ["event:#{i + 1}", event, reason]
+      end
       records.concat(reviews.each_with_index.filter_map do |review, i|
         candidate = review["candidate"]
         next if candidate.nil?

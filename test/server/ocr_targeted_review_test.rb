@@ -131,6 +131,22 @@ class OcrTargetedReviewTest < Minitest::Test
     end
   end
 
+  def test_conflicting_location_on_an_admitted_event_asks_about_that_venue
+    with_artifact do |dir, source|
+      source["events"] = [{"name" => "Workshop"}, {"name" => "Concerto"}]
+      source["review_items"] = []
+      source["uncertain_fields_by_index"] = {
+        "1" => {"location" => {"candidate" => "Biblioteca Municipal", "evidence" => "Auditório do CCC"}}
+      }
+      File.write(File.join(dir, "result.json"), JSON.generate(source))
+      judge = ->(_input, questions, _image) { questions.transform_values { {choice: "supported"} } }
+
+      report = Ocr::TargetedReview.new(judge: judge).call(dir)
+
+      assert_equal [["event:2", "missing_location"]], report.fetch(:questions).map { |question| question.values_at(:record_id, :field) }
+    end
+  end
+
   def test_review_asks_about_populated_start_date_without_source
     with_artifact do |dir, source|
       candidate = {"name" => "Workshop", "start_date" => "03/01/2026"}
