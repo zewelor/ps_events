@@ -16,7 +16,7 @@ page_gen:
     filter_condition: "require 'date'; end_date = record['end_date'].to_s.strip; end_date = record['start_date'] if end_date.empty?; Date.strptime(end_date.split(' ')[0], '%d/%m/%Y') >= (Date.new(Date.today.year, Date.today.month, 1) << 1)"
 
 tailwindcss:
-  css_path: ./events_listing/_tailwind.css
+  css_path: _tailwind.css
 
 # `twitter.username` feeds Twitter Card metadata,
 # while `social.links` feeds JSON-LD `sameAs` links for `jekyll-seo-tag`.
